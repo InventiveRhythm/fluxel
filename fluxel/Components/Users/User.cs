@@ -1,0 +1,68 @@
+﻿using fluxel.Database;
+using Newtonsoft.Json;
+using Realms;
+
+namespace fluxel.Components.Users; 
+
+public class User : RealmObject {
+    [PrimaryKey]
+    [JsonProperty("id")]
+    public int Id { get; set; }
+    
+    [JsonIgnore]
+    public string Password { get; set; } = "";
+    
+    [JsonProperty("username")]
+    public string Username { get; set; } = "";
+    
+    [JsonProperty("aboutme")]
+    public string AboutMe { get; set; } = "";
+    
+    [JsonProperty("role")]
+    public int Role { get; set; } = 0;
+    
+    [JsonProperty("social")]
+    public UserSocials Socials { get; set; } = new();
+    
+    [JsonProperty("created")]
+    public long CreatedAt { get; set; } = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+    
+    public UserShort ToShort() {
+        return new() {
+            Id = Id,
+            Username = Username
+        };
+    }
+    
+    public static bool UsernameExists(string username) {
+        return RealmAccess.Run(realm => realm.All<User>().Any(u => u.Username == username));
+    }
+    
+    public static int Count() {
+        return RealmAccess.Run(realm => realm.All<User>().Count());
+    }
+    
+    public static User? FindById(int id) {
+        return RealmAccess.Run(realm => realm.Find<User>(id));
+    }
+    
+    public static User? FindByUsername(string username) {
+        return RealmAccess.Run(realm => realm.All<User>().FirstOrDefault(u => u.Username == username));
+    }
+    
+    public static int GetNextId() {
+        return RealmAccess.Run(realm => {
+            var users = realm.All<User>();
+            
+            int max = 0;
+            
+            foreach (var user in users) {
+                if (user.Id > max) {
+                    max = user.Id;
+                }
+            }
+            
+            return !users.Any() ? 1 : max + 1;
+        });
+    }
+}

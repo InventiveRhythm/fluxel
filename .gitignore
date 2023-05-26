@@ -1,0 +1,8 @@
+FodyWeavers.*
+Assets/
+.idea
+fluxel.realm.management/
+bin
+obj
+fluxel.realm.*
+fluxel.realm
