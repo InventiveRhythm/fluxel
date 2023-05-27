@@ -1,11 +1,14 @@
-﻿using Newtonsoft.Json;
+﻿using System.Net;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 namespace fluxel.Websocket; 
 
 public class WebsocketInteraction {
-    private WebsocketConnection _connection;
+    private readonly WebsocketConnection _connection;
     private readonly int _id;
+    
+    public IPEndPoint RemoteEndPoint => _connection.IP;
     
     public Action<string> ReplyAction { get; init; } = _ => { };
 

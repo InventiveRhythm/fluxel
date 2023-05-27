@@ -46,5 +46,7 @@ public class RegisterHandler : IPacketHandler {
             token = UserToken.GetByUserId(user.Id).Token,
             user = RealmAccess.Run(realm => realm.Add(user))
         });
+        
+        Stats.AddOnlineUser(interaction.RemoteEndPoint, user.Id);
     }
 }

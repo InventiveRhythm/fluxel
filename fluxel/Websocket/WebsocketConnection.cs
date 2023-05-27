@@ -9,7 +9,7 @@ using ErrorEventArgs = WebSocketSharp.ErrorEventArgs;
 namespace fluxel.Websocket; 
 
 public class WebsocketConnection : WebSocketBehavior {
-    private IPEndPoint _ip = null!;
+    public IPEndPoint IP = null!;
     
     protected override void OnMessage(MessageEventArgs e) {
         var json = JsonConvert.DeserializeObject<JObject>(e.Data);
@@ -35,14 +35,15 @@ public class WebsocketConnection : WebSocketBehavior {
     }
 
     protected override void OnClose(CloseEventArgs e) {
-        // TODO: Remove user from online list
+        Stats.RemoveOnlineUser(IP);
     }
 
     protected override void OnError(ErrorEventArgs e) {
-        Console.WriteLine($"[{_ip}] Error: {e.Message}!");
+        Console.WriteLine($"[{IP}] Error: {e.Message}!");
+        Stats.RemoveOnlineUser(IP);
     }
 
     protected override void OnOpen() {
-        _ip = Context.UserEndPoint;
+        IP = Context.UserEndPoint;
     } 
 }
