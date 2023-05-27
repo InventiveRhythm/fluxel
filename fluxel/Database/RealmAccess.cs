@@ -4,14 +4,14 @@ namespace fluxel.Database;
 
 public static class RealmAccess {
     private static RealmConfiguration Config => new($"{Directory.GetCurrentDirectory()}{Path.DirectorySeparatorChar}fluxel.realm") {
-        SchemaVersion = 1
+        SchemaVersion = 2
     };
     
     private static Realm Realm => Realm.GetInstance(Config);
 
     public static void Run(Action<Realm> action) => Write(Realm, action);
     
-    public static T Run<T>(Func<Realm, T> func) => Read(Realm, func);
+    public static T Run<T>(Func<Realm, T> func) => Write(Realm, func);
 
     private static void Write(Realm realm, Action<Realm> func) {
         Transaction? transaction = null;
@@ -30,7 +30,7 @@ public static class RealmAccess {
         }
     }
     
-    private static T Read<T>(Realm realm, Func<Realm, T> func) {
+    private static T Write<T>(Realm realm, Func<Realm, T> func) {
         T? result;
         Transaction? transaction = null;
 

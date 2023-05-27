@@ -27,6 +27,13 @@ public class User : RealmObject {
     [JsonProperty("created")]
     public long CreatedAt { get; set; } = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
     
+    [JsonProperty("lastlogin")]
+    public long LastLogin { get; set; } = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+    
+    [Ignored]
+    [JsonProperty("is_online")]
+    public bool IsOnline => Stats.GetOnlineUsers.Contains(Id);
+
     public UserShort ToShort() {
         return new() {
             Id = Id,
