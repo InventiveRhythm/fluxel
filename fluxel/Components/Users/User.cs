@@ -15,6 +15,9 @@ public class User : RealmObject {
     [JsonProperty("username")]
     public string Username { get; set; } = "";
     
+    [JsonIgnore]
+    public string Email { get; set; } = "";
+    
     [JsonProperty("aboutme")]
     public string AboutMe { get; set; } = "";
     

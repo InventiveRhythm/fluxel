@@ -1,4 +1,5 @@
-﻿using fluxel.API.Components;
+﻿using System.Text.RegularExpressions;
+using fluxel.API.Components;
 using fluxel.API.Utils;
 using fluxel.Components.Users;
 using fluxel.Database;
@@ -9,10 +10,11 @@ namespace fluxel.Websocket.Handlers.Account;
 public class RegisterHandler : IPacketHandler {
     public void Handle(WebsocketInteraction interaction, JToken data) {
         var username = data["username"]?.Value<string>();
+        var email = data["email"]?.Value<string>();
         var password = data["password"]?.Value<string>();
         
-        if (username == null || password == null) {
-            interaction.Reply(400, "Missing username or password!");
+        if (username == null || password == null || email == null) {
+            interaction.Reply(400, "Missing username, email or password!");
             return;
         }
         
@@ -31,6 +33,12 @@ public class RegisterHandler : IPacketHandler {
             return;
         }
         
+        // regex matching email
+        if (!Regex.IsMatch(email, @"^[^@\s]+@[^@\s]+\.[^@\s]+$")) {
+            interaction.Reply(400, "Invalid email!");
+            return;
+        }
+        
         if (User.UsernameExists(username)) {
             interaction.Reply(400, "Username is already taken!");
             return;
@@ -39,6 +47,7 @@ public class RegisterHandler : IPacketHandler {
         var user = new User {
             Id = User.GetNextId(),
             Username = username,
+            Email = email,
             Password = PasswordUtils.HashPassword(password)
         };
         
