@@ -1,5 +1,6 @@
 ﻿using System.Net;
 using fluxel.Websocket.Handlers.Account;
+using fluxel.Websocket.Handlers.Chat;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using WebSocketSharp;
@@ -9,6 +10,8 @@ using ErrorEventArgs = WebSocketSharp.ErrorEventArgs;
 namespace fluxel.Websocket; 
 
 public class WebsocketConnection : WebSocketBehavior {
+    public static readonly Dictionary<IPEndPoint, WebsocketConnection> Connections = new(); 
+
     public IPEndPoint IP = null!;
     
     protected override void OnMessage(MessageEventArgs e) {
@@ -26,6 +29,8 @@ public class WebsocketConnection : WebSocketBehavior {
             0 => new AuthHandler(),
             1 => new LoginHandler(),
             2 => new RegisterHandler(),
+            10 => new ChatMessageHandler(),
+            11 => new ChatHistoryHandler(),
             _ => null
         };
 
@@ -36,14 +41,21 @@ public class WebsocketConnection : WebSocketBehavior {
 
     protected override void OnClose(CloseEventArgs e) {
         Stats.RemoveOnlineUser(IP);
+        Connections.Remove(IP);
     }
 
     protected override void OnError(ErrorEventArgs e) {
         Console.WriteLine($"[{IP}] Error: {e.Message}!");
         Stats.RemoveOnlineUser(IP);
+        Connections.Remove(IP);
     }
 
     protected override void OnOpen() {
         IP = Context.UserEndPoint;
-    } 
+        Connections.Add(IP, this);
+    }
+    
+    public new void Send(string data) {
+        base.Send(data);
+    }
 }

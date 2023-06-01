@@ -5,7 +5,7 @@ using fluxel.Database;
 namespace fluxel; 
 
 public static class Stats {
-    private static readonly Dictionary<IPEndPoint, int> OnlineUsers = new();
+    public static readonly Dictionary<IPEndPoint, int> OnlineUsers = new();
     
     public static int Online => OnlineUsers.Count;
     public static List<int> GetOnlineUsers => OnlineUsers.Values.ToList();
