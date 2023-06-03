@@ -12,10 +12,9 @@ public class UserToken : RealmObject {
     public string Token { get; set; } = string.Empty;
     
     public static string GenerateToken() {
+        const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
         var random = new Random();
-        var bytes = new byte[32];
-        random.NextBytes(bytes);
-        return Convert.ToBase64String(bytes);
+        return new string(Enumerable.Repeat(chars, 32).Select(s => s[random.Next(s.Length)]).ToArray());
     }
     
     public static UserToken? GetByToken(string token) {
