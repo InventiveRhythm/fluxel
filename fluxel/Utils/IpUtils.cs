@@ -8,7 +8,7 @@ public class IpUtils {
             using var client = new HttpClient();
             var json = await client.GetStringAsync($"http://ip-api.com/json/{ip}");
             var obj = JsonConvert.DeserializeObject<Dictionary<string, string>>(json);
-            return obj?["countryCode"];
+            return obj?["countryCode"].ToLowerInvariant();
         } catch {
             return null;
         }
