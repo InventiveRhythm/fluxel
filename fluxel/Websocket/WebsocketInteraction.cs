@@ -8,7 +8,7 @@ public class WebsocketInteraction {
     private readonly WebsocketConnection _connection;
     private readonly int _id;
     
-    public IPEndPoint RemoteEndPoint => _connection.IP;
+    public IPEndPoint RemoteEndPoint => _connection.Address;
     
     public Action<string> ReplyAction { get; init; } = _ => { };
 

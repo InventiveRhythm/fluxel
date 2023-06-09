@@ -1,5 +1,4 @@
-﻿using System.Collections.Specialized;
-using System.Net;
+﻿using System.Net;
 using fluxel.Websocket.Handlers.Account;
 using fluxel.Websocket.Handlers.Chat;
 using Newtonsoft.Json;
@@ -13,9 +12,12 @@ namespace fluxel.Websocket;
 public class WebsocketConnection : WebSocketBehavior {
     public static readonly Dictionary<IPEndPoint, WebsocketConnection> Connections = new(); 
 
-    public IPEndPoint IP = null!;
+    public IPEndPoint? Address { get; private set; }
     
     protected override void OnMessage(MessageEventArgs e) {
+        if (Address == null)
+            return;
+        
         var json = JsonConvert.DeserializeObject<JObject>(e.Data);
         if (json == null) return;
 
@@ -26,7 +28,7 @@ public class WebsocketConnection : WebSocketBehavior {
 
         if (data == null) return;
 
-        Console.WriteLine($"[{IP}] Received packet {id}!");
+        Console.WriteLine($"[{Address}] Received packet {id}!");
 
         IPacketHandler? packetHandler = id switch {
             0 => new AuthHandler(),
@@ -43,26 +45,35 @@ public class WebsocketConnection : WebSocketBehavior {
     }
 
     protected override void OnClose(CloseEventArgs e) {
-        Stats.RemoveOnlineUser(IP);
-        Connections.Remove(IP);
+        if (Address == null)
+            return;
+        
+        Stats.RemoveOnlineUser(Address);
+        Connections.Remove(Address);
     }
 
     protected override void OnError(ErrorEventArgs e) {
-        Console.WriteLine($"[{IP}] Error: {e.Message}!");
-        Stats.RemoveOnlineUser(IP);
-        Connections.Remove(IP);
+        if (Address == null)
+            return;
+
+        Console.WriteLine($"[{Address}] Error: {e.Message}!");
+        Stats.RemoveOnlineUser(Address);
+        Connections.Remove(Address);
     }
 
     protected override void OnOpen() {
-        IP = Context.UserEndPoint;
-        Connections.Add(IP, this);
-        
-        string?[] headerKeys = Context.Headers.AllKeys;
-        
-        foreach (var header in headerKeys) {
-            string? value = Context.Headers[header];
-            Console.WriteLine($"[{IP}] Header: {header} = {value}");
+        var forwardedFor = Context.Headers["X-Forwarded-For"];
+
+        if (forwardedFor != null) {
+            var ips = forwardedFor.Split(',');
+            Address = new IPEndPoint(IPAddress.Parse(ips[0]), Context.UserEndPoint.Port);
         }
+        else {
+            Console.WriteLine("X-Forwarded-For header not found, using remote endpoint");
+            Address = Context.UserEndPoint;
+        }
+        
+        Connections.Add(Address, this);
     }
     
     public new void Send(string data) {
