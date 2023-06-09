@@ -1,4 +1,5 @@
-﻿using System.Net;
+﻿using System.Collections.Specialized;
+using System.Net;
 using fluxel.Websocket.Handlers.Account;
 using fluxel.Websocket.Handlers.Chat;
 using Newtonsoft.Json;
@@ -53,12 +54,15 @@ public class WebsocketConnection : WebSocketBehavior {
     }
 
     protected override void OnOpen() {
-        var ipHeader = Context.Headers["X-Real-IP"];
-        if (ipHeader == null) return;
-        IP = IPEndPoint.Parse(ipHeader);
+        IP = Context.UserEndPoint;
         Connections.Add(IP, this);
         
-        Console.WriteLine($"[{IP}] Connected!");
+        string?[] headerKeys = Context.Headers.AllKeys;
+        
+        foreach (var header in headerKeys) {
+            string? value = Context.Headers[header];
+            Console.WriteLine($"[{IP}] Header: {header} = {value}");
+        }
     }
     
     public new void Send(string data) {
