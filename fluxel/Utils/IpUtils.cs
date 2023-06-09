@@ -11,6 +11,7 @@ public class IpUtils {
             Console.WriteLine(json);
             
             var code = obj?["countryCode"].ToLowerInvariant();
+            Console.WriteLine($"Got country code {code} for {ip}");
             
             if (code == null) {
                 Console.WriteLine($"Failed to get country code for {ip}");
