@@ -42,7 +42,7 @@ public class User : RealmObject {
     public bool IsOnline => Stats.GetOnlineUsers.Contains(Id);
 
     public UserShort ToShort() {
-        return new() {
+        return new UserShort {
             Id = Id,
             Username = Username
         };
