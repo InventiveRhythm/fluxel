@@ -44,7 +44,8 @@ public class User : RealmObject {
     public UserShort ToShort() {
         return new UserShort {
             Id = Id,
-            Username = Username
+            Username = Username,
+            CountryCode = CountryCode
         };
     }
     
