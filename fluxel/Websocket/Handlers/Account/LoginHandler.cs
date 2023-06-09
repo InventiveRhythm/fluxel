@@ -30,10 +30,10 @@ public class LoginHandler : IPacketHandler {
         
         if (string.IsNullOrEmpty(user.CountryCode)) {
             IpUtils.GetCountryCode(interaction.RemoteEndPoint.Address.ToString()).ContinueWith(task => {
-                Console.WriteLine($"Got country code for {interaction.RemoteEndPoint.Address}: {task.Result}");
                 RealmAccess.Run(realm => {
                     var u = realm.Find<User>(user.Id);
                     u.CountryCode = task.Result;
+                    Console.WriteLine($"Updated country code for {interaction.RemoteEndPoint.Address}: {task.Result} ({u.CountryCode}) ({u.Id})");
                 });
             });
         }
