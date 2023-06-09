@@ -9,7 +9,9 @@ public class IpUtils {
             var json = await client.GetStringAsync($"http://ip-api.com/json/{ip}");
             var obj = JsonConvert.DeserializeObject<Dictionary<string, string>>(json);
             return obj?["countryCode"].ToLowerInvariant();
-        } catch {
+        } catch (Exception e) {
+            Console.WriteLine($"Failed to get country code for {ip}");
+            Console.WriteLine(e);
             return null;
         }
     }
