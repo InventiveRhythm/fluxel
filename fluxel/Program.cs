@@ -1,5 +1,6 @@
 ﻿using fluxel.API;
 using fluxel.Websocket;
+using Newtonsoft.Json;
 
 namespace fluxel;
 

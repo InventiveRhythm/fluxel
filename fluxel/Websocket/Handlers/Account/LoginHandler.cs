@@ -1,4 +1,6 @@
 ﻿using fluxel.Components.Users;
+using fluxel.Database;
+using fluxel.Utils;
 using Newtonsoft.Json.Linq;
 
 namespace fluxel.Websocket.Handlers.Account; 
@@ -26,6 +28,15 @@ public class LoginHandler : IPacketHandler {
             return;
         }
         
+        if (string.IsNullOrEmpty(user.CountryCode)) {
+            IpUtils.GetCountryCode(interaction.RemoteEndPoint.Address.ToString()).ContinueWith(task => {
+                RealmAccess.Run(realm => {
+                    var u = realm.Find<User>(user.Id);
+                    u.CountryCode = task.Result;
+                });
+            });
+        }
+
         interaction.Reply(200, "Successfully logged in!", user.ToShort());
         Stats.AddOnlineUser(interaction.RemoteEndPoint, user.Id);
     }

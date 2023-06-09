@@ -26,7 +26,7 @@ public class User : RealmObject {
     public int Role { get; set; } = 0;
     
     [JsonProperty("country")]
-    public string CountryCode { get; set; } = string.Empty;
+    public string? CountryCode { get; set; } = string.Empty;
     
     [JsonProperty("social")]
     public UserSocials Socials { get; set; } = new();

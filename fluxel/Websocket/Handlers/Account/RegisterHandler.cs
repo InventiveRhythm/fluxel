@@ -3,12 +3,13 @@ using fluxel.API.Components;
 using fluxel.API.Utils;
 using fluxel.Components.Users;
 using fluxel.Database;
+using fluxel.Utils;
 using Newtonsoft.Json.Linq;
 
 namespace fluxel.Websocket.Handlers.Account; 
 
 public class RegisterHandler : IPacketHandler {
-    public void Handle(WebsocketInteraction interaction, JToken data) {
+    public async void Handle(WebsocketInteraction interaction, JToken data) {
         var username = data["username"]?.Value<string>();
         var email = data["email"]?.Value<string>();
         var password = data["password"]?.Value<string>();
@@ -53,7 +54,8 @@ public class RegisterHandler : IPacketHandler {
             Id = User.GetNextId(),
             Username = username,
             Email = email,
-            Password = PasswordUtils.HashPassword(password)
+            Password = PasswordUtils.HashPassword(password),
+            CountryCode = await IpUtils.GetCountryCode(interaction.RemoteEndPoint.Address.ToString())
         };
         
         interaction.Reply(200, "Successfully registered!", new {
