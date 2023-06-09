@@ -27,6 +27,9 @@ public class LoginHandler : IPacketHandler {
             interaction.Reply(400, "Invalid token! (User not found)");
             return;
         }
+
+        interaction.Reply(200, "Successfully logged in!", user.ToShort());
+        Stats.AddOnlineUser(interaction.RemoteEndPoint, user.Id);
         
         if (string.IsNullOrEmpty(user.CountryCode)) {
             var userid = user.Id;
@@ -37,8 +40,5 @@ public class LoginHandler : IPacketHandler {
                 Console.WriteLine($"Updated country code for {interaction.RemoteEndPoint.Address}: {code} ({u.CountryCode}) ({u.Id})");
             });
         }
-
-        interaction.Reply(200, "Successfully logged in!", user.ToShort());
-        Stats.AddOnlineUser(interaction.RemoteEndPoint, user.Id);
     }
 }
