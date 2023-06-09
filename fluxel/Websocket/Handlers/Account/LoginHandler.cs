@@ -6,7 +6,7 @@ using Newtonsoft.Json.Linq;
 namespace fluxel.Websocket.Handlers.Account; 
 
 public class LoginHandler : IPacketHandler {
-    public void Handle(WebsocketInteraction interaction, JToken data) {
+    public async void Handle(WebsocketInteraction interaction, JToken data) {
         var token = data["token"]?.Value<string>();
         
         if (token == null) {
@@ -29,12 +29,11 @@ public class LoginHandler : IPacketHandler {
         }
         
         if (string.IsNullOrEmpty(user.CountryCode)) {
-            IpUtils.GetCountryCode(interaction.RemoteEndPoint.Address.ToString()).ContinueWith(task => {
-                RealmAccess.Run(realm => {
-                    var u = realm.Find<User>(user.Id);
-                    u.CountryCode = task.Result;
-                    Console.WriteLine($"Updated country code for {interaction.RemoteEndPoint.Address}: {task.Result} ({u.CountryCode}) ({u.Id})");
-                });
+            var code = await IpUtils.GetCountryCode(interaction.RemoteEndPoint.Address.ToString());
+            RealmAccess.Run(realm => {
+                var u = realm.Find<User>(user.Id);
+                u.CountryCode = code;
+                Console.WriteLine($"Updated country code for {interaction.RemoteEndPoint.Address}: {code} ({u.CountryCode}) ({u.Id})");
             });
         }
 
