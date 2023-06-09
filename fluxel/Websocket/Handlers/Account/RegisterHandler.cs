@@ -32,7 +32,12 @@ public class RegisterHandler : IPacketHandler {
             interaction.Reply(400, "Password must be between 8 and 32 characters!");
             return;
         }
-        
+
+        if (!User.ValidUsername(username)) {
+            interaction.Reply(400, "Username can only contain A-Z, a-z, 0-9 and _!");
+            return;
+        }
+
         // regex matching email
         if (!Regex.IsMatch(email, @"^[^@\s]+@[^@\s]+\.[^@\s]+$")) {
             interaction.Reply(400, "Invalid email!");

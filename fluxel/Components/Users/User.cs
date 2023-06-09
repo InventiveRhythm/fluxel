@@ -1,4 +1,5 @@
-﻿using fluxel.Database;
+﻿using System.Text.RegularExpressions;
+using fluxel.Database;
 using Newtonsoft.Json;
 using Realms;
 
@@ -48,7 +49,11 @@ public class User : RealmObject {
     }
     
     public static bool UsernameExists(string username) {
-        return RealmAccess.Run(realm => realm.All<User>().Any(u => u.Username == username));
+        return RealmAccess.Run(realm => realm.All<User>().Any(u => u.Username.ToLowerInvariant() == username.ToLowerInvariant()));
+    }
+    
+    public static bool ValidUsername(string username) {
+        return Regex.IsMatch(username, @"^[a-zA-Z0-9_]{3,16}$");
     }
     
     public static int Count() {
