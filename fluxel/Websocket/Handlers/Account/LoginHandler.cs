@@ -22,16 +22,17 @@ public class LoginHandler : IPacketHandler {
         }
         
         var user = User.FindById(utk.UserId);
-        
+
         if (user == null) {
             interaction.Reply(400, "Invalid token! (User not found)");
             return;
         }
         
         if (string.IsNullOrEmpty(user.CountryCode)) {
+            var userid = user.Id;
             var code = await IpUtils.GetCountryCode(interaction.RemoteEndPoint.Address.ToString());
             RealmAccess.Run(realm => {
-                var u = realm.Find<User>(user.Id);
+                var u = realm.Find<User>(userid);
                 u.CountryCode = code;
                 Console.WriteLine($"Updated country code for {interaction.RemoteEndPoint.Address}: {code} ({u.CountryCode}) ({u.Id})");
             });
