@@ -24,7 +24,7 @@ public class WebsocketConnection : WebSocketBehavior {
         if (id == -1) return;
 
         if (data == null) return;
-        
+
         Console.WriteLine($"[{IP}] Received packet {id}!");
 
         IPacketHandler? packetHandler = id switch {
@@ -53,8 +53,12 @@ public class WebsocketConnection : WebSocketBehavior {
     }
 
     protected override void OnOpen() {
-        IP = Context.UserEndPoint;
+        var ipHeader = Context.Headers["X-Real-IP"];
+        if (ipHeader == null) return;
+        IP = IPEndPoint.Parse(ipHeader);
         Connections.Add(IP, this);
+        
+        Console.WriteLine($"[{IP}] Connected!");
     }
     
     public new void Send(string data) {
