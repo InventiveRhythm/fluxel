@@ -50,7 +50,7 @@ public class User : RealmObject {
     }
     
     public static bool UsernameExists(string username) {
-        return RealmAccess.Run(realm => realm.All<User>().Any(u => u.Username.ToLowerInvariant() == username.ToLowerInvariant()));
+        return RealmAccess.Run(realm => realm.All<User>().Any(u => string.Equals(u.Username, username, StringComparison.InvariantCultureIgnoreCase)));
     }
     
     public static bool ValidUsername(string username) {

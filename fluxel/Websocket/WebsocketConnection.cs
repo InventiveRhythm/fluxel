@@ -24,6 +24,8 @@ public class WebsocketConnection : WebSocketBehavior {
         if (id == -1) return;
 
         if (data == null) return;
+        
+        Console.WriteLine($"[{IP}] Received packet {id}!");
 
         IPacketHandler? packetHandler = id switch {
             0 => new AuthHandler(),

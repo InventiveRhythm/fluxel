@@ -44,8 +44,6 @@ public class ApiServer {
         var req = context.Request;
         var res = context.Response;
         
-        Console.WriteLine($"{req.HttpMethod} {req.Url?.AbsolutePath}");
-        
         IApiRoute? route = null;
         Dictionary<string, string> parameters = new();
 
