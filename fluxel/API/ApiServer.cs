@@ -16,6 +16,7 @@ public class ApiServer {
         
         _listener = new HttpListener();
         _listener.Prefixes.Add("http://localhost:2434/");
+        _listener.Prefixes.Add("http://75.119.143.200:2434/");
         _listener.Start();
         
         Task.Run(async () => {
