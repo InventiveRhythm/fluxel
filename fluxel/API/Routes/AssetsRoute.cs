@@ -27,7 +27,7 @@ public class AssetsRoute : IApiRoute {
         res.ContentLength64 = asset.Length;
         res.ContentType = "image/png";
         res.ContentEncoding = Encoding.UTF8;
-        res.AddHeader("Content-Type", "application/json");
+        res.AddHeader("Content-Type", "image/png");
         res.AddHeader("Access-Control-Allow-Origin", "*");
         res.AddHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
         res.AddHeader("Access-Control-Allow-Headers", "*");
