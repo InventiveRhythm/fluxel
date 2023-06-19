@@ -47,6 +47,8 @@ public class AccountUpdateRoute : IApiRoute {
         var len = input.Read(buffer, 0, buffer.Length);
         int startPos;
         
+        Console.WriteLine(len);
+        
         // limit to 4MB
         if (len > 4194304) {
             return new ApiResponse {
