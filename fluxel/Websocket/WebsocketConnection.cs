@@ -28,8 +28,6 @@ public class WebsocketConnection : WebSocketBehavior {
 
         if (data == null) return;
 
-        Console.WriteLine($"[{Address}] Received packet {id}!");
-
         IPacketHandler? packetHandler = id switch {
             0 => new AuthHandler(),
             1 => new LoginHandler(),

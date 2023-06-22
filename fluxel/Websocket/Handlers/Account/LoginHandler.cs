@@ -37,7 +37,6 @@ public class LoginHandler : IPacketHandler {
             RealmAccess.Run(realm => {
                 var u = realm.Find<User>(userid);
                 u.CountryCode = code;
-                Console.WriteLine($"Updated country code for {interaction.RemoteEndPoint.Address}: {code} ({u.CountryCode}) ({u.Id})");
             });
         }
     }

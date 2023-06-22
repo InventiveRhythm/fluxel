@@ -36,8 +36,6 @@ public class AccountUpdateRoute : IApiRoute {
             };
         }
         
-        Console.WriteLine(req.ContentLength64);
-        
         var enc = req.ContentEncoding;
         var boundaryBytes = enc.GetBytes(GetBoundary(req.ContentType));
         var boundaryLen = boundaryBytes.Length;
