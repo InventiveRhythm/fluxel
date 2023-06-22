@@ -41,16 +41,17 @@ public class AccountUpdateRoute : IApiRoute {
         var enc = req.ContentEncoding;
         var boundaryBytes = enc.GetBytes(GetBoundary(req.ContentType));
         var boundaryLen = boundaryBytes.Length;
+
+        const int maxLen = 4194304;
         
         var input = req.InputStream;
-        var buffer = new byte[4194304];
-        var len = input.Read(buffer, 0, buffer.Length);
+        
+        var stream = new MemoryStream();
+        input.CopyTo(stream);
         int startPos;
         
-        Console.WriteLine(len);
-        
         // limit to 4MB
-        if (len > 4194304) {
+        if (stream.Length > maxLen) {
             return new ApiResponse {
                 Message = "Image too large",
                 Status = 400
@@ -60,40 +61,40 @@ public class AccountUpdateRoute : IApiRoute {
         // Find start boundary
         while (true)
         {
-            if (len == 0)
+            if (stream.Length == 0)
                 throw new Exception("Start Boundaray Not Found");
 
-            startPos = IndexOf(buffer, len, boundaryBytes);
+            startPos = IndexOf(stream.ToArray(), (int) stream.Length, boundaryBytes);
             if (startPos >= 0)
                 break;
 
-            Array.Copy(buffer, len - boundaryLen, buffer, 0, boundaryLen);
-            len = input.Read(buffer, boundaryLen, 1024 - boundaryLen);
+            var temp = new MemoryStream();
+            stream.Position = stream.Length - boundaryLen;
+            stream.CopyTo(temp);
+            stream.Dispose();
+            stream = temp;
         }
         
         for (var i = 0; i < 4; i++)
         {
             while (true)
             {
-                if (len == 0) 
+                if (stream.Length == 0) 
                     throw new Exception("Preamble not Found.");
-
-                startPos = Array.IndexOf(buffer, enc.GetBytes("\n")[0], startPos);
+                
+                startPos = IndexOf(stream, enc.GetBytes("\n")[0], startPos);
                 if (startPos >= 0)
                 {
                     startPos++;
                     break;
                 }
-
-                len = input.Read(buffer, 0, buffer.Length);
             }
         }
         
-        Array.Copy(buffer, startPos, buffer, 0, len - startPos);
-        
-        // remove last null bytes
-        buffer = buffer.Take(len - startPos).ToArray();
-        
+        var buffer = new byte[stream.Length - startPos];
+        stream.Position = startPos;
+        var read = stream.Read(buffer, 0, buffer.Length);
+
         if (!buffer.IsImage()) {
             return new ApiResponse {
                 Message = "Invalid image",
@@ -140,6 +141,20 @@ public class AccountUpdateRoute : IApiRoute {
 
             if (match)
                 return i;
+        }
+
+        return -1;
+    }
+
+    private static int IndexOf(Stream stream, byte bytes, int start) {
+        var buffer = new byte[stream.Length];
+        stream.Position = 0;
+        var read = stream.Read(buffer, 0, (int) stream.Length);
+
+        for (var i = start; i < buffer.Length; i++) {
+            if (buffer[i] == bytes) {
+                return i;
+            }
         }
 
         return -1;
