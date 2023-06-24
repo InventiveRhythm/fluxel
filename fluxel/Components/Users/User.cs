@@ -1,4 +1,5 @@
 ﻿using System.Text.RegularExpressions;
+using fluxel.Components.Maps;
 using fluxel.Components.Scores;
 using fluxel.Database;
 using Newtonsoft.Json;
@@ -79,7 +80,12 @@ public class User : RealmObject {
             var recent = new List<Score>();
             
             foreach (var score in scores) {
-                if (recent.Any(s => s.MapId == score.MapId)) continue;
+                var isranked = RealmAccess.Run(realm => {
+                    var set = realm.Find<MapSet>(score.MapShort.MapSet);
+                    return set?.Status == 2;
+                });
+
+                if (recent.Any(s => s.MapId == score.MapId) || !isranked) continue;
                 recent.Add(score);
             }
             
@@ -97,11 +103,114 @@ public class User : RealmObject {
             var best = new List<Score>();
             
             foreach (var score in scores) {
-                if (best.Any(s => s.MapId == score.MapId)) continue;
+                var isranked = RealmAccess.Run(realm => {
+                    var set = realm.Find<MapSet>(score.MapShort.MapSet);
+                    return set?.Status == 2;
+                });
+                
+                if (best.Any(s => s.MapId == score.MapId) || !isranked) continue;
                 best.Add(score);
             }
             
             return best.Take(50).ToList();
+        }
+    }
+    
+    [Ignored]
+    [JsonProperty("max_combo")]
+    public int MaxCombo {
+        get {
+            var max = 0;
+            
+            RealmAccess.Run(realm => {
+                var scores = realm.All<Score>().Where(s => s.UserId == Id);
+
+                foreach (var score in scores) {
+                    if (realm.Find<MapSet>(score.MapShort.MapSet)?.Status == 2) max = Math.Max(max, score.MaxCombo);
+                }
+            });
+            
+            return max;
+        }
+    }
+    
+    [Ignored]
+    [JsonProperty("ranked_score")]
+    public int RankedScore {
+        get {
+            var total = 0;
+            
+            RealmAccess.Run(realm => {
+                var scores = realm.All<Score>().Where(s => s.UserId == Id);
+
+                foreach (var score in scores) {
+                    if (realm.Find<MapSet>(score.MapShort.MapSet)?.Status == 2)
+                        total += score.TotalScore;
+                }
+            });
+            
+            return total;
+        }
+    }
+    
+    [Ignored]
+    [JsonProperty("ova")]
+    public double OverallAccuracy {
+        get {
+            double acc = 0;
+            var count = 0;
+            
+            RealmAccess.Run(realm => {
+                var scores = realm.All<Score>().Where(s => s.UserId == Id);
+
+                foreach (var score in scores) {
+                    if (realm.Find<MapSet>(score.MapShort.MapSet)?.Status != 2) continue;
+                    
+                    acc += Math.Round(score.Accuracy, 2);
+                    count++;
+                }
+            });
+            
+            if (count == 0) return 0;
+            return acc / count;
+        }
+    }
+    
+    [Ignored]
+    [JsonProperty("rank")]
+    public int Rank {
+        get {
+            if (OverallRating == 0) return 0;
+            var rank = 0;
+            
+            RealmAccess.Run(realm => {
+                var users = realm.All<User>().OrderByDescending(u => u.OverallRating);
+                foreach (var user in users) {
+                    rank++;
+                    if (user.Id == Id) break;
+                }
+            });
+            
+            return rank;
+        }
+    }
+    
+    [Ignored]
+    [JsonProperty("country_rank")]
+    public int CountryRank {
+        get {
+            if (OverallRating == 0) return 0;
+            var rank = 0;
+            
+            RealmAccess.Run(realm => {
+                var users = realm.All<User>().Where(u => u.CountryCode == CountryCode).OrderByDescending(u => u.OverallRating);
+                foreach (var user in users) {
+                    rank++;
+                    if (user.Id == Id) break;
+                }
+            });
+            
+            return rank;
         }
     }
 
