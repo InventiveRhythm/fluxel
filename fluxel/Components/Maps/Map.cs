@@ -1,4 +1,5 @@
-﻿using fluxel.Components.Users;
+﻿using fluxel.Components.Maps.Json;
+using fluxel.Components.Users;
 using fluxel.Database;
 using Newtonsoft.Json;
 using Realms;
@@ -80,5 +81,21 @@ public class Map : RealmObject {
 
     public static Map? GetByHash(string hash) {
         return RealmAccess.Run(realm => realm.All<Map>().FirstOrDefault(m => m.Hash == hash));
+    }
+
+    public static int GetNextId() {
+        return RealmAccess.Run(realm => {
+            var maps = realm.All<Map>();
+            
+            var max = 0;
+            
+            foreach (var set in maps) {
+                if (set.Id > max) {
+                    max = set.Id;
+                }
+            }
+            
+            return !maps.Any() ? 1 : max + 1;
+        });
     }
 }

@@ -1,5 +1,6 @@
 FodyWeavers.*
 Assets/
+Maps/
 .idea
 fluxel.realm.management/
 bin
