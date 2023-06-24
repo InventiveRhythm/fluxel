@@ -55,8 +55,30 @@ public class Map : RealmObject {
     
     [JsonProperty("lns")]
     public int LongNotes { get; set; }
+    
+    [Ignored]
+    [JsonProperty("maxcombo")]
+    public int MaxCombo => Hits + LongNotes * 2;
+    
+    public MapShort ToShort() {
+        return new MapShort {
+            Id = Id,
+            MapSet = SetId,
+            Hash = Hash,
+            Title = Title,
+            Artist = Artist,
+            Difficulty = Difficulty,
+            Mode = Mode,
+            Rating = Rating,
+            MapperId = MapperId
+        };
+    }
 
-    public static Map FindById(int id) {
+    public static Map? FindById(int id) {
         return RealmAccess.Run(realm => realm.Find<Map>(id));
+    }
+
+    public static Map? GetByHash(string hash) {
+        return RealmAccess.Run(realm => realm.All<Map>().First(m => m.Hash == hash));
     }
 }

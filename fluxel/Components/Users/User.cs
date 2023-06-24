@@ -1,4 +1,5 @@
 ﻿using System.Text.RegularExpressions;
+using fluxel.Components.Scores;
 using fluxel.Database;
 using Newtonsoft.Json;
 using Realms;
@@ -40,6 +41,69 @@ public class User : RealmObject {
     [Ignored]
     [JsonProperty("is_online")]
     public bool IsOnline => Stats.GetOnlineUsers.Contains(Id);
+
+    [Ignored]
+    [JsonProperty("ovr")]
+    public double OverallRating {
+        get {
+            var ovr = 0d;
+            var count = 0;
+            
+            foreach (var score in BestScores) {
+                ovr += score.PerformanceRating * Math.Pow(.9f, count);
+                count++;
+            }
+            
+            return ovr;
+        }
+    }
+    
+    [Ignored]
+    [JsonProperty("ptr")]
+    public double PotentialRating {
+        get {
+            var ptr = BestScores.Take(30).Sum(score => score.PerformanceRating);
+            ptr += RecentScores.Take(10).Sum(score => score.PerformanceRating);
+            ptr /= 40f;
+            return ptr;
+        }
+    }
+    
+    [Ignored]
+    [JsonProperty("recent_scores")]
+    public List<Score> RecentScores {
+        get {
+            var scores = RealmAccess.Run(realm => realm.All<Score>().Where(s => s.UserId == Id))
+                .ToList().OrderByDescending(s => s.Time);
+            
+            var recent = new List<Score>();
+            
+            foreach (var score in scores) {
+                if (recent.Any(s => s.MapId == score.MapId)) continue;
+                recent.Add(score);
+            }
+            
+            return recent.Take(30).ToList();
+        }
+    }
+    
+    [Ignored]
+    [JsonProperty("best_scores")]
+    public List<Score> BestScores {
+        get {
+            var scores = RealmAccess.Run(realm => realm.All<Score>().Where(s => s.UserId == Id))
+                .ToList().OrderByDescending(s => s.PerformanceRating);
+            
+            var best = new List<Score>();
+            
+            foreach (var score in scores) {
+                if (best.Any(s => s.MapId == score.MapId)) continue;
+                best.Add(score);
+            }
+            
+            return best.Take(50).ToList();
+        }
+    }
 
     public UserShort ToShort() {
         return new UserShort {

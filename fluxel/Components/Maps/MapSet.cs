@@ -100,17 +100,17 @@ public class MapSet : RealmObject {
 
     public static int GetNextId() {
         return RealmAccess.Run(realm => {
-            var users = realm.All<MapSet>();
+            var sets = realm.All<MapSet>();
             
             var max = 0;
             
-            foreach (var user in users) {
-                if (user.Id > max) {
-                    max = user.Id;
+            foreach (var set in sets) {
+                if (set.Id > max) {
+                    max = set.Id;
                 }
             }
             
-            return !users.Any() ? 1 : max + 1;
+            return !sets.Any() ? 1 : max + 1;
         });
     }
 

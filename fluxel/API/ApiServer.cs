@@ -81,7 +81,7 @@ public class ApiServer {
         if (route == null) {
             response = new ApiResponse {
                 Status = 404,
-                Message = "Not Found"
+                Message = "Nothing here..."
             };
         } else {
             try {
