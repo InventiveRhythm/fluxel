@@ -76,6 +76,8 @@ public class ScoreUploadRoute : IApiRoute {
                 Message = "Map is not submitted!"
             };
         }
+        
+        var mapset = MapSet.FindById(map.SetId);
 
         var mapid = map.Id;
         var userid = user.Id;
@@ -103,14 +105,21 @@ public class ScoreUploadRoute : IApiRoute {
             
             user = realm.Find<User>(userid);
 
-            // TODO: Calculate rank
+            if (mapset.Status == 3) {
+                // TODO: Calculate rank
+                return new ApiResponse {
+                    Data = new {
+                        ovr = user.OverallRating,
+                        ptr = user.PotentialRating,
+                        ovrChange = user.OverallRating - ovr,
+                        ptrChange = user.PotentialRating - ptr
+                    }
+                };
+            }
+            
             return new ApiResponse {
-                Data = new {
-                    ovr = user.OverallRating,
-                    ptr = user.PotentialRating,
-                    ovrChange = user.OverallRating - ovr,
-                    ptrChange = user.PotentialRating - ptr
-                }
+                Status = 400,
+                Message = "Map is not ranked!"
             };
         });
     }

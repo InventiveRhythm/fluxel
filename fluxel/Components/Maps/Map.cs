@@ -79,6 +79,6 @@ public class Map : RealmObject {
     }
 
     public static Map? GetByHash(string hash) {
-        return RealmAccess.Run(realm => realm.All<Map>().First(m => m.Hash == hash));
+        return RealmAccess.Run(realm => realm.All<Map>().FirstOrDefault(m => m.Hash == hash));
     }
 }

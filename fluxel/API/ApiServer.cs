@@ -90,8 +90,8 @@ public class ApiServer {
             catch (Exception e) {
                 response = new ApiResponse {
                     Status = 500,
-                    Message = "Internal Server Error",
-                    Data = e.Message
+                    Message = "Internal Server Error: " + e.Message,
+                    Data = new {}
                 };
                 Console.WriteLine(e);
             }

@@ -25,10 +25,13 @@ public static class ScoreUtils {
     
     public static float CalculatePerformanceRating(this Score score) {
         var totalScore = score.TotalScore;
+
+        if (totalScore > 1000000)
+            return 2f + (totalScore - 1000000) / 200000f;
         
         if (totalScore >= 960000)
             return 1f + (totalScore - 960000) / 40000f;
-
+        
         return (totalScore - 920000) / 80000f;
     }
 
