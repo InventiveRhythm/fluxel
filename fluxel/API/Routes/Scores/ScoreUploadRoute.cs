@@ -64,7 +64,7 @@ public class ScoreUploadRoute : IApiRoute {
         if (hash == null) {
             return new ApiResponse {
                 Status = 400,
-                Message = "Invalid hash"
+                Message = "Invalid map hash!"
             };
         }
         
@@ -73,7 +73,7 @@ public class ScoreUploadRoute : IApiRoute {
         if (map == null) {
             return new ApiResponse {
                 Status = 404,
-                Message = "Map not found"
+                Message = "Map is not submitted!"
             };
         }
 

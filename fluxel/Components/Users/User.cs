@@ -54,7 +54,7 @@ public class User : RealmObject {
                 count++;
             }
             
-            return ovr;
+            return Math.Round(ovr, 2);
         }
     }
     
@@ -65,7 +65,7 @@ public class User : RealmObject {
             var ptr = BestScores.Take(30).Sum(score => score.PerformanceRating);
             ptr += RecentScores.Take(10).Sum(score => score.PerformanceRating);
             ptr /= 40f;
-            return ptr;
+            return Math.Round(ptr, 2);
         }
     }
     
