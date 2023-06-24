@@ -1,6 +1,4 @@
-﻿using System.Text.RegularExpressions;
-using fluxel.API.Components;
-using fluxel.API.Utils;
+﻿using fluxel.API.Utils;
 using fluxel.Components.Users;
 using fluxel.Database;
 using fluxel.Utils;
@@ -40,7 +38,8 @@ public class RegisterHandler : IPacketHandler {
         }
 
         // regex matching email
-        if (!Regex.IsMatch(email, @"^[^@\s]+@[^@\s]+\.[^@\s]+$")) {
+        Console.WriteLine(email);
+        if (!MailUtils.IsValidEmail(email)) {
             interaction.Reply(400, "Invalid email!");
             return;
         }
