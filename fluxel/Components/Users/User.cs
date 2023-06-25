@@ -216,27 +216,15 @@ public class User : RealmObject {
     
     [Ignored]
     [JsonProperty("ranked_maps")]
-    public List<MapSet> RankedMaps {
-        get {
-            return Realm.All<MapSet>().Where(s => s.Status == 3).ToList();
-        }
-    }
-    
+    public List<MapSet> RankedMaps => RealmAccess.Run(realm => realm.All<MapSet>().Where(s => s.Status == 3).ToList());
+
     [Ignored]
     [JsonProperty("unranked_maps")]
-    public List<MapSet> UnrankedMaps {
-        get {
-            return Realm.All<MapSet>().Where(s => s.Status != 3).ToList();
-        }
-    }
-    
+    public List<MapSet> UnrankedMaps => RealmAccess.Run(realm => realm.All<MapSet>().Where(s => s.Status != 3).ToList());
+
     [Ignored]
     [JsonProperty("guest_diffs")]
-    public List<MapSet> GuestDiffs {
-        get {
-            return Realm.All<MapSet>().Where(s => s.CreatorId != Id && s.MapsList.Any(m => m.MapperId == Id)).ToList();
-        }
-    }
+    public List<MapSet> GuestDiffs => RealmAccess.Run(realm => realm.All<MapSet>().ToList().Where(s => s.CreatorId != Id && s.MapsList.Any(m => m.MapperId == Id))).ToList();
 
     public UserShort ToShort() {
         return new UserShort {
