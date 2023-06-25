@@ -57,6 +57,9 @@ public class MapUploadRoute : IApiRoute {
         var maps = new List<Map>();
         int id = Map.GetNextId();
         
+        var backgroundStream = new MemoryStream();
+        bool hasBackground = false;
+        
         foreach (var entry in zip.Entries) {
             if (entry.Name.EndsWith(".fsc")) {
                 var json = new StreamReader(entry.Open()).ReadToEnd();
@@ -67,7 +70,19 @@ public class MapUploadRoute : IApiRoute {
                         Message = "Invalid map file"
                     };
                 }
-                
+
+                if (!hasBackground) {
+                    try {
+                        var background = zip.GetEntry(mapJson.BackgroundFile);
+                        background?.Open().CopyTo(backgroundStream);
+                        hasBackground = true;
+                    }
+                    catch {
+                        // ignored
+                    }
+                }
+
+
                 var hash = Hashing.GetHash(json);
                 
                 var mapper = User.FindByUsername(mapJson.Metadata.Mapper);
@@ -118,6 +133,12 @@ public class MapUploadRoute : IApiRoute {
         stream.Seek(0, SeekOrigin.Begin);
         stream.CopyTo(File.Create(file));
         
+        var backgroundPath = $"{Environment.CurrentDirectory}/Assets/Backgrounds";
+        if (!Directory.Exists(backgroundPath)) Directory.CreateDirectory(backgroundPath);
+        var backgroundFile = $"{backgroundPath}/{set.Id}.png";
+        backgroundStream.Seek(0, SeekOrigin.Begin);
+        backgroundStream.CopyTo(File.Create(backgroundFile));
+
         RealmAccess.Run(realm => {
             realm.Add(set);
             
