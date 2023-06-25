@@ -78,6 +78,13 @@ public class ScoreUploadRoute : IApiRoute {
         }
         
         var mapset = MapSet.FindById(map.SetId);
+        
+        if (mapset == null) {
+            return new ApiResponse {
+                Status = 404,
+                Message = "Mapset not found!"
+            };
+        }
 
         var mapid = map.Id;
         var userid = user.Id;
