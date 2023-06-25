@@ -28,6 +28,9 @@ public class MapShort {
     [JsonProperty("rating")]
     public double Rating { get; set; }
     
+    [JsonProperty("status")]
+    public int Status { get; set; }
+    
     [JsonIgnore]
     public int MapperId { get; set; }
     

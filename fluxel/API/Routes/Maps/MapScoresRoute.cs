@@ -44,7 +44,8 @@ public class MapScoresRoute : IApiRoute {
 
             return new ApiResponse {
                 Data = new {
-                    scores
+                    scores,
+                    map = map.ToShort()
                 }
             };
         });

@@ -114,7 +114,7 @@ public class MapSet : RealmObject {
         });
     }
 
-    public static MapSet FindById(int id) {
+    public static MapSet? FindById(int id) {
         return RealmAccess.Run(realm => realm.Find<MapSet>(id));
     }
 }

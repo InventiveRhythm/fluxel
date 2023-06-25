@@ -71,6 +71,7 @@ public class Map : RealmObject {
             Difficulty = Difficulty,
             Mode = Mode,
             Rating = Rating,
+            Status = MapSet.FindById(SetId)?.Status ?? 0,
             MapperId = MapperId
         };
     }
