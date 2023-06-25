@@ -184,7 +184,7 @@ public class User : RealmObject {
             var rank = 0;
             
             RealmAccess.Run(realm => {
-                var users = realm.All<User>().OrderByDescending(u => u.OverallRating);
+                var users = realm.All<User>().ToList().OrderByDescending(u => u.OverallRating);
                 foreach (var user in users) {
                     rank++;
                     if (user.Id == Id) break;
@@ -203,7 +203,7 @@ public class User : RealmObject {
             var rank = 0;
             
             RealmAccess.Run(realm => {
-                var users = realm.All<User>().Where(u => u.CountryCode == CountryCode).OrderByDescending(u => u.OverallRating);
+                var users = realm.All<User>().ToList().Where(u => u.CountryCode == CountryCode && u.OverallRating > 0).OrderByDescending(u => u.OverallRating);
                 foreach (var user in users) {
                     rank++;
                     if (user.Id == Id) break;
