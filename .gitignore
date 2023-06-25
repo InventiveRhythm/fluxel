@@ -5,5 +5,4 @@ Maps/*.zip
 fluxel.realm.management/
 bin
 obj
-fluxel.realm.*
-fluxel.realm
+*.realm*
