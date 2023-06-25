@@ -13,6 +13,7 @@ public static class ScoreUtils {
     
     public static float CalculateAccuracy(this Score score) {
         var rated = 0f;
+        var total = score.FlawlessCount + score.PerfectCount + score.GreatCount + score.AlrightCount + score.OkayCount + score.MissCount;
         
         rated += score.FlawlessCount;
         rated += score.PerfectCount * .98f;
@@ -20,7 +21,7 @@ public static class ScoreUtils {
         rated += score.AlrightCount * .25f;
         rated += score.OkayCount * .1f;
         
-        return rated / score.MapInfo.MaxCombo * 100f;
+        return rated / total * 100f;
     }
     
     public static float CalculatePerformanceRating(this Score score) {

@@ -26,7 +26,7 @@ public class Score : RealmObject {
     public MapShort MapShort => Map.FindById(MapId)?.ToShort() ?? new MapShort();
     
     [JsonIgnore]
-    public DateTimeOffset Time = DateTimeOffset.Now;
+    public DateTimeOffset Time { get; set; } = DateTimeOffset.Now;
 
     [Ignored]
     [JsonProperty("time")]
