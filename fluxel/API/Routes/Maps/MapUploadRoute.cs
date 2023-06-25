@@ -70,11 +70,17 @@ public class MapUploadRoute : IApiRoute {
                 
                 var hash = Hashing.GetHash(json);
                 
+                var mapper = User.FindByUsername(mapJson.Metadata.Mapper);
+                
+                if (mapper == null) {
+                    mapper = user;
+                }
+                
                 var map = new Map {
                     Id = id,
                     SetId = set.Id,
                     Hash = hash,
-                    MapperId = user.Id,
+                    MapperId = mapper.Id,
                     Title = mapJson.Metadata.Title,
                     Artist = mapJson.Metadata.Artist,
                     Source = mapJson.Metadata.Source,
