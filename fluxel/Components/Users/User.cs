@@ -213,6 +213,30 @@ public class User : RealmObject {
             return rank;
         }
     }
+    
+    [Ignored]
+    [JsonProperty("ranked_maps")]
+    public List<MapSet> RankedMaps {
+        get {
+            return Realm.All<MapSet>().Where(s => s.Status == 3).ToList();
+        }
+    }
+    
+    [Ignored]
+    [JsonProperty("unranked_maps")]
+    public List<MapSet> UnrankedMaps {
+        get {
+            return Realm.All<MapSet>().Where(s => s.Status != 3).ToList();
+        }
+    }
+    
+    [Ignored]
+    [JsonProperty("guest_diffs")]
+    public List<MapSet> GuestDiffs {
+        get {
+            return Realm.All<MapSet>().Where(s => s.CreatorId != Id && s.MapsList.Any(m => m.MapperId == Id)).ToList();
+        }
+    }
 
     public UserShort ToShort() {
         return new UserShort {
