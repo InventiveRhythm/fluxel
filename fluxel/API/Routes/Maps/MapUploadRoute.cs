@@ -15,6 +15,11 @@ public class MapUploadRoute : IApiRoute {
     public string Method => "POST";
     
     public ApiResponse? Handle(HttpListenerRequest req, HttpListenerResponse res, Dictionary<string, string> parameters) {
+        return new ApiResponse {
+            Message = "Disabled for now",
+            Status = 400
+        };
+    
         var token = req.Headers["Authorization"];
         
         if (token == null) {
