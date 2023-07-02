@@ -230,7 +230,8 @@ public class User : RealmObject {
         return new UserShort {
             Id = Id,
             Username = Username,
-            CountryCode = CountryCode
+            CountryCode = CountryCode,
+            Role = Role
         };
     }
     

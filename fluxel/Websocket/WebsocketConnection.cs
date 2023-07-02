@@ -34,6 +34,7 @@ public class WebsocketConnection : WebSocketBehavior {
             2 => new RegisterHandler(),
             10 => new ChatMessageHandler(),
             11 => new ChatHistoryHandler(),
+            12 => new ChatDeleteHandler(),
             _ => null
         };
 

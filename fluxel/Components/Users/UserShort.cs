@@ -11,4 +11,7 @@ public class UserShort {
     
     [JsonProperty("country")]
     public string? CountryCode { get; set; } = "";
+    
+    [JsonProperty("role")]
+    public int Role { get; set; }
 }
