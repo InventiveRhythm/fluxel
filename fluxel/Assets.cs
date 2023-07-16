@@ -33,10 +33,10 @@ public static class Assets {
 
     private static string GetType(AssetType type) {
         return  type switch {
-            AssetType.Avatar => "avatars",
-            AssetType.Banner => "banners",
-            AssetType.Background => "backgrounds",
-            AssetType.Cover => "covers",
+            AssetType.Avatar => "Avatars",
+            AssetType.Banner => "Banners",
+            AssetType.Background => "Backgrounds",
+            AssetType.Cover => "Covers",
             _ => throw new ArgumentOutOfRangeException(nameof(type), type, null)
         };
     }
