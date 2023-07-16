@@ -15,11 +15,6 @@ public class MapUploadRoute : IApiRoute {
     public string Method => "POST";
     
     public ApiResponse? Handle(HttpListenerRequest req, HttpListenerResponse res, Dictionary<string, string> parameters) {
-        return new ApiResponse {
-            Message = "Disabled for now",
-            Status = 400
-        };
-    
         var token = req.Headers["Authorization"];
         
         if (token == null) {
@@ -60,63 +55,63 @@ public class MapUploadRoute : IApiRoute {
         };
         
         var maps = new List<Map>();
-        int id = Map.GetNextId();
+        var id = Map.GetNextId();
         
         var backgroundStream = new MemoryStream();
-        bool hasBackground = false;
+        var hasBackground = false;
         
         foreach (var entry in zip.Entries) {
-            if (entry.Name.EndsWith(".fsc")) {
-                var json = new StreamReader(entry.Open()).ReadToEnd();
-                var mapJson = JsonConvert.DeserializeObject<MapJson>(json);
-                if (mapJson == null || !mapJson.Validate()) {
-                    return new ApiResponse {
-                        Status = 400,
-                        Message = "Invalid map file"
-                    };
-                }
-
-                if (!hasBackground) {
-                    try {
-                        var background = zip.GetEntry(mapJson.BackgroundFile);
-                        background?.Open().CopyTo(backgroundStream);
-                        hasBackground = true;
-                    }
-                    catch {
-                        // ignored
-                    }
-                }
-
-
-                var hash = Hashing.GetHash(json);
-                
-                var mapper = User.FindByUsername(mapJson.Metadata.Mapper);
-                
-                if (mapper == null) {
-                    mapper = user;
-                }
-                
-                var map = new Map {
-                    Id = id,
-                    SetId = set.Id,
-                    Hash = hash,
-                    MapperId = mapper.Id,
-                    Title = mapJson.Metadata.Title,
-                    Artist = mapJson.Metadata.Artist,
-                    Source = mapJson.Metadata.Source,
-                    Tags = mapJson.Metadata.Tags,
-                    Bpm = mapJson.TimingPoints.First().BPM,
-                    Difficulty = mapJson.Metadata.Difficulty,
-                    Mode = mapJson.KeyCount,
-                    Length = (int)mapJson.HitObjects.Max(h => h.Time),
-                    Rating = 0,
-                    Hits = mapJson.HitObjects.Count(h => h.HoldTime == 0),
-                    LongNotes = mapJson.HitObjects.Count(h => h.HoldTime > 0) * 2
+            if (!entry.Name.EndsWith(".fsc")) continue;
+            
+            var json = new StreamReader(entry.Open()).ReadToEnd();
+            var mapJson = JsonConvert.DeserializeObject<MapJson>(json);
+            if (mapJson == null || !mapJson.Validate()) {
+                return new ApiResponse {
+                    Status = 400,
+                    Message = "Invalid map file"
                 };
-                
-                id++;
-                maps.Add(map);
             }
+
+            if (!hasBackground) {
+                try {
+                    var background = zip.GetEntry(mapJson.BackgroundFile);
+                    background?.Open().CopyTo(backgroundStream);
+                    hasBackground = true;
+                }
+                catch {
+                    // ignored
+                }
+            }
+
+
+            var hash = Hashing.GetHash(json);
+                
+            var mapper = User.FindByUsername(mapJson.Metadata.Mapper);
+                
+            if (mapper == null) {
+                mapper = user;
+            }
+                
+            var map = new Map {
+                Id = id,
+                SetId = set.Id,
+                Hash = hash,
+                MapperId = mapper.Id,
+                Title = mapJson.Metadata.Title,
+                Artist = mapJson.Metadata.Artist,
+                Source = mapJson.Metadata.Source,
+                Tags = mapJson.Metadata.Tags,
+                Bpm = mapJson.TimingPoints.First().BPM,
+                Difficulty = mapJson.Metadata.Difficulty,
+                Mode = mapJson.KeyCount,
+                Length = (int)mapJson.HitObjects.Max(h => h.Time),
+                Rating = 0,
+                Hits = mapJson.HitObjects.Count(h => h.HoldTime == 0),
+                LongNotes = mapJson.HitObjects.Count(h => h.HoldTime > 0) * 2
+            };
+                
+            id++;
+            maps.Add(map);
         }
         
         if (maps.Count == 0) {
@@ -136,7 +131,10 @@ public class MapUploadRoute : IApiRoute {
         if (!Directory.Exists(path)) Directory.CreateDirectory(path);
         var file = $"{path}/{set.Id}.zip";
         stream.Seek(0, SeekOrigin.Begin);
-        stream.CopyTo(File.Create(file));
+            
+        var dest = File.Create(file);
+        stream.CopyTo(dest);
+        dest.Flush();
         
         var backgroundPath = $"{Environment.CurrentDirectory}/Assets/Backgrounds";
         if (!Directory.Exists(backgroundPath)) Directory.CreateDirectory(backgroundPath);
@@ -151,6 +149,8 @@ public class MapUploadRoute : IApiRoute {
                 realm.Add(map);
             }
         });
+        
+        zip.Dispose();
 
         return new ApiResponse {
             Status = 200,

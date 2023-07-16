@@ -29,9 +29,6 @@ public class MapJson {
                 return false;
         }
 
-        if (KeyCount is <= 0 or >= 11)
-            return false;
-
-        return true;
+        return KeyCount is >= 4 and <= 8;
     }
 }

@@ -99,4 +99,13 @@ public class Map : RealmObject {
             return !maps.Any() ? 1 : max + 1;
         });
     }
+
+    public static void Delete(int mapId) {
+        RealmAccess.Run(realm => {
+            var map = realm.Find<Map>(mapId);
+            if (map != null) realm.Remove(map);
+        });
+    }
+
+    public static void Insert(Map map) => RealmAccess.Run(realm => realm.Add(map));
 }
