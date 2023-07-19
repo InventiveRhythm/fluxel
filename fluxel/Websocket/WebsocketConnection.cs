@@ -1,6 +1,7 @@
 ﻿using System.Net;
 using fluxel.Websocket.Handlers.Account;
 using fluxel.Websocket.Handlers.Chat;
+using fluxel.Websocket.Handlers.Multiplayer;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using WebSocketSharp;
@@ -35,6 +36,8 @@ public class WebsocketConnection : WebSocketBehavior {
             10 => new ChatMessageHandler(),
             11 => new ChatHistoryHandler(),
             12 => new ChatDeleteHandler(),
+            21 => new MultiplayerJoinHandler(),
+            22 => new MultiplayerLeaveHandler(),
             _ => null
         };
 

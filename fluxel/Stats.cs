@@ -1,6 +1,7 @@
 ﻿using System.Net;
 using fluxel.Components.Users;
 using fluxel.Database;
+using fluxel.Multiplayer.OpenLobby;
 
 namespace fluxel; 
 
@@ -24,5 +25,7 @@ public static class Stats {
             
             OnlineUsers.Remove(ip);
         }
+        
+        LobbyHandler.RemoveUser(ip);
     }
 }
