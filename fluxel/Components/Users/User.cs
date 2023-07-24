@@ -18,6 +18,9 @@ public class User : RealmObject {
     [JsonProperty("username")]
     public string Username { get; set; } = "";
     
+    [JsonProperty("displayname")]
+    public string DisplayName { get; set; } = "";
+    
     [JsonIgnore]
     public string Email { get; set; } = "";
     
@@ -230,6 +233,7 @@ public class User : RealmObject {
         return new UserShort {
             Id = Id,
             Username = Username,
+            DisplayName = DisplayName,
             CountryCode = CountryCode,
             Role = Role,
             OverallRating = OverallRating,

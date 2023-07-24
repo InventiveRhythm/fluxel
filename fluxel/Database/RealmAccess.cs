@@ -4,7 +4,7 @@ namespace fluxel.Database;
 
 public static class RealmAccess {
     private static RealmConfiguration Config => new($"{Directory.GetCurrentDirectory()}{Path.DirectorySeparatorChar}fluxel.realm") {
-        SchemaVersion = 10
+        SchemaVersion = 11
     };
     
     private static Realm Realm => Realm.GetInstance(Config);

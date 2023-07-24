@@ -1,7 +1,9 @@
 ﻿using System.Net;
+using System.Text.RegularExpressions;
 using fluxel.API.Components;
 using fluxel.Components.Users;
 using fluxel.Constants;
+using fluxel.Database;
 using fluxel.Utils;
 
 namespace fluxel.API.Routes.Account; 
@@ -21,16 +23,45 @@ public class AccountUpdateRoute : IApiRoute {
             };
         }
         
-        var user = UserToken.GetByToken(token);
+        var userToken = UserToken.GetByToken(token);
         
-        if (user == null) {
+        if (userToken == null) {
             return new ApiResponse {
                 Status = HttpStatusCode.Unauthorized,
                 Message = ResponseStrings.InvalidToken
             };
         }
+        
+        var user = User.FindById(userToken.UserId);
+        
+        if (user == null) {
+            return new ApiResponse {
+                Status = HttpStatusCode.Unauthorized,
+                Message = ResponseStrings.TokenUserNotFound
+            };
+        }
 
         switch (action) {
+            case "displayname":
+                var name = new StreamReader(req.InputStream).ReadToEnd();
+                
+                // check if name is valid (3-20 characters, no special characters) 
+                if (!Regex.IsMatch(name, @"^[a-zA-Z0-9_ ]{1,20}$")) {
+                    return new ApiResponse {
+                        Message = "Invalid display name",
+                        Status = HttpStatusCode.BadRequest
+                    };
+                }
+
+                RealmAccess.Run(realm => {
+                    var users = realm.Find<User>(userToken.UserId);
+                    users.DisplayName = name;
+                });
+
+                return new ApiResponse {
+                    Message = "Your display name has been updated."
+                };
+
             case "avatar" or "banner":
                 if (req.ContentType == null) {
                     return new ApiResponse {
@@ -61,13 +92,13 @@ public class AccountUpdateRoute : IApiRoute {
                 
                 switch (action) {
                     case "avatar":
-                        Assets.WriteAsset(AssetType.Avatar, user.UserId, buffer);
+                        Assets.WriteAsset(AssetType.Avatar, userToken.UserId, buffer);
                 
                         return new ApiResponse {
                             Message = "Your avatar has been updated."
                         };
                     case "banner":
-                        Assets.WriteAsset(AssetType.Banner, user.UserId, buffer);
+                        Assets.WriteAsset(AssetType.Banner, userToken.UserId, buffer);
                 
                         return new ApiResponse {
                             Message = "Your banner has been updated."

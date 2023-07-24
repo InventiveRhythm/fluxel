@@ -9,6 +9,9 @@ public class UserShort {
     [JsonProperty("username")]
     public string Username { get; set; } = "";
     
+    [JsonProperty("displayname")]
+    public string DisplayName { get; set; } = "";
+    
     [JsonProperty("country")]
     public string? CountryCode { get; set; } = "";
     
