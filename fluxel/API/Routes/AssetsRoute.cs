@@ -15,8 +15,8 @@ public class AssetsRoute : IApiRoute {
         
         if (!Enum.TryParse<AssetType>(type, true, out var assetType)) {
             return new ApiResponse {
-                Status = 400,
-                Message = "Invalid asset type"
+                Status = HttpStatusCode.BadRequest,
+                Message = $"'{type}' is not a valid asset type."
             };
         }
         

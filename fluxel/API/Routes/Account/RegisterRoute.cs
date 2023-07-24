@@ -13,8 +13,8 @@ public class RegisterRoute : IApiRoute {
     
     public ApiResponse Handle(HttpListenerRequest req, HttpListenerResponse res, Dictionary<string, string> parameters) {
         return new ApiResponse {
-            Message = "This route is deprecated. Login and register are now handled by the websocket.",
-            Status = 400
+            Message = "This route is deprecated. Register is now handled by the Websocket.",
+            Status = HttpStatusCode.BadRequest
         };
     }
 }

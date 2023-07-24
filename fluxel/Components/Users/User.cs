@@ -252,22 +252,11 @@ public class User : RealmObject {
         }) != null;
     }
     
-    public static bool ValidUsername(string username) {
-        return Regex.IsMatch(username, @"^[a-zA-Z0-9_]{3,16}$");
-    }
-    
-    public static int Count() {
-        return RealmAccess.Run(realm => realm.All<User>().Count());
-    }
-    
-    public static User? FindById(int id) {
-        return RealmAccess.Run(realm => realm.Find<User>(id));
-    }
-    
-    public static User? FindByUsername(string username) {
-        return RealmAccess.Run(realm => realm.All<User>().FirstOrDefault(u => u.Username == username));
-    }
-    
+    public static bool ValidUsername(string username) => Regex.IsMatch(username, @"^[a-zA-Z0-9_]{3,16}$");
+    public static int Count() => RealmAccess.Run(realm => realm.All<User>().Count());
+    public static User? FindById(int id) => RealmAccess.Run(realm => realm.Find<User>(id));
+    public static User? FindByUsername(string username) => RealmAccess.Run(realm => realm.All<User>().FirstOrDefault(u => u.Username == username));
+
     public static int GetNextId() {
         return RealmAccess.Run(realm => {
             var users = realm.All<User>();

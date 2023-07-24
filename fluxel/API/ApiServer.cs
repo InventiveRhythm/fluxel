@@ -48,11 +48,18 @@ public class ApiServer {
         Dictionary<string, string> parameters = new();
 
         foreach (var (path, handler) in Routes) {
-            if (req.HttpMethod != handler.Method) continue; // don't even bother if the method doesn't match
+            if (req.HttpMethod != handler.Method) continue;
             if (req.Url == null) continue; // don't even know how this would happen but ok
+            
+            var url = req.Url.AbsolutePath;
+
+            if (path == url && !path.Contains(':')) {
+                route = handler; // exact match with no parameters
+                break;
+            }
 
             var parts = path.Split('/');
-            var reqParts = req.Url.AbsolutePath.Split('/');
+            var reqParts = url.Split('/');
             
             if (parts.Length == 0 || reqParts.Length == 0) continue;
             if (reqParts.Last() == "") reqParts = reqParts[..^1]; // remove trailing slash (if any)
@@ -80,8 +87,8 @@ public class ApiServer {
         
         if (route == null) {
             response = new ApiResponse {
-                Status = 404,
-                Message = "Nothing here..."
+                Status = HttpStatusCode.NotFound,
+                Message = "The requested route does not exist."
             };
         } else {
             try {
@@ -89,8 +96,8 @@ public class ApiServer {
             }
             catch (Exception e) {
                 response = new ApiResponse {
-                    Status = 500,
-                    Message = "Internal Server Error: " + e.Message,
+                    Status = HttpStatusCode.InternalServerError,
+                    Message = "Welp, something went very wrong. It's probably not your fault, but please report this to the developers.",
                     Data = new {}
                 };
                 Console.WriteLine(e);

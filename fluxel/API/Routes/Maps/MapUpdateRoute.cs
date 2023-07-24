@@ -4,6 +4,7 @@ using fluxel.API.Components;
 using fluxel.Components.Maps;
 using fluxel.Components.Maps.Json;
 using fluxel.Components.Users;
+using fluxel.Constants;
 using fluxel.Database;
 using fluxel.Utils;
 using Newtonsoft.Json;
@@ -19,8 +20,8 @@ public class MapUpdateRoute : IApiRoute {
         
         if (token == null) {
             return new ApiResponse {
-                Status = 401,
-                Message = "Unauthorized (no token)"
+                Status = HttpStatusCode.Unauthorized,
+                Message = ResponseStrings.NoToken
             };
         }
         
@@ -28,16 +29,16 @@ public class MapUpdateRoute : IApiRoute {
         
         if (userToken == null) {
             return new ApiResponse {
-                Status = 401,
-                Message = "Unauthorized (invalid token)"
+                Status = HttpStatusCode.Unauthorized,
+                Message = ResponseStrings.InvalidToken
             };
         }
         var user = User.FindById(userToken.UserId);
         
         if (user == null) {
             return new ApiResponse {
-                Status = 404,
-                Message = "User not found"
+                Status = HttpStatusCode.NotFound,
+                Message = ResponseStrings.TokenUserNotFound
             };
         }
         
@@ -45,8 +46,8 @@ public class MapUpdateRoute : IApiRoute {
         
         if (!int.TryParse(id, out var mapId)) {
             return new ApiResponse {
-                Status = 400,
-                Message = "Invalid map id"
+                Status = HttpStatusCode.BadRequest,
+                Message = ResponseStrings.InvalidParameter("id", "integer")
             };
         }
 
@@ -55,22 +56,22 @@ public class MapUpdateRoute : IApiRoute {
         
             if (set == null) {
                 return new ApiResponse {
-                    Status = 404,
-                    Message = "Map not found"
+                    Status = HttpStatusCode.NotFound,
+                    Message = ResponseStrings.MapSetNotFound
                 };
             }
         
             if (set.CreatorId != user.Id) {
                 return new ApiResponse {
-                    Status = 403,
-                    Message = "You are not the creator of this map"
+                    Status = HttpStatusCode.Forbidden,
+                    Message = "You are not the creator of this mapset."
                 };
             }
         
             if (set.Status == 3) { // map ranked
                 return new ApiResponse {
-                    Status = 403,
-                    Message = "You cannot update a pure map"
+                    Status = HttpStatusCode.Forbidden,
+                    Message = "You cannot update a pure map."
                 };
             }
         
@@ -94,8 +95,8 @@ public class MapUpdateRoute : IApiRoute {
                 var mapJson = JsonConvert.DeserializeObject<MapJson>(json);
                 if (mapJson == null || !mapJson.Validate()) {
                     return new ApiResponse {
-                        Status = 400,
-                        Message = "Invalid map file"
+                        Status = HttpStatusCode.BadRequest,
+                        Message = "The file " + entry.Name + " is not a valid map file."
                     };
                 }
             
@@ -179,8 +180,7 @@ public class MapUpdateRoute : IApiRoute {
             set.LastUpdated = DateTime.Now;
 
             return new ApiResponse {
-                Status = 200,
-                Message = "Map updated",
+                Message = "Successfully updated mapset.",
                 Data = set
             };
         });

@@ -8,7 +8,7 @@ public class IndexRoute : IApiRoute {
     public string Method => "GET";
     public ApiResponse Handle(HttpListenerRequest req, HttpListenerResponse res, Dictionary<string, string> parameters) {
         return new ApiResponse {
-            Data = "Welcome to fluxel, the API for fluXis!"
+            Data = "Welcome to fluxel, the API for fluXis! You can see the API docs at https://fluxis.foxes4life.net/wiki/api"
         };
     }
 }

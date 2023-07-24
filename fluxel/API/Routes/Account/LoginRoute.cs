@@ -16,7 +16,7 @@ public class LoginRoute : IApiRoute {
         
         if (username == null || password == null) {
             return new ApiResponse {
-                Status = 400,
+                Status = HttpStatusCode.BadRequest,
                 Message = "Missing username or password"
             };
         }
@@ -33,7 +33,7 @@ public class LoginRoute : IApiRoute {
             }
             
             return new ApiResponse {
-                Status = 400,
+                Status = HttpStatusCode.BadRequest,
                 Message = "Invalid username or password"
             };
         });

@@ -1,6 +1,7 @@
 ﻿using System.Net;
 using fluxel.API.Components;
 using fluxel.Components.Maps;
+using fluxel.Constants;
 using fluxel.Database;
 
 namespace fluxel.API.Routes.Maps; 
@@ -12,8 +13,8 @@ public class MapRoute : IApiRoute {
     public ApiResponse Handle(HttpListenerRequest req, HttpListenerResponse res, Dictionary<string, string> parameters) {
         if (!int.TryParse(parameters["id"], out var id)) {
             return new ApiResponse {
-                Status = 400,
-                Message = "Invalid Map ID"
+                Status = HttpStatusCode.BadRequest,
+                Message = ResponseStrings.InvalidParameter("id", "integer")
             };
         }
 
@@ -22,8 +23,8 @@ public class MapRoute : IApiRoute {
             
             if (map == null) {
                 return new ApiResponse {
-                    Status = 404,
-                    Message = "Map not found"
+                    Status = HttpStatusCode.NotFound,
+                    Message = ResponseStrings.MapNotFound
                 };
             }
             

@@ -4,6 +4,7 @@ using fluxel.API.Components;
 using fluxel.Components.Maps;
 using fluxel.Components.Maps.Json;
 using fluxel.Components.Users;
+using fluxel.Constants;
 using fluxel.Database;
 using fluxel.Utils;
 using Newtonsoft.Json;
@@ -19,8 +20,8 @@ public class MapUploadRoute : IApiRoute {
         
         if (token == null) {
             return new ApiResponse {
-                Status = 401,
-                Message = "Unauthorized (no token)"
+                Status = HttpStatusCode.Unauthorized,
+                Message = ResponseStrings.NoToken
             };
         }
         
@@ -28,16 +29,16 @@ public class MapUploadRoute : IApiRoute {
         
         if (userToken == null) {
             return new ApiResponse {
-                Status = 401,
-                Message = "Unauthorized (invalid token)"
+                Status = HttpStatusCode.Unauthorized,
+                Message = ResponseStrings.InvalidToken
             };
         }
         var user = User.FindById(userToken.UserId);
         
         if (user == null) {
             return new ApiResponse {
-                Status = 404,
-                Message = "User not found"
+                Status = HttpStatusCode.NotFound,
+                Message = ResponseStrings.TokenUserNotFound
             };
         }
         
@@ -67,8 +68,8 @@ public class MapUploadRoute : IApiRoute {
             var mapJson = JsonConvert.DeserializeObject<MapJson>(json);
             if (mapJson == null || !mapJson.Validate()) {
                 return new ApiResponse {
-                    Status = 400,
-                    Message = "Invalid map file"
+                    Status = HttpStatusCode.BadRequest,
+                    Message = "The file " + entry.Name + " is not a valid map file."
                 };
             }
 
@@ -86,12 +87,8 @@ public class MapUploadRoute : IApiRoute {
 
             var hash = Hashing.GetHash(json);
                 
-            var mapper = User.FindByUsername(mapJson.Metadata.Mapper);
-                
-            if (mapper == null) {
-                mapper = user;
-            }
-                
+            var mapper = User.FindByUsername(mapJson.Metadata.Mapper) ?? user;
+
             var map = new Map {
                 Id = id,
                 SetId = set.Id,
@@ -116,8 +113,8 @@ public class MapUploadRoute : IApiRoute {
         
         if (maps.Count == 0) {
             return new ApiResponse {
-                Status = 400,
-                Message = "No maps found"
+                Status = HttpStatusCode.BadRequest,
+                Message = "The zip file does not contain any valid map files."
             };
         }
         
@@ -153,8 +150,7 @@ public class MapUploadRoute : IApiRoute {
         zip.Dispose();
 
         return new ApiResponse {
-            Status = 200,
-            Message = "OK",
+            Message = "Successfully uploaded mapset.",
             Data = set
         };
     }

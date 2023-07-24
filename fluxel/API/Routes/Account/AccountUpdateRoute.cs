@@ -1,6 +1,7 @@
 ﻿using System.Net;
 using fluxel.API.Components;
 using fluxel.Components.Users;
+using fluxel.Constants;
 using fluxel.Utils;
 
 namespace fluxel.API.Routes.Account; 
@@ -15,8 +16,8 @@ public class AccountUpdateRoute : IApiRoute {
         
         if (token == null) {
             return new ApiResponse {
-                Status = 401,
-                Message = "Unauthorized (no token)"
+                Status = HttpStatusCode.Unauthorized,
+                Message = ResponseStrings.NoToken
             };
         }
         
@@ -24,8 +25,8 @@ public class AccountUpdateRoute : IApiRoute {
         
         if (user == null) {
             return new ApiResponse {
-                Status = 401,
-                Message = "Unauthorized (invalid token)"
+                Status = HttpStatusCode.Unauthorized,
+                Message = ResponseStrings.InvalidToken
             };
         }
 
@@ -33,8 +34,8 @@ public class AccountUpdateRoute : IApiRoute {
             case "avatar" or "banner":
                 if (req.ContentType == null) {
                     return new ApiResponse {
-                        Status = 400,
-                        Message = "Missing content type"
+                        Status = HttpStatusCode.BadRequest,
+                        Message = ResponseStrings.MissingHeader("Content-Type")
                     };
                 }
 
@@ -45,7 +46,7 @@ public class AccountUpdateRoute : IApiRoute {
                 if (stream.Length > 4194304) {
                     return new ApiResponse {
                         Message = "Image too large",
-                        Status = 400
+                        Status = HttpStatusCode.BadRequest
                     };
                 }
         
@@ -54,7 +55,7 @@ public class AccountUpdateRoute : IApiRoute {
                 if (!buffer.IsImage()) {
                     return new ApiResponse {
                         Message = "Invalid image",
-                        Status = 400
+                        Status = HttpStatusCode.BadRequest
                     };
                 }
                 
@@ -63,15 +64,13 @@ public class AccountUpdateRoute : IApiRoute {
                         Assets.WriteAsset(AssetType.Avatar, user.UserId, buffer);
                 
                         return new ApiResponse {
-                            Message = "Avatar updated",
-                            Status = 200
+                            Message = "Your avatar has been updated."
                         };
                     case "banner":
                         Assets.WriteAsset(AssetType.Banner, user.UserId, buffer);
                 
                         return new ApiResponse {
-                            Message = "Banner updated",
-                            Status = 200
+                            Message = "Your banner has been updated."
                         };
                 }
 
@@ -80,7 +79,7 @@ public class AccountUpdateRoute : IApiRoute {
         
         return new ApiResponse {
             Message = "Invalid action",
-            Status = 400
+            Status = HttpStatusCode.BadRequest
         };
     }
 }

@@ -3,6 +3,7 @@ using fluxel.API.Components;
 using fluxel.Components.Maps;
 using fluxel.Components.Scores;
 using fluxel.Components.Users;
+using fluxel.Constants;
 using fluxel.Database;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -18,8 +19,8 @@ public class ScoreUploadRoute : IApiRoute {
         
         if (token == null) {
             return new ApiResponse {
-                Status = 401,
-                Message = "Unauthorized (no token)"
+                Status = HttpStatusCode.Unauthorized,
+                Message = ResponseStrings.NoToken
             };
         }
         
@@ -27,16 +28,16 @@ public class ScoreUploadRoute : IApiRoute {
         
         if (userToken == null) {
             return new ApiResponse {
-                Status = 401,
-                Message = "Unauthorized (invalid token)"
+                Status = HttpStatusCode.Unauthorized,
+                Message = ResponseStrings.InvalidToken
             };
         }
         var user = User.FindById(userToken.UserId);
         
         if (user == null) {
             return new ApiResponse {
-                Status = 404,
-                Message = "User not found"
+                Status = HttpStatusCode.NotFound,
+                Message = ResponseStrings.TokenUserNotFound
             };
         }
 
@@ -45,8 +46,8 @@ public class ScoreUploadRoute : IApiRoute {
         
         if (score == null) {
             return new ApiResponse {
-                Status = 400,
-                Message = "Invalid score"
+                Status = HttpStatusCode.BadRequest,
+                Message = ResponseStrings.InvalidBodyJson
             };
         }
         
@@ -63,8 +64,8 @@ public class ScoreUploadRoute : IApiRoute {
         
         if (hash == null) {
             return new ApiResponse {
-                Status = 400,
-                Message = "Invalid map hash!"
+                Status = HttpStatusCode.BadRequest,
+                Message = ResponseStrings.InvalidBodyMissingProperty("hash")
             };
         }
         
@@ -72,8 +73,8 @@ public class ScoreUploadRoute : IApiRoute {
         
         if (map == null) {
             return new ApiResponse {
-                Status = 404,
-                Message = "Map is not submitted!"
+                Status = HttpStatusCode.NotFound,
+                Message = "This map is not uploaded to the server!"
             };
         }
         
@@ -81,8 +82,8 @@ public class ScoreUploadRoute : IApiRoute {
         
         if (mapset == null) {
             return new ApiResponse {
-                Status = 404,
-                Message = "Mapset not found!"
+                Status = HttpStatusCode.NotFound,
+                Message = ResponseStrings.MapSetNotFound
             };
         }
 
@@ -125,8 +126,8 @@ public class ScoreUploadRoute : IApiRoute {
             }
             
             return new ApiResponse {
-                Status = 400,
-                Message = "Map is not ranked!"
+                Status = HttpStatusCode.BadRequest,
+                Message = "This map is not ranked!"
             };
         });
     }

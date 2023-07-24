@@ -1,10 +1,11 @@
-﻿using Newtonsoft.Json;
+﻿using System.Net;
+using Newtonsoft.Json;
 
 namespace fluxel.API.Components; 
 
 public class ApiResponse {
     [JsonProperty("status")]
-    public int Status { get; set; } = 200;
+    public HttpStatusCode Status { get; set; } = HttpStatusCode.OK;
     
     [JsonProperty("message")]
     public string Message { get; set; } = "OK";

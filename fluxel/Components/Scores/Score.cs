@@ -94,4 +94,7 @@ public class Score : RealmObject {
             return !scores.Any() ? 1 : max + 1;
         });
     }
+
+    
+    public static int Count() => RealmAccess.Run(realm => realm.All<Score>().Count());
 }

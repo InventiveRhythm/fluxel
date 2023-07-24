@@ -1,6 +1,7 @@
 ﻿using System.Net;
 using fluxel.API.Components;
 using fluxel.Components.Users;
+using fluxel.Constants;
 using fluxel.Database;
 
 namespace fluxel.API.Routes.Users; 
@@ -11,8 +12,8 @@ public class UserRoute : IApiRoute {
     public ApiResponse? Handle(HttpListenerRequest req, HttpListenerResponse res, Dictionary<string, string> parameters) {
         if (int.TryParse(parameters["id"], out var id) == false) {
             return new ApiResponse {
-                Status = 400,
-                Message = "Invalid user ID"
+                Status = HttpStatusCode.BadRequest,
+                Message = ResponseStrings.InvalidParameter("id", "integer")
             };
         }
 
@@ -21,8 +22,8 @@ public class UserRoute : IApiRoute {
             
             if (user == null) {
                 return new ApiResponse {
-                    Status = 404,
-                    Message = "User not found"
+                    Status = HttpStatusCode.NotFound,
+                    Message = ResponseStrings.UserNotFound
                 };
             }
             

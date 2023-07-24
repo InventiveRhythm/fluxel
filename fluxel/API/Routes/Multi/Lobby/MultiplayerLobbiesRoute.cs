@@ -10,8 +10,6 @@ public class MultiplayerLobbiesRoute : IApiRoute {
     
     public ApiResponse? Handle(HttpListenerRequest req, HttpListenerResponse res, Dictionary<string, string> parameters) {
         return new ApiResponse {
-            Status = 200,
-            Message = "OK",
             Data = LobbyHandler.Lobbies
         };
     }
