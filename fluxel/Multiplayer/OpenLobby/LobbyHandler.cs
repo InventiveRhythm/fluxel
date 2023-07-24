@@ -62,4 +62,12 @@ public static class LobbyHandler {
             });
         }
     }
+    
+    public static MultiLobby? FindLobby(int lobbyId) {
+        return Lobbies.Find(l => l.RoomId == lobbyId);
+    }
+    
+    public static MultiLobby? FindLobby(IPEndPoint ip) {
+        return Lobbies.Find(l => l.Users.ContainsKey(ip));
+    }
 }

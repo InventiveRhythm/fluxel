@@ -231,7 +231,9 @@ public class User : RealmObject {
             Id = Id,
             Username = Username,
             CountryCode = CountryCode,
-            Role = Role
+            Role = Role,
+            OverallRating = OverallRating,
+            PotentialRating = PotentialRating,
         };
     }
     
