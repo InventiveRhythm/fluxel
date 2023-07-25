@@ -63,6 +63,18 @@ public class AccountUpdateRoute : IApiRoute {
                     Message = "Your display name has been updated."
                 };
             
+            case "aboutme":
+                var aboutme = new StreamReader(req.InputStream).ReadToEnd();
+
+                RealmAccess.Run(realm => {
+                    var rUser = realm.Find<User>(userToken.UserId);
+                    rUser.AboutMe = aboutme;
+                });
+
+                return new ApiResponse {
+                    Message = "Your about me has been updated."
+                };
+            
             case "socials":
                 var json = new StreamReader(req.InputStream).ReadToEnd();
                 var socials = JsonConvert.DeserializeObject<Dictionary<string, string>>(json);
