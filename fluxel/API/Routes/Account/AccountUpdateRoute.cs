@@ -100,7 +100,7 @@ public class AccountUpdateRoute : IApiRoute {
                                 rUser.Socials.Twitch = value;
                                 break;
                             case "discord":
-                                rUser.Socials.Twitch = value;
+                                rUser.Socials.Discord = value;
                                 break;
                         }
                     }
