@@ -1,4 +1,4 @@
-﻿namespace fluxel.Components.Users; 
+﻿namespace fluxel.Components.Users;
 
 public enum UserRole {
     User = 0,

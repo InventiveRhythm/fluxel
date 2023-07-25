@@ -1,6 +1,6 @@
 ﻿using System.Net.Mail;
 
-namespace fluxel.Utils; 
+namespace fluxel.Utils;
 
 public static class MailUtils {
     public static bool IsValidEmail(string email) {

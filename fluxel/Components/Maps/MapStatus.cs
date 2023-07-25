@@ -1,4 +1,4 @@
-﻿namespace fluxel.Components.Maps; 
+﻿namespace fluxel.Components.Maps;
 
 public enum MapStatus {
     Blacklisted = -1,

@@ -3,29 +3,29 @@ using fluxel.Components.Users;
 using fluxel.Database;
 using fluxel.Multiplayer.OpenLobby;
 
-namespace fluxel; 
+namespace fluxel;
 
 public static class Stats {
-    public static readonly Dictionary<IPEndPoint, int> OnlineUsers = new();
-    
-    public static int Online => OnlineUsers.Count;
-    public static List<int> GetOnlineUsers => OnlineUsers.Values.ToList();
+    public static readonly Dictionary<IPEndPoint, int> ONLINE_USERS = new();
+
+    public static int Online => ONLINE_USERS.Count;
+    public static List<int> GetOnlineUsers => ONLINE_USERS.Values.ToList();
 
     public static void AddOnlineUser(IPEndPoint ip, int id) {
-        OnlineUsers[ip] = id;
+        ONLINE_USERS[ip] = id;
     }
-    
+
     public static void RemoveOnlineUser(IPEndPoint ip) {
-        if (OnlineUsers.ContainsKey(ip)) {
+        if (ONLINE_USERS.ContainsKey(ip)) {
             RealmAccess.Run(_ => {
-                var user = User.FindById(OnlineUsers[ip]);
+                var user = User.FindById(ONLINE_USERS[ip]);
                 if (user != null)
                     user.LastLogin = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
             });
-            
-            OnlineUsers.Remove(ip);
+
+            ONLINE_USERS.Remove(ip);
         }
-        
+
         LobbyHandler.RemoveUser(ip);
     }
 }

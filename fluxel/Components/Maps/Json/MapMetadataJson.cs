@@ -1,4 +1,4 @@
-﻿namespace fluxel.Components.Maps.Json; 
+﻿namespace fluxel.Components.Maps.Json;
 
 public class MapMetadataJson {
     public string Title { get; init; } = string.Empty;

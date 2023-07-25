@@ -10,13 +10,13 @@ public class Score : RealmObject {
     [PrimaryKey]
     [JsonProperty("id")]
     public int Id { get; set; }
-    
+
     [JsonProperty("user")]
     public int UserId { get; set; }
-    
+
     [JsonIgnore]
-    public int MapId { get; set; }
-    
+    public int MapId { get; init; }
+
     [Ignored]
     [JsonIgnore]
     public Map MapInfo => Map.FindById(MapId) ?? new Map();
@@ -24,9 +24,9 @@ public class Score : RealmObject {
     [Ignored]
     [JsonProperty("map")]
     public MapShort MapShort => Map.FindById(MapId)?.ToShort() ?? new MapShort();
-    
+
     [JsonIgnore]
-    public DateTimeOffset Time { get; set; } = DateTimeOffset.Now;
+    public DateTimeOffset Time { get; init; } = DateTimeOffset.Now;
 
     [Ignored]
     [JsonProperty("time")]
@@ -35,7 +35,7 @@ public class Score : RealmObject {
     [Ignored]
     [JsonProperty("mode")]
     public int Mode => MapShort.Mode;
-    
+
     [JsonProperty("mods")]
     public string Mods { get; set; } = "";
 
@@ -50,51 +50,51 @@ public class Score : RealmObject {
     [Ignored]
     [JsonProperty("accuracy")]
     public float Accuracy => this.CalculateAccuracy();
-    
+
     [Ignored]
     [JsonProperty("grade")]
     public string Grade => this.GetGrade();
-    
+
     [JsonProperty("maxcombo")]
     public int MaxCombo { get; set; }
-    
+
     [JsonProperty("flawless")]
     public int FlawlessCount { get; set; }
-    
+
     [JsonProperty("perfect")]
     public int PerfectCount { get; set; }
-    
+
     [JsonProperty("great")]
     public int GreatCount { get; set; }
-    
+
     [JsonProperty("alright")]
     public int AlrightCount { get; set; }
-    
+
     [JsonProperty("okay")]
     public int OkayCount { get; set; }
-    
+
     [JsonProperty("miss")]
     public int MissCount { get; set; }
-    
+
     [JsonProperty("scrollspeed")]
     public float ScrollSpeed { get; set; }
 
     public static int GetNextId() {
         return RealmAccess.Run(realm => {
             var scores = realm.All<Score>();
-            
+
             var max = 0;
-            
+
             foreach (var score in scores) {
                 if (score.Id > max) {
                     max = score.Id;
                 }
             }
-            
+
             return !scores.Any() ? 1 : max + 1;
         });
     }
 
-    
+
     public static int Count() => RealmAccess.Run(realm => realm.All<Score>().Count());
 }

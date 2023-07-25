@@ -2,24 +2,24 @@
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-namespace fluxel.Websocket; 
+namespace fluxel.Websocket;
 
 public class WebsocketInteraction {
-    private readonly WebsocketConnection _connection;
-    private readonly int _id;
-    
-    public IPEndPoint RemoteEndPoint => _connection.Address;
-    
+    private readonly WebsocketConnection connection;
+    private readonly int id;
+
+    public IPEndPoint RemoteEndPoint => connection.Address ?? throw new NullReferenceException();
+
     public Action<string> ReplyAction { get; init; } = _ => { };
 
     public WebsocketInteraction(WebsocketConnection connection, int id) {
-        _connection = connection;
-        _id = id;
+        this.connection = connection;
+        this.id = id;
     }
-    
+
     public void Reply(int status = 200, string message = "OK!", object? data = null) {
         ReplyAction(JsonConvert.SerializeObject(new Dictionary<string, object?> {
-            {"id", _id},
+            {"id", id},
             {"status", status},
             {"message", message},
             {"data", data}

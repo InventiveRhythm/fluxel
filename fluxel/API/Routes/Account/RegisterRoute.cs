@@ -10,7 +10,7 @@ namespace fluxel.API.Routes.Account;
 public class RegisterRoute : IApiRoute {
     public string Path => "/account/register";
     public string Method => "POST";
-    
+
     public ApiResponse Handle(HttpListenerRequest req, HttpListenerResponse res, Dictionary<string, string> parameters) {
         return new ApiResponse {
             Message = "This route is deprecated. Register is now handled by the Websocket.",

@@ -1,4 +1,4 @@
-﻿namespace fluxel.Utils; 
+﻿namespace fluxel.Utils;
 
 public static class ImageUtils {
     public static bool IsImage(this byte[] input) {

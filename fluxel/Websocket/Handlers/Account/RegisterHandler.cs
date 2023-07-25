@@ -4,29 +4,29 @@ using fluxel.Database;
 using fluxel.Utils;
 using Newtonsoft.Json.Linq;
 
-namespace fluxel.Websocket.Handlers.Account; 
+namespace fluxel.Websocket.Handlers.Account;
 
 public class RegisterHandler : IPacketHandler {
     public async void Handle(WebsocketInteraction interaction, JToken data) {
         var username = data["username"]?.Value<string>();
         var email = data["email"]?.Value<string>();
         var password = data["password"]?.Value<string>();
-        
+
         if (username == null || password == null || email == null) {
             interaction.Reply(400, "Missing username, email or password!");
             return;
         }
-        
+
         if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password)) {
             interaction.Reply(400, "Username or password cannot be empty!");
             return;
         }
-        
+
         if (username.Length is < 3 or > 16) {
             interaction.Reply(400, "Username must be between 3 and 16 characters!");
             return;
         }
-        
+
         if (password.Length is < 8 or > 32) {
             interaction.Reply(400, "Password must be between 8 and 32 characters!");
             return;
@@ -43,12 +43,12 @@ public class RegisterHandler : IPacketHandler {
             interaction.Reply(400, "Invalid email!");
             return;
         }
-        
+
         if (User.UsernameExists(username)) {
             interaction.Reply(400, "Username is already taken!");
             return;
         }
-        
+
         var user = new User {
             Id = User.GetNextId(),
             Username = username,
@@ -56,12 +56,12 @@ public class RegisterHandler : IPacketHandler {
             Password = PasswordUtils.HashPassword(password),
             CountryCode = await IpUtils.GetCountryCode(interaction.RemoteEndPoint.Address.ToString())
         };
-        
+
         interaction.Reply(200, "Successfully registered!", new {
             token = UserToken.GetByUserId(user.Id).Token,
             user = RealmAccess.Run(realm => realm.Add(user))
         });
-        
+
         Stats.AddOnlineUser(interaction.RemoteEndPoint, user.Id);
     }
 }

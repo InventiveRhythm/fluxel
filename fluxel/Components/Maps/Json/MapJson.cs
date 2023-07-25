@@ -1,4 +1,4 @@
-﻿namespace fluxel.Components.Maps.Json; 
+﻿namespace fluxel.Components.Maps.Json;
 
 // ReSharper disable CollectionNeverUpdated.Global
 public class MapJson {
@@ -10,7 +10,7 @@ public class MapJson {
     public List<HitObjectInfo> HitObjects { get; init; } = new();
     public List<TimingPointInfo> TimingPoints { get; init; } = new();
     public List<ScrollVelocityInfo> ScrollVelocities { get; init; } = new();
-    
+
     public int KeyCount => HitObjects.Count > 0 ? HitObjects.Max(x => x.Lane) : 0;
 
     public bool Validate() {

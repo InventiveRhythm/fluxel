@@ -1,6 +1,6 @@
 ﻿using System.Net;
 
-namespace fluxel.API.Components; 
+namespace fluxel.API.Components;
 
 public interface IApiRoute {
     public string Path { get; }

@@ -2,12 +2,12 @@
 using fluxel.API.Components;
 using fluxel.Components.Users;
 
-namespace fluxel.API.Routes.Users; 
+namespace fluxel.API.Routes.Users;
 
 public class OnlineUsersRoute : IApiRoute {
     public string Path => "/users/online";
     public string Method => "GET";
-    
+
     public ApiResponse Handle(HttpListenerRequest req, HttpListenerResponse res, Dictionary<string, string> parameters) {
         return new ApiResponse {
             Data = new {

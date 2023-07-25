@@ -1,19 +1,18 @@
 ﻿using Realms;
 
-namespace fluxel.Database; 
+namespace fluxel.Database;
 
 public static class RealmAccess {
-    private static RealmConfiguration Config => new($"{Directory.GetCurrentDirectory()}{Path.DirectorySeparatorChar}fluxel.realm") {
+    private static RealmConfiguration config => new($"{Directory.GetCurrentDirectory()}{Path.DirectorySeparatorChar}fluxel.realm") {
         SchemaVersion = 11
     };
-    
-    private static Realm Realm => Realm.GetInstance(Config);
 
-    public static void Run(Action<Realm> action) => Write(Realm, action);
-    
-    public static T Run<T>(Func<Realm, T> func) => Write(Realm, func);
+    private static Realm realm => Realm.GetInstance(config);
 
-    private static void Write(Realm realm, Action<Realm> func) {
+    public static void Run(Action<Realm> action) => write(realm, action);
+    public static T Run<T>(Func<Realm, T> func) => write(realm, func);
+
+    private static void write(Realm realm, Action<Realm> func) {
         Transaction? transaction = null;
 
         try
@@ -29,8 +28,8 @@ public static class RealmAccess {
             transaction?.Dispose();
         }
     }
-    
-    private static T Write<T>(Realm realm, Func<Realm, T> func) {
+
+    private static T write<T>(Realm realm, Func<Realm, T> func) {
         T? result;
         Transaction? transaction = null;
 

@@ -4,16 +4,16 @@ using fluxel.API.Utils;
 using fluxel.Components.Users;
 using fluxel.Database;
 
-namespace fluxel.API.Routes.Account; 
+namespace fluxel.API.Routes.Account;
 
 public class LoginRoute : IApiRoute {
     public string Path => "/account/login";
     public string Method => "GET";
-    
+
     public ApiResponse? Handle(HttpListenerRequest req, HttpListenerResponse res, Dictionary<string, string> parameters) {
         var username = req.Headers["username"];
         var password = req.Headers["password"];
-        
+
         if (username == null || password == null) {
             return new ApiResponse {
                 Status = HttpStatusCode.BadRequest,
@@ -31,7 +31,7 @@ public class LoginRoute : IApiRoute {
                     };
                 }
             }
-            
+
             return new ApiResponse {
                 Status = HttpStatusCode.BadRequest,
                 Message = "Invalid username or password"
