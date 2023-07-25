@@ -5,6 +5,7 @@ using fluxel.Components.Users;
 using fluxel.Constants;
 using fluxel.Database;
 using fluxel.Utils;
+using Newtonsoft.Json;
 
 namespace fluxel.API.Routes.Account; 
 
@@ -54,12 +55,47 @@ public class AccountUpdateRoute : IApiRoute {
                 }
 
                 RealmAccess.Run(realm => {
-                    var users = realm.Find<User>(userToken.UserId);
-                    users.DisplayName = name;
+                    var rUser = realm.Find<User>(userToken.UserId);
+                    rUser.DisplayName = name;
                 });
 
                 return new ApiResponse {
                     Message = "Your display name has been updated."
+                };
+            
+            case "socials":
+                var json = new StreamReader(req.InputStream).ReadToEnd();
+                var socials = JsonConvert.DeserializeObject<Dictionary<string, string>>(json);
+                if (socials == null) {
+                    return new ApiResponse {
+                        Message = ResponseStrings.InvalidBodyJson,
+                        Status = HttpStatusCode.BadRequest
+                    };
+                }
+                
+                RealmAccess.Run(realm => {
+                    var rUser = realm.Find<User>(userToken.UserId);
+                    
+                    foreach (var (key, value) in socials) {
+                        switch (key.ToLower()) {
+                            case "twitter":
+                                rUser.Socials.Twitter = value;
+                                break;
+                            case "youtube":
+                                rUser.Socials.YouTube = value;
+                                break;
+                            case "twitch":
+                                rUser.Socials.Twitch = value;
+                                break;
+                            case "discord":
+                                rUser.Socials.Twitch = value;
+                                break;
+                        }
+                    }
+                });
+                
+                return new ApiResponse {
+                    Message = "Your socials have been updated."
                 };
 
             case "avatar" or "banner":

@@ -18,6 +18,5 @@ public static class ResponseStrings {
     public static string MissingHeader(string header) => $"The '{header}' header is missing.";
     public static string InvalidHeader(string header) => $"The '{header}' header is invalid.";
     
-    public static string MissingParameter(string parameter) => $"The parameter '{parameter}' is missing.";
     public static string InvalidParameter(string parameter, string type) => $"The parameter '{parameter}' is not a valid {type}.";
 }
