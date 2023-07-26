@@ -62,6 +62,9 @@ public class MapUploadRoute : IApiRoute {
         var backgroundStream = new MemoryStream();
         var hasBackground = false;
 
+        var coverStream = new MemoryStream();
+        var hasCover = false;
+
         foreach (var entry in zip.Entries) {
             if (!entry.Name.EndsWith(".fsc")) continue;
 
@@ -86,6 +89,16 @@ public class MapUploadRoute : IApiRoute {
                 }
             }
 
+            if (!hasCover) {
+                try {
+                    var cover = zip.GetEntry(mapJson.CoverFile);
+                    cover?.Open().CopyTo(coverStream);
+                    hasCover = true;
+                }
+                catch {
+                    // ignored
+                }
+            }
 
             var hash = Hashing.GetHash(json);
 
@@ -135,11 +148,26 @@ public class MapUploadRoute : IApiRoute {
         stream.CopyTo(dest);
         dest.Flush();
 
-        var backgroundPath = $"{Environment.CurrentDirectory}/Assets/Backgrounds";
-        if (!Directory.Exists(backgroundPath)) Directory.CreateDirectory(backgroundPath);
-        var backgroundFile = $"{backgroundPath}/{set.Id}.png";
-        backgroundStream.Seek(0, SeekOrigin.Begin);
-        backgroundStream.CopyTo(File.Create(backgroundFile));
+        if (!hasCover && hasBackground) {
+            coverStream = backgroundStream;
+            hasCover = true;
+        }
+
+        if (hasBackground) {
+            var backgroundPath = $"{Environment.CurrentDirectory}/Assets/Backgrounds";
+            if (!Directory.Exists(backgroundPath)) Directory.CreateDirectory(backgroundPath);
+            var backgroundFile = $"{backgroundPath}/{set.Id}.png";
+            backgroundStream.Seek(0, SeekOrigin.Begin);
+            backgroundStream.CopyTo(File.Create(backgroundFile));
+        }
+
+        if (hasCover) {
+            var coverPath = $"{Environment.CurrentDirectory}/Assets/Covers";
+            if (!Directory.Exists(coverPath)) Directory.CreateDirectory(coverPath);
+            var coverFile = $"{coverPath}/{set.Id}.png";
+            coverStream.Seek(0, SeekOrigin.Begin);
+            coverStream.CopyTo(File.Create(coverFile));
+        }
 
         RealmAccess.Run(realm => {
             realm.Add(set);

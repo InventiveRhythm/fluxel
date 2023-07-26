@@ -4,6 +4,7 @@
 public class MapJson {
     public string AudioFile { get; init; } = string.Empty;
     public string BackgroundFile { get; init; } = string.Empty;
+    public string CoverFile { get; set; } = string.Empty;
     public string VideoFile { get; init; } = string.Empty;
     public string EffectFile { get; init; } = string.Empty;
     public MapMetadataJson Metadata { get; init; } = new();

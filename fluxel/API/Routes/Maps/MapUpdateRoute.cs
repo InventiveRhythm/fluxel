@@ -90,6 +90,12 @@ public class MapUpdateRoute : IApiRoute {
             var newMaps = new List<Map>();
             var newId = Map.GetNextId();
 
+            var backgroundStream = new MemoryStream();
+            var hasBackground = false;
+
+            var coverStream = new MemoryStream();
+            var hasCover = false;
+
             foreach (var entry in zip.Entries) {
                 if (!entry.Name.EndsWith(".fsc")) continue;
 
@@ -146,6 +152,24 @@ public class MapUpdateRoute : IApiRoute {
                     newId++;
                     newMaps.Add(map);
                 }
+
+                if (!hasBackground && mapJson.BackgroundFile != "") {
+                    var background = zip.GetEntry(mapJson.BackgroundFile);
+
+                    if (background != null) {
+                        background.Open().CopyTo(backgroundStream);
+                        hasBackground = true;
+                    }
+                }
+
+                if (!hasCover && mapJson.CoverFile != "") {
+                    var cover = zip.GetEntry(mapJson.CoverFile);
+
+                    if (cover != null) {
+                        cover.Open().CopyTo(coverStream);
+                        hasCover = true;
+                    }
+                }
             }
 
             var newSplit = new List<int>();
@@ -178,6 +202,29 @@ public class MapUpdateRoute : IApiRoute {
             var dest = File.Create(file);
             stream.CopyTo(dest);
             dest.Flush();
+
+            if (!hasCover && hasBackground) {
+                coverStream = backgroundStream;
+                hasCover = true;
+            }
+
+            // update background
+            if (hasBackground) {
+                var backgroundPath = $"{Environment.CurrentDirectory}/Assets/Backgrounds";
+                if (!Directory.Exists(backgroundPath)) Directory.CreateDirectory(backgroundPath);
+                var backgroundFile = $"{backgroundPath}/{set.Id}.png";
+                backgroundStream.Seek(0, SeekOrigin.Begin);
+                backgroundStream.CopyTo(File.Create(backgroundFile));
+            }
+
+            // update cover
+            if (hasCover) {
+                var coverPath = $"{Environment.CurrentDirectory}/Assets/Covers";
+                if (!Directory.Exists(coverPath)) Directory.CreateDirectory(coverPath);
+                var coverFile = $"{coverPath}/{set.Id}.png";
+                coverStream.Seek(0, SeekOrigin.Begin);
+                coverStream.CopyTo(File.Create(coverFile));
+            }
 
             zip.Dispose();
 
