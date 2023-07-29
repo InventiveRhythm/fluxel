@@ -4,6 +4,8 @@ namespace fluxel.Utils;
 
 public class IpUtils {
     public static async Task<string?> GetCountryCode(string ip) {
+        if (ip == "127.0.0.1") return null;
+
         try {
             using var client = new HttpClient();
             var json = await client.GetStringAsync($"http://ip-api.com/json/{ip}");

@@ -39,8 +39,9 @@ public class RegisterHandler : IPacketHandler {
 
         // regex matching email
         Console.WriteLine(email);
+
         if (!MailUtils.IsValidEmail(email)) {
-            interaction.Reply(400, "Invalid email!");
+            interaction.Reply(400, "The provided email is invalid!");
             return;
         }
 

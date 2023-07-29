@@ -22,12 +22,12 @@ public class AuthHandler : IPacketHandler {
         var user = User.FindByUsername(username);
 
         if (user == null) {
-            interaction.Reply(400, "Invalid username!");
+            interaction.Reply(400, "There is no user with that username!");
             return;
         }
 
         if (!PasswordUtils.VerifyPassword(password, user.Password)) {
-            interaction.Reply(400, "Invalid password!");
+            interaction.Reply(400, "The provided password is incorrect!");
             return;
         }
 

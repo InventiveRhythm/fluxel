@@ -1,4 +1,5 @@
 ﻿using fluxel.Components.Users;
+using fluxel.Constants;
 using fluxel.Database;
 using fluxel.Utils;
 using Newtonsoft.Json.Linq;
@@ -10,21 +11,21 @@ public class LoginHandler : IPacketHandler {
         var token = data["token"]?.Value<string>();
 
         if (token == null) {
-            interaction.Reply(400, "Missing token!");
+            interaction.Reply(400, ResponseStrings.NoToken);
             return;
         }
 
         var utk = UserToken.GetByToken(token);
 
         if (utk == null) {
-            interaction.Reply(400, "Invalid token!");
+            interaction.Reply(400, ResponseStrings.InvalidToken);
             return;
         }
 
         var user = User.FindById(utk.UserId);
 
         if (user == null) {
-            interaction.Reply(400, "Invalid token! (User not found)");
+            interaction.Reply(400, ResponseStrings.TokenUserNotFound);
             return;
         }
 
