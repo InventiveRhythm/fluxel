@@ -13,8 +13,7 @@ public class IpUtils {
             return obj?["countryCode"].ToLowerInvariant();
         }
         catch (Exception e) {
-            Console.WriteLine($"Failed to get country code for {ip}");
-            Console.WriteLine(e);
+            Logger.Log($"Failed to get country code for {ip}", LogLevel.Error);
             return null;
         }
     }

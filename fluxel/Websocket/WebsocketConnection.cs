@@ -58,7 +58,7 @@ public class WebsocketConnection : WebSocketBehavior {
         if (Address == null)
             return;
 
-        Console.WriteLine($"[{Address}] Error: {e.Message}!");
+        Logger.Log($"[{Address}] Error: {e.Message}!", LogLevel.Error);
         Stats.RemoveOnlineUser(Address);
         CONNECTIONS.Remove(Address);
     }
@@ -71,7 +71,7 @@ public class WebsocketConnection : WebSocketBehavior {
             Address = new IPEndPoint(IPAddress.Parse(ips[0]), Context.UserEndPoint.Port);
         }
         else {
-            Console.WriteLine("X-Forwarded-For header not found, using remote endpoint");
+            Logger.Log("X-Forwarded-For header not found, using remote endpoint", LogLevel.Warning);
             Address = Context.UserEndPoint;
         }
 

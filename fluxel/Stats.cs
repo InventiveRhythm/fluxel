@@ -12,6 +12,9 @@ public static class Stats {
     public static List<int> GetOnlineUsers => ONLINE_USERS.Values.ToList();
 
     public static void AddOnlineUser(IPEndPoint ip, int id) {
+        if (ONLINE_USERS.ContainsValue(id))
+            ONLINE_USERS.Remove(ONLINE_USERS.First(x => x.Value == id).Key);
+
         ONLINE_USERS[ip] = id;
     }
 

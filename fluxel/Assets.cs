@@ -14,7 +14,7 @@ public static class Assets {
             return File.ReadAllBytes(path);
         }
         catch (Exception) {
-            Console.WriteLine($"Failed to load asset {path}");
+            Logger.Log($"Failed to load asset {path}", LogLevel.Error);
             return Array.Empty<byte>();
         }
     }

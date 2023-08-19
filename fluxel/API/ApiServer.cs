@@ -24,7 +24,7 @@ public abstract class ApiServer {
             }
         });
 
-        Console.WriteLine("Started API server on port 2434.");
+        Logger.Log("Started API server on port 2434.");
     }
 
     private static void loadRoutes() {
@@ -33,7 +33,7 @@ public abstract class ApiServer {
             .ToList()
             .ForEach(t => {
                 var route = (IApiRoute) Activator.CreateInstance(t)!;
-                Console.WriteLine($"Found route {route.Method} {route.Path}");
+                Logger.Log($"Found route {route.Method} {route.Path}");
                 routes.Add(route.Path, route);
             });
     }
@@ -102,7 +102,7 @@ public abstract class ApiServer {
                     Message = "Welp, something went very wrong. It's probably not your fault, but please report this to the developers.",
                     Data = new {}
                 };
-                Console.WriteLine(e);
+                Logger.Log(e.Message, LogLevel.Error);
             }
         }
 

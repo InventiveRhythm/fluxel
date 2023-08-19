@@ -6,7 +6,7 @@ namespace fluxel;
 
 public static class Program {
     public static async Task Main(string[] args) {
-        Console.WriteLine("Starting fluxel...");
+        Logger.Log("Starting fluxel...");
 
         ApiServer.Start();
         WebsocketServer.Start();
@@ -20,7 +20,7 @@ public static class Program {
             Maps = new List<int> { 1 }
         });
 
-        Console.WriteLine("Ready!");
+        Logger.Log("Ready!");
         await Task.Delay(-1);
     }
 }
