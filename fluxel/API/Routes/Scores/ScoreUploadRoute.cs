@@ -98,7 +98,7 @@ public class ScoreUploadRoute : IApiRoute {
                 Id = Score.GetNextId(),
                 UserId = userid,
                 MapId = mapid,
-                Time = DateTime.Now,
+                Time = DateTimeOffset.Now,
                 Mods = mods,
                 MaxCombo = maxCombo,
                 FlawlessCount = flawlessCount,

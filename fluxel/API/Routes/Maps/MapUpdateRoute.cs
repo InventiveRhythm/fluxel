@@ -110,25 +110,28 @@ public class MapUpdateRoute : IApiRoute {
                 }
 
                 diffNames.Add(mapJson.Metadata.Difficulty);
+                Logger.Log($"{mapJson.Metadata.Difficulty}");
 
                 var hash = Hashing.GetHash(json);
                 var mapper = User.FindByUsername(mapJson.Metadata.Mapper) ?? user;
 
                 if (set.MapsList.Any(m => m.Difficulty == mapJson.Metadata.Difficulty)) {
                     var map = set.MapsList.First(m => m.Difficulty == mapJson.Metadata.Difficulty);
-                    if (map.Hash == hash) continue;
 
-                    map.Hash = hash;
-                    map.MapperId = mapper.Id;
-                    map.Title = mapJson.Metadata.Title;
-                    map.Artist = mapJson.Metadata.Artist;
-                    map.Source = mapJson.Metadata.Source;
-                    map.Tags = mapJson.Metadata.Tags;
-                    map.Bpm = mapJson.TimingPoints.First().BPM;
-                    map.Mode = mapJson.KeyCount;
-                    map.Length = (int)mapJson.HitObjects.Max(h => h.Time);
-                    map.Hits = mapJson.HitObjects.Count(h => h.HoldTime == 0);
-                    map.LongNotes = mapJson.HitObjects.Count(h => h.HoldTime > 0) * 2;
+                    if (map.Hash != hash)
+                    {
+                        map.Hash = hash;
+                        map.MapperId = mapper.Id;
+                        map.Title = mapJson.Metadata.Title;
+                        map.Artist = mapJson.Metadata.Artist;
+                        map.Source = mapJson.Metadata.Source;
+                        map.Tags = mapJson.Metadata.Tags;
+                        map.Bpm = mapJson.TimingPoints.First().BPM;
+                        map.Mode = mapJson.KeyCount;
+                        map.Length = (int)mapJson.HitObjects.Max(h => h.Time);
+                        map.Hits = mapJson.HitObjects.Count(h => h.HoldTime == 0);
+                        map.LongNotes = mapJson.HitObjects.Count(h => h.HoldTime > 0) * 2;
+                    }
                 }
                 else {
                     var map = new Map {
@@ -172,20 +175,25 @@ public class MapUpdateRoute : IApiRoute {
                 }
             }
 
+            Logger.Log($"New maps: {JsonConvert.SerializeObject(diffNames)}");
+
             var newSplit = new List<int>();
 
             // delete old maps
             foreach (var map in set.MapsList) {
                 if (diffNames.Contains(map.Difficulty)) {
                     newSplit.Add(map.Id);
+                    Logger.Log($"{map.Difficulty} exists");
                 }
                 else {
                     realm.Remove(map);
+                    Logger.Log($"{map.Difficulty} does not exist");
                 }
             }
 
             // add new maps
             foreach (var map in newMaps) {
+                Logger.Log($"{map.Difficulty} added");
                 realm.Add(map);
                 newSplit.Add(map.Id);
             }
@@ -226,10 +234,14 @@ public class MapUpdateRoute : IApiRoute {
                 coverStream.CopyTo(File.Create(coverFile));
             }
 
+            backgroundStream.Dispose();
+            coverStream.Dispose();
+            stream.Dispose();
+            dest.Dispose();
             zip.Dispose();
 
             set.Maps = string.Join(',', newSplit);
-            set.LastUpdated = DateTime.Now;
+            set.LastUpdated = DateTimeOffset.Now;
 
             return new ApiResponse {
                 Message = "Successfully updated mapset.",

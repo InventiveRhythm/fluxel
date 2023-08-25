@@ -73,7 +73,7 @@ public class MapSet : RealmObject {
 
                 foreach (var s in split) {
                     if (!tags.Contains(s)) {
-                        tags.Add(s);
+                        tags.Add(s.Trim());
                     }
                 }
             });

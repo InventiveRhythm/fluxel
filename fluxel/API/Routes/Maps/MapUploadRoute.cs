@@ -177,6 +177,10 @@ public class MapUploadRoute : IApiRoute {
             }
         });
 
+        backgroundStream.Dispose();
+        coverStream.Dispose();
+        stream.Dispose();
+        dest.Dispose();
         zip.Dispose();
 
         return new ApiResponse {

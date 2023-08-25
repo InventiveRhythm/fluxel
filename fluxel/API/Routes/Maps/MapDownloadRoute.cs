@@ -41,7 +41,7 @@ public class MapDownloadRoute : IApiRoute {
         res.ContentType = "application/zip";
         res.ContentEncoding = Encoding.UTF8;
         res.AddHeader("Content-Type", "application/zip");
-        res.AddHeader("Content-Disposition", $"attachment; filename=\"{set.Artist} - {set.Title}.fms\"");
+        res.AddHeader("Content-Disposition", $"attachment; filename=\"{set.Id} {set.Artist} - {set.Title}.fms\"");
         res.AddHeader("Access-Control-Allow-Origin", "*");
         res.AddHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
         res.AddHeader("Access-Control-Allow-Headers", "*");
