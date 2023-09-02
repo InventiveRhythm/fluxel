@@ -47,7 +47,7 @@ public class AccountUpdateRoute : IApiRoute {
                 var name = new StreamReader(req.InputStream).ReadToEnd();
 
                 // check if name is valid (3-20 characters, no special characters)
-                if (!Regex.IsMatch(name, @"^[a-zA-Z0-9_ ]{1,20}$")) {
+                if (!Regex.IsMatch(name, @"^[a-zA-Z0-9_ ]{1,20}$") && name.Length != 0) {
                     return new ApiResponse {
                         Message = "Invalid display name",
                         Status = HttpStatusCode.BadRequest
