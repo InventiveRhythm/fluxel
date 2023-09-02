@@ -18,9 +18,6 @@ public class UserShort {
     [JsonProperty("role")]
     public int Role { get; set; }
 
-    [JsonProperty("ovr")]
-    public double OverallRating { get; set; }
-
-    [JsonProperty("ptr")]
-    public double PotentialRating { get; set; }
+    [JsonProperty("social")]
+    public UserSocials Socials { get; set; } = new();
 }

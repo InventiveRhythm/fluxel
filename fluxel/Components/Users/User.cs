@@ -238,8 +238,7 @@ public class User : RealmObject {
             DisplayName = DisplayName,
             CountryCode = CountryCode,
             Role = Role,
-            OverallRating = OverallRating,
-            PotentialRating = PotentialRating,
+            Socials = Socials
         };
     }
 
