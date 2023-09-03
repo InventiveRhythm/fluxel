@@ -65,7 +65,7 @@ public static class ScoreUtils {
             }
 
             if (mod.EndsWith("x"))
-                multiplier += float.Parse(mod[..^1], NumberStyles.Float, CultureInfo.InvariantCulture) - 1f;
+                multiplier += (float.Parse(mod[..^1], NumberStyles.Float, CultureInfo.InvariantCulture) - 1f) * .1f;
         }
 
         return multiplier;
