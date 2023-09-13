@@ -36,6 +36,9 @@ public class Score : RealmObject {
     [JsonProperty("mode")]
     public int Mode => MapShort.Mode;
 
+    /// <summary>
+    /// List of mods seperated by commas.
+    /// </summary>
     [JsonProperty("mods")]
     public string Mods { get; set; } = "";
 

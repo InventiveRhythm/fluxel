@@ -53,7 +53,7 @@ public class ScoreUploadRoute : IApiRoute {
         }
 
         var hash = score.Value<string>("hash");
-        var mods = score.Value<string>("mods") ?? "";
+        var mods = score.Value<JArray>("mods")?.Select(t => t.Value<string>()) ?? new List<string>();
         var scrollSpeed = score.Value<float>("scrollSpeed");
         var maxCombo = score.Value<int>("maxCombo");
         var flawlessCount = score.Value<int>("flawless");
@@ -99,7 +99,7 @@ public class ScoreUploadRoute : IApiRoute {
                 UserId = userid,
                 MapId = mapid,
                 Time = DateTimeOffset.Now,
-                Mods = mods,
+                Mods = string.Join(",", mods),
                 MaxCombo = maxCombo,
                 FlawlessCount = flawlessCount,
                 PerfectCount = perfectCount,
