@@ -74,9 +74,19 @@ public class User : RealmObject {
     }
 
     [Ignored]
-    [JsonProperty("recent_scores")]
+    [JsonIgnore]
+    private List<Score>? recentScores { get; set; }
+
+    [Ignored]
+    [JsonIgnore]
+    private List<Score>? bestScores { get; set; }
+
+    [Ignored]
+    [JsonIgnore]
     public List<Score> RecentScores {
         get {
+            if (recentScores != null) return recentScores;
+
             var scores = RealmAccess.Run(realm => realm.All<Score>().Where(s => s.UserId == Id))
                 .ToList().OrderByDescending(s => s.Time);
 
@@ -92,14 +102,16 @@ public class User : RealmObject {
                 recent.Add(score);
             }
 
-            return recent.Take(30).ToList();
+            return recentScores = recent.Take(30).ToList();
         }
     }
 
     [Ignored]
-    [JsonProperty("best_scores")]
+    [JsonIgnore]
     public List<Score> BestScores {
         get {
+            if (bestScores != null) return bestScores;
+
             var scores = RealmAccess.Run(realm => realm.All<Score>().Where(s => s.UserId == Id))
                 .ToList().OrderByDescending(s => s.PerformanceRating);
 
@@ -115,7 +127,7 @@ public class User : RealmObject {
                 best.Add(score);
             }
 
-            return best.Take(50).ToList();
+            return bestScores = best.Take(50).ToList();
         }
     }
 
@@ -219,18 +231,6 @@ public class User : RealmObject {
         }
     }
 
-    [Ignored]
-    [JsonProperty("ranked_maps")]
-    public List<MapSet> RankedMaps => RealmAccess.Run(realm => realm.All<MapSet>().Where(s => s.CreatorId == Id && s.Status == 3).ToList());
-
-    [Ignored]
-    [JsonProperty("unranked_maps")]
-    public List<MapSet> UnrankedMaps => RealmAccess.Run(realm => realm.All<MapSet>().Where(s => s.CreatorId == Id && s.Status != 3).ToList());
-
-    [Ignored]
-    [JsonProperty("guest_diffs")]
-    public List<MapSet> GuestDiffs => RealmAccess.Run(realm => realm.All<MapSet>().ToList().Where(s => s.CreatorId != Id && s.MapsList.Any(m => m.MapperId == Id))).ToList();
-
     public UserShort ToShort() {
         return new UserShort {
             Id = Id,
@@ -256,6 +256,24 @@ public class User : RealmObject {
 
             return null;
         }) != null;
+    }
+
+    public class UserMaps
+    {
+        private User user { get; set; }
+
+        [JsonProperty("ranked")]
+        public List<MapSet> Ranked => RealmAccess.Run(realm => realm.All<MapSet>().Where(s => s.CreatorId == user.Id && s.Status == 3).ToList());
+
+        [JsonProperty("unranked")]
+        public List<MapSet> Unranked => RealmAccess.Run(realm => realm.All<MapSet>().Where(s => s.CreatorId == user.Id && s.Status != 3).ToList());
+
+        [JsonProperty("guest_diffs")]
+        public List<MapSet> GuestDiffs => RealmAccess.Run(realm => realm.All<MapSet>().ToList().Where(s => s.CreatorId != user.Id && s.MapsList.Any(m => m.MapperId == user.Id))).ToList();
+
+        public UserMaps(User user) {
+            this.user = user;
+        }
     }
 
     public static bool ValidUsername(string username) => Regex.IsMatch(username, @"^[a-zA-Z0-9_]{3,16}$");
