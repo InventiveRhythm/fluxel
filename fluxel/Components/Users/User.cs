@@ -260,7 +260,7 @@ public class User : RealmObject {
 
     public class UserMaps
     {
-        private User user { get; set; }
+        private User user { get; }
 
         [JsonProperty("ranked")]
         public List<MapSet> Ranked => RealmAccess.Run(realm => realm.All<MapSet>().Where(s => s.CreatorId == user.Id && s.Status == 3).ToList());
@@ -276,7 +276,7 @@ public class User : RealmObject {
         }
     }
 
-    public static bool ValidUsername(string username) => Regex.IsMatch(username, @"^[a-zA-Z0-9_]{3,16}$");
+    public static bool ValidUsername(string username) => Regex.IsMatch(username, "^[a-zA-Z0-9_]{3,16}$");
     public static int Count() => RealmAccess.Run(realm => realm.All<User>().Count());
     public static User? FindById(int id) => RealmAccess.Run(realm => realm.Find<User>(id));
     public static User? FindByUsername(string username) => RealmAccess.Run(realm => realm.All<User>().FirstOrDefault(u => u.Username == username));
@@ -285,7 +285,7 @@ public class User : RealmObject {
         return RealmAccess.Run(realm => {
             var users = realm.All<User>();
 
-            int max = 0;
+            var max = 0;
 
             foreach (var user in users) {
                 if (user.Id > max) {

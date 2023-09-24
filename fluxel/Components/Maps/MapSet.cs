@@ -36,12 +36,14 @@ public class MapSet : RealmObject {
             var split = Maps.Split(',');
             var maps = new List<Map>();
 
-            foreach (var s in split) {
-                if (int.TryParse(s, out int id)) {
-                    var map = Map.FindById(id);
-                    if (map is not null)
-                        maps.Add(map);
-                }
+            foreach (var s in split)
+            {
+                if (!int.TryParse(s, out int id)) continue;
+
+                var map = Map.FindById(id);
+
+                if (map is not null)
+                    maps.Add(map);
             }
 
             return maps;

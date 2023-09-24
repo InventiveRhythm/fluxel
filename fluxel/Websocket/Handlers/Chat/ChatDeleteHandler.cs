@@ -3,7 +3,6 @@ using fluxel.Components.Users;
 using fluxel.Database;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using Realms;
 
 namespace fluxel.Websocket.Handlers.Chat;
 

@@ -3,7 +3,7 @@
 public static class Assets {
     public static byte[] GetAsset(AssetType type, string id) {
         var prefix = getType(type);
-        var extension = "png";
+        const string extension = "png";
 
         var path = $"{Directory.GetCurrentDirectory()}{Path.DirectorySeparatorChar}Assets{Path.DirectorySeparatorChar}{prefix}{Path.DirectorySeparatorChar}{id}.{extension}";
 
@@ -21,7 +21,7 @@ public static class Assets {
 
     public static void WriteAsset(AssetType type, int id, byte[] data) {
         var prefix = getType(type);
-        var extension = "png";
+        const string extension = "png";
 
         var path = $"{Directory.GetCurrentDirectory()}{Path.DirectorySeparatorChar}Assets{Path.DirectorySeparatorChar}{prefix}{Path.DirectorySeparatorChar}{id}.{extension}";
 

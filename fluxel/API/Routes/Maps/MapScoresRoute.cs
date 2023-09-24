@@ -11,7 +11,7 @@ public class MapScoresRoute : IApiRoute {
     public string Path => "/map/:id/scores";
     public string Method => "GET";
 
-    public ApiResponse? Handle(HttpListenerRequest req, HttpListenerResponse res, Dictionary<string, string> parameters) {
+    public ApiResponse Handle(HttpListenerRequest req, HttpListenerResponse res, Dictionary<string, string> parameters) {
         if (!int.TryParse(parameters["id"], out var id)) {
             return new ApiResponse {
                 Status = HttpStatusCode.BadRequest,

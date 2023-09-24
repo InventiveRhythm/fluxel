@@ -32,13 +32,13 @@ public class LoginHandler : IPacketHandler {
         interaction.Reply(200, "Successfully logged in!", user.ToShort());
         Stats.AddOnlineUser(interaction.RemoteEndPoint, user.Id);
 
-        if (string.IsNullOrEmpty(user.CountryCode)) {
-            var userid = user.Id;
-            var code = await IpUtils.GetCountryCode(interaction.RemoteEndPoint.Address.ToString());
-            RealmAccess.Run(realm => {
-                var u = realm.Find<User>(userid);
-                u.CountryCode = code;
-            });
-        }
+        if (!string.IsNullOrEmpty(user.CountryCode)) return;
+
+        var userid = user.Id;
+        var code = await IpUtils.GetCountryCode(interaction.RemoteEndPoint.Address.ToString());
+        RealmAccess.Run(realm => {
+            var u = realm.Find<User>(userid);
+            u.CountryCode = code;
+        });
     }
 }

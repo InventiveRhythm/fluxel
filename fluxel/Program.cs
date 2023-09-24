@@ -5,7 +5,7 @@ using fluxel.Websocket;
 namespace fluxel;
 
 public static class Program {
-    public static async Task Main(string[] args) {
+    public static async Task Main() {
         Logger.Log("Starting fluxel...");
 
         ApiServer.Start();
@@ -17,7 +17,7 @@ public static class Program {
                 Name = "Test Lobby"
             },
             HostId = 0,
-            Maps = new List<int> { 1 }
+            Maps = new List<int> { 6 }
         });
 
         Logger.Log("Ready!");

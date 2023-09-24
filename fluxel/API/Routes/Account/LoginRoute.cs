@@ -10,7 +10,7 @@ public class LoginRoute : IApiRoute {
     public string Path => "/account/login";
     public string Method => "GET";
 
-    public ApiResponse? Handle(HttpListenerRequest req, HttpListenerResponse res, Dictionary<string, string> parameters) {
+    public ApiResponse Handle(HttpListenerRequest req, HttpListenerResponse res, Dictionary<string, string> parameters) {
         var username = req.Headers["username"];
         var password = req.Headers["password"];
 

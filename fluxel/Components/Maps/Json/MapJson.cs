@@ -1,6 +1,8 @@
-﻿namespace fluxel.Components.Maps.Json;
+﻿using JetBrains.Annotations;
 
-// ReSharper disable CollectionNeverUpdated.Global
+namespace fluxel.Components.Maps.Json;
+
+[UsedImplicitly(ImplicitUseTargetFlags.Members)]
 public class MapJson {
     public string AudioFile { get; init; } = string.Empty;
     public string BackgroundFile { get; init; } = string.Empty;

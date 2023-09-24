@@ -12,7 +12,7 @@ public class IpUtils {
             var obj = JsonConvert.DeserializeObject<Dictionary<string, string>>(json);
             return obj?["countryCode"].ToLowerInvariant();
         }
-        catch (Exception e) {
+        catch {
             Logger.Log($"Failed to get country code for {ip}", LogLevel.Error);
             return null;
         }

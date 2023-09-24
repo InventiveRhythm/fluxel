@@ -10,7 +10,7 @@ public class MapSetsRoute : IApiRoute
     public string Path => "/mapsets";
     public string Method => "GET";
 
-    public ApiResponse? Handle(HttpListenerRequest req, HttpListenerResponse res, Dictionary<string, string> parameters)
+    public ApiResponse Handle(HttpListenerRequest req, HttpListenerResponse res, Dictionary<string, string> parameters)
     {
         return new ApiResponse
         {

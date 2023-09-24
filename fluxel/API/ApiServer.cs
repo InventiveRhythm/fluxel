@@ -70,7 +70,7 @@ public abstract class ApiServer {
 
             for (var i = 0; i < parts.Length; i++) {
                 if (parts[i].StartsWith(":")) {
-                    reqParams.Add(parts[i].Substring(1), reqParts[i]);
+                    reqParams.Add(parts[i][1..], reqParts[i]);
                 }
                 else if (!parts[i].Equals(reqParts[i])) {
                     match = false;

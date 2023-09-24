@@ -15,7 +15,7 @@ public class MapUploadRoute : IApiRoute {
     public string Path => "/maps/upload";
     public string Method => "POST";
 
-    public ApiResponse? Handle(HttpListenerRequest req, HttpListenerResponse res, Dictionary<string, string> parameters) {
+    public ApiResponse Handle(HttpListenerRequest req, HttpListenerResponse res, Dictionary<string, string> parameters) {
         var token = req.Headers["Authorization"];
 
         if (token == null) {

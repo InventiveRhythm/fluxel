@@ -1,5 +1,8 @@
-﻿namespace fluxel.Components.Maps.Json;
+﻿using JetBrains.Annotations;
 
+namespace fluxel.Components.Maps.Json;
+
+[UsedImplicitly(ImplicitUseTargetFlags.Members)]
 public class MapMetadataJson {
     public string Title { get; init; } = string.Empty;
     public string Artist { get; init; } = string.Empty;
