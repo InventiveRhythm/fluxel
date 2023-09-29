@@ -2,6 +2,14 @@
 
 public static class Logger
 {
+    public static void Log(Exception e)
+    {
+        Console.ForegroundColor = ConsoleColor.Red;
+        Console.WriteLine($"[{DateTime.Now:HH:mm:ss}] {e.Message}");
+        Console.WriteLine(e.StackTrace);
+        Console.ForegroundColor = ConsoleColor.White;
+    }
+
     public static void Log(string message, LogLevel level = LogLevel.Verbose)
     {
         var severity = getSeverity(level).PadRight(8)[..8];

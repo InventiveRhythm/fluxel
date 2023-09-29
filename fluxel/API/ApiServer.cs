@@ -102,7 +102,7 @@ public abstract class ApiServer {
                     Message = "Welp, something went very wrong. It's probably not your fault, but please report this to the developers.",
                     Data = new {}
                 };
-                Logger.Log(e.Message, LogLevel.Error);
+                Logger.Log(e);
             }
         }
 
