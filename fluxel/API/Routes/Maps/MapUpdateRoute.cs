@@ -186,8 +186,8 @@ public class MapUpdateRoute : IApiRoute {
                     Logger.Log($"{map.Difficulty} exists");
                 }
                 else {
-                    realm.Remove(map);
                     Logger.Log($"{map.Difficulty} does not exist");
+                    realm.Remove(map);
                 }
             }
 
