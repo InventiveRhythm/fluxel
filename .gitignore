@@ -6,3 +6,4 @@ fluxel.realm.management/
 bin
 obj
 *.realm*
+config.json

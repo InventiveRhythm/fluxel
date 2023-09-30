@@ -1,4 +1,6 @@
-﻿using fluxel.API.Utils;
+﻿using DSharpPlus.Entities;
+using fluxel.API.Utils;
+using fluxel.Bot;
 using fluxel.Components.Users;
 using fluxel.Database;
 using fluxel.Utils;
@@ -61,5 +63,13 @@ public class RegisterHandler : IPacketHandler {
         });
 
         Stats.AddOnlineUser(interaction.RemoteEndPoint, user.Id);
+
+        DiscordBot.GetLoggingChannel()?.SendMessageAsync(new DiscordMessageBuilder {
+            Embed = new DiscordEmbedBuilder
+            {
+                Title = "New user registered!",
+                Color = new DiscordColor("#55ff55")
+            }.AddField("Username", user.Username, true).AddField("ID", $"{user.Id}", true).Build()
+        });
     }
 }
