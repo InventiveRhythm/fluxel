@@ -8,7 +8,7 @@ public class MultiplayerJoinHandler : IPacketHandler {
         var lobbyId = data["lobbyId"]?.ToObject<int>() ?? -1;
         var password = data["password"]?.ToObject<string>() ?? "";
 
-        var user = Stats.ONLINE_USERS.FirstOrDefault(u => Equals(u.Key, interaction.RemoteEndPoint)).Value;
+        var user = GlobalStatistics.ONLINE_USERS.FirstOrDefault(u => Equals(u.Key, interaction.RemoteEndPoint)).Value;
 
         if (user == 0) {
             interaction.Reply(400, "User not found.");

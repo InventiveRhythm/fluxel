@@ -30,7 +30,7 @@ public class LoginHandler : IPacketHandler {
         }
 
         interaction.Reply(200, "Successfully logged in!", user.ToShort());
-        Stats.AddOnlineUser(interaction.RemoteEndPoint, user.Id);
+        GlobalStatistics.AddOnlineUser(interaction.RemoteEndPoint, user.Id);
 
         if (!string.IsNullOrEmpty(user.CountryCode)) return;
 

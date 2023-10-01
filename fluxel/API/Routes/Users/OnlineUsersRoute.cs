@@ -11,8 +11,8 @@ public class OnlineUsersRoute : IApiRoute {
     public ApiResponse Handle(HttpListenerRequest req, HttpListenerResponse res, Dictionary<string, string> parameters) {
         return new ApiResponse {
             Data = new {
-                count = Stats.Online,
-                users = Stats.GetOnlineUsers.Select(u => User.FindById(u)?.ToShort())
+                count = GlobalStatistics.Online,
+                users = GlobalStatistics.GetOnlineUsers.Select(u => User.FindById(u)?.ToShort())
             }
         };
     }

@@ -14,7 +14,7 @@ public class StatsRoute : IApiRoute {
         return new ApiResponse {
             Data = new {
                 users = User.Count() - 1, // dont count fluxel
-                online = Stats.Online,
+                online = GlobalStatistics.Online,
                 scores = Score.Count(),
                 mapsets = MapSet.Count()
             }

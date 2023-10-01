@@ -14,7 +14,7 @@ public class ChatMessageHandler : IPacketHandler {
         if (string.IsNullOrWhiteSpace(content) || channel == null)
             return;
 
-        if (!Stats.ONLINE_USERS.TryGetValue(interaction.RemoteEndPoint, out var id))
+        if (!GlobalStatistics.ONLINE_USERS.TryGetValue(interaction.RemoteEndPoint, out var id))
             return;
 
         var user = User.FindById(id);

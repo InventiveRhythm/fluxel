@@ -15,7 +15,7 @@ public class ChatDeleteHandler : IPacketHandler {
             return;
         }
 
-        if (!Stats.ONLINE_USERS.TryGetValue(interaction.RemoteEndPoint, out var userId)) {
+        if (!GlobalStatistics.ONLINE_USERS.TryGetValue(interaction.RemoteEndPoint, out var userId)) {
             interaction.Reply(400, "You are not logged in!");
             return;
         }

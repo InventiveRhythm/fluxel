@@ -62,7 +62,7 @@ public class RegisterHandler : IPacketHandler {
             user = RealmAccess.Run(realm => realm.Add(user))
         });
 
-        Stats.AddOnlineUser(interaction.RemoteEndPoint, user.Id);
+        GlobalStatistics.AddOnlineUser(interaction.RemoteEndPoint, user.Id);
 
         DiscordBot.GetLoggingChannel()?.SendMessageAsync(new DiscordMessageBuilder {
             Embed = new DiscordEmbedBuilder

@@ -31,7 +31,7 @@ public static class DiscordBot
 
         await Bot.UpdateStatusAsync(new DiscordActivity("fluXis", ActivityType.Playing));
 
-        GetLoggingChannel()?.SendMessageAsync(new DiscordMessageBuilder { Content = "Server started!" });
+        GetLoggingChannel()?.SendMessageAsync(new DiscordMessageBuilder { Content = "Discord bot started!" });
     }
 
     public static DiscordChannel? GetLoggingChannel() => Bot.GetChannelAsync(Program.Config.LoggingChannelId).Result;

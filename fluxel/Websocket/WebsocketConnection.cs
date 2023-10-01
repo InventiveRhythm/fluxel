@@ -50,7 +50,7 @@ public class WebsocketConnection : WebSocketBehavior {
         if (Address == null)
             return;
 
-        Stats.RemoveOnlineUser(Address);
+        GlobalStatistics.RemoveOnlineUser(Address);
         CONNECTIONS.Remove(Address);
     }
 
@@ -59,7 +59,7 @@ public class WebsocketConnection : WebSocketBehavior {
             return;
 
         Logger.Log($"[{Address}] Error: {e.Message}!", LogLevel.Error);
-        Stats.RemoveOnlineUser(Address);
+        GlobalStatistics.RemoveOnlineUser(Address);
         CONNECTIONS.Remove(Address);
     }
 
