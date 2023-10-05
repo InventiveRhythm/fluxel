@@ -114,7 +114,7 @@ public class ScoreUploadRoute : IApiRoute {
 
             user = realm.Find<User>(userid);
 
-            if (mapset.Status == 3) {
+            /*if (mapset.Status == 3) {
                 // TODO: Calculate rank
                 return new ApiResponse {
                     Data = new {
@@ -129,6 +129,15 @@ public class ScoreUploadRoute : IApiRoute {
             return new ApiResponse {
                 Status = HttpStatusCode.BadRequest,
                 Message = "This map is not ranked!"
+            };*/
+
+            return new ApiResponse {
+                Data = new {
+                    ovr = user.OverallRating,
+                    ptr = user.PotentialRating,
+                    ovrChange = user.OverallRating - ovr,
+                    ptrChange = user.PotentialRating - ptr
+                }
             };
         });
     }
