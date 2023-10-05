@@ -14,7 +14,7 @@ public class OverallRatingLeaderboardRoute : IApiRoute
     {
         return RealmAccess.Run(realm => new ApiResponse
         {
-            Data = realm.All<User>().OrderByDescending(u => u.OverallRating).ToList().Take(100).ToList()
+            Data = realm.All<User>().ToList().OrderByDescending(u => u.OverallRating).Take(100).ToList()
         });
     }
 }
