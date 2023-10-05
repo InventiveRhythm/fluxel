@@ -98,6 +98,8 @@ public class User : RealmObject {
                     return set?.Status == 3;
                 });
 
+                isranked = true;
+
                 if (recent.Any(s => s.MapId == score.MapId) || !isranked) continue;
                 recent.Add(score);
             }
@@ -123,6 +125,8 @@ public class User : RealmObject {
                     return set?.Status == 3;
                 });
 
+                isranked = true;
+
                 if (best.Any(s => s.MapId == score.MapId) || !isranked) continue;
                 best.Add(score);
             }
@@ -140,8 +144,10 @@ public class User : RealmObject {
             RealmAccess.Run(realm => {
                 var scores = realm.All<Score>().Where(s => s.UserId == Id);
 
-                foreach (var score in scores) {
-                    if (realm.Find<MapSet>(score.MapShort.MapSet)?.Status == 3) max = Math.Max(max, score.MaxCombo);
+                foreach (var score in scores)
+                {
+                    // if (realm.Find<MapSet>(score.MapShort.MapSet)?.Status != 3) continue;
+                    max = Math.Max(max, score.MaxCombo);
                 }
             });
 
@@ -158,9 +164,10 @@ public class User : RealmObject {
             RealmAccess.Run(realm => {
                 var scores = realm.All<Score>().Where(s => s.UserId == Id);
 
-                foreach (var score in scores) {
-                    if (realm.Find<MapSet>(score.MapShort.MapSet)?.Status == 3)
-                        total += score.TotalScore;
+                foreach (var score in scores)
+                {
+                    // if (realm.Find<MapSet>(score.MapShort.MapSet)?.Status != 3) continue;
+                    total += score.TotalScore;
                 }
             });
 
@@ -179,7 +186,7 @@ public class User : RealmObject {
                 var scores = realm.All<Score>().Where(s => s.UserId == Id);
 
                 foreach (var score in scores) {
-                    if (realm.Find<MapSet>(score.MapShort.MapSet)?.Status != 3) continue;
+                    // if (realm.Find<MapSet>(score.MapShort.MapSet)?.Status != 3) continue;
 
                     acc += Math.Round(score.Accuracy, 2);
                     count++;
