@@ -18,11 +18,8 @@ public abstract class ApiServer {
         listener.Prefixes.Add("http://localhost:2434/");
         listener.Start();
 
-        Task.Run(async () => {
-            while (running) {
-                await handle();
-            }
-        });
+        var thread = new Thread(startListener);
+        thread.Start();
 
         Logger.Log("Started API server on port 2434.");
     }
@@ -38,8 +35,22 @@ public abstract class ApiServer {
             });
     }
 
-    private static async Task handle() {
-        var context = await listener?.GetContextAsync()!;
+    private static void startListener(object? o) {
+        while (running) {
+            process();
+        }
+    }
+
+    private static void process()
+    {
+        var res = listener?.BeginGetContext(handle, listener);
+        res?.AsyncWaitHandle.WaitOne();
+    }
+
+    private static void handle(IAsyncResult result)
+    {
+        var context = listener?.EndGetContext(result);
+        if (context == null) return;
 
         var req = context.Request;
         var res = context.Response;
@@ -116,7 +127,7 @@ public abstract class ApiServer {
         res.AddHeader("Access-Control-Allow-Origin", "*");
         res.AddHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
         res.AddHeader("Access-Control-Allow-Headers", "*");
-        await res.OutputStream.WriteAsync(buffer);
+        res.OutputStream.Write(buffer);
         res.Close();
     }
 }
