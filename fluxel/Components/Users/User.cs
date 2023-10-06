@@ -44,7 +44,7 @@ public class User : RealmObject {
 
     [Ignored]
     [JsonProperty("is_online")]
-    public bool IsOnline => GlobalStatistics.GetOnlineUsers.Contains(Id);
+    public bool IsOnline => GlobalStatistics.GetOnlineUsers.Contains(Id) || Id == 0;
 
     [Ignored]
     [JsonProperty("ovr")]
