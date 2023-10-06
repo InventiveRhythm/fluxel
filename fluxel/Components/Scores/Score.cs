@@ -44,7 +44,7 @@ public class Score : RealmObject {
 
     [Ignored]
     [JsonProperty("pr")]
-    public double PerformanceRating => MapShort.Rating + this.CalculatePerformanceRating();
+    public double PerformanceRating => MapInfo.NotesPerSecond + this.CalculatePerformanceRating();
 
     [Ignored]
     [JsonProperty("score")]

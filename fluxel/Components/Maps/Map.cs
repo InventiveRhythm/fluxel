@@ -60,6 +60,10 @@ public class Map : RealmObject {
     [JsonProperty("maxcombo")]
     public int MaxCombo => Hits + LongNotes * 2;
 
+    [Ignored]
+    [JsonProperty("nps")]
+    public double NotesPerSecond => Math.Round((Hits + LongNotes * 2) / (double)(Length / 1000f), 2);
+
     public MapShort ToShort() {
         return new MapShort {
             Id = Id,

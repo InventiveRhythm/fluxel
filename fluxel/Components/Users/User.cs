@@ -66,10 +66,9 @@ public class User : RealmObject {
     [JsonProperty("ptr")]
     public double PotentialRating {
         get {
-            var ptr = BestScores.Take(30).Sum(score => score.PerformanceRating);
-            ptr += RecentScores.Take(10).Sum(score => score.PerformanceRating);
-            ptr /= 40f;
-            return Math.Round(ptr, 2);
+            var best = BestScores.Take(30).Sum(score => score.PerformanceRating);
+            var recent = RecentScores.Take(10).Sum(score => score.PerformanceRating);
+            return Math.Round((best + recent) / 40f, 2);
         }
     }
 
@@ -93,6 +92,7 @@ public class User : RealmObject {
             var recent = new List<Score>();
 
             foreach (var score in scores) {
+                if (score.MapInfo.Id == 0) continue;
                 var isranked = RealmAccess.Run(realm => {
                     var set = realm.Find<MapSet>(score.MapShort.MapSet);
                     return set?.Status == 3;
@@ -120,6 +120,7 @@ public class User : RealmObject {
             var best = new List<Score>();
 
             foreach (var score in scores) {
+                if (score.MapInfo.Id == 0) continue;
                 var isranked = RealmAccess.Run(realm => {
                     var set = realm.Find<MapSet>(score.MapShort.MapSet);
                     return set?.Status == 3;
@@ -146,6 +147,7 @@ public class User : RealmObject {
 
                 foreach (var score in scores)
                 {
+                    if (score.MapInfo.Id == 0) continue;
                     // if (realm.Find<MapSet>(score.MapShort.MapSet)?.Status != 3) continue;
                     max = Math.Max(max, score.MaxCombo);
                 }
@@ -166,6 +168,8 @@ public class User : RealmObject {
 
                 foreach (var score in scores)
                 {
+                    if (score.MapInfo.Id == 0) continue;
+
                     // if (realm.Find<MapSet>(score.MapShort.MapSet)?.Status != 3) continue;
                     total += score.TotalScore;
                 }
