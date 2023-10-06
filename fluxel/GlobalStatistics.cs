@@ -8,7 +8,7 @@ namespace fluxel;
 public static class GlobalStatistics {
     public static readonly Dictionary<IPEndPoint, int> ONLINE_USERS = new();
 
-    public static int Online => ONLINE_USERS.Count;
+    public static int Online => ONLINE_USERS.Count - 1; // -1 because fluxel is always online
     public static List<int> GetOnlineUsers => ONLINE_USERS.Values.ToList();
 
     public static void AddOnlineUser(IPEndPoint ip, int id) {

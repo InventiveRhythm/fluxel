@@ -13,7 +13,7 @@ public class StatsRoute : IApiRoute {
     public ApiResponse Handle(HttpListenerRequest req, HttpListenerResponse res, Dictionary<string, string> parameters) {
         return new ApiResponse {
             Data = new {
-                users = User.Count() - 1, // dont count fluxel
+                users = User.Count() - 1,
                 online = GlobalStatistics.Online,
                 scores = Score.Count(),
                 mapsets = MapSet.Count()

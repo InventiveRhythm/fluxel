@@ -1,4 +1,5 @@
-﻿using fluxel.API;
+﻿using System.Net;
+using fluxel.API;
 using fluxel.Bot;
 using fluxel.Multiplayer.OpenLobby;
 using fluxel.Websocket;
@@ -41,6 +42,8 @@ public static class Program {
             HostId = 0,
             Maps = new List<int> { 6 }
         });
+
+        GlobalStatistics.AddOnlineUser(new IPEndPoint(IPAddress.Parse("0.0.0.0"), 0), 0);
 
         Logger.Log("Ready!");
         await Task.Delay(-1);
