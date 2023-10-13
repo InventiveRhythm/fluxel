@@ -1,14 +1,13 @@
-﻿using fluxel.Database;
-using Realms;
+﻿using System.ComponentModel.DataAnnotations;
+using fluxel.Database;
+using MongoDB.Driver;
 
 namespace fluxel.Components.Users;
 
-public class UserToken : RealmObject {
-    [Indexed]
-    public int UserId { get; init; }
+public class UserToken {
+    public long Id { get; init; }
 
     [Required]
-    [PrimaryKey]
     public string Token { get; set; } = string.Empty;
 
     public static string GenerateToken() {
@@ -17,20 +16,25 @@ public class UserToken : RealmObject {
         return new string(Enumerable.Repeat(chars, 32).Select(s => s[random.Next(s.Length)]).ToArray());
     }
 
-    public static UserToken? GetByToken(string token) => RealmAccess.Run(realm => realm.Find<UserToken>(token));
+    public static UserToken? GetByToken(string token)
+    {
+        var tokens = MongoDatabase.GetCollection<UserToken>("tokens");
+        return tokens.Find(t => t.Token == token).FirstOrDefault();
+    }
 
-    public static UserToken GetByUserId(int id) {
-        return RealmAccess.Run(realm => {
-            var tk = realm.All<UserToken>().FirstOrDefault(t => t.UserId == id);
+    public static UserToken GetByUserId(long id) {
+        var tokens = MongoDatabase.GetCollection<UserToken>("tokens");
+        var token = tokens.Find(t => t.Id == id).FirstOrDefault();
 
-            if (tk == null) {
-                realm.Add(tk = new UserToken {
-                    UserId = id,
-                    Token = GenerateToken()
-                });
-            }
+        if (token == null) {
+            token = new UserToken {
+                Id = id,
+                Token = GenerateToken()
+            };
 
-            return tk;
-        });
+            tokens.InsertOne(token);
+        }
+
+        return token;
     }
 }

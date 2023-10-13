@@ -1,5 +1,6 @@
 ﻿using System.Net;
 using fluxel.Components.Users;
+using fluxel.Database.Helpers;
 
 namespace fluxel.Multiplayer.OpenLobby;
 
@@ -10,7 +11,7 @@ public static class LobbyHandler {
         Lobbies.Add(lobby);
     }
 
-    public static bool AddUser(int lobbyId, IPEndPoint ip, int userId) {
+    public static bool AddUser(int lobbyId, IPEndPoint ip, long userId) {
         var lobby = Lobbies.Find(l => l.RoomId == lobbyId);
         if (lobby == null) return false;
 
@@ -20,7 +21,7 @@ public static class LobbyHandler {
             id = 23,
             data = new {
                 type = "player/join",
-                data = User.FindById(userId)?.ToShort() ?? new UserShort()
+                data = UserHelper.Get(userId)?.ToShort() ?? new UserShort()
             }
         });
 

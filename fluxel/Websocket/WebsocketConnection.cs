@@ -58,9 +58,7 @@ public class WebsocketConnection : WebSocketBehavior {
         if (Address == null)
             return;
 
-        Logger.Log($"[{Address}] Error: {e.Message}!", LogLevel.Error);
-        GlobalStatistics.RemoveOnlineUser(Address);
-        CONNECTIONS.Remove(Address);
+        Logger.Log(e.Exception, $"[{Address}] Error: {e.Message}!");
     }
 
     protected override void OnOpen() {

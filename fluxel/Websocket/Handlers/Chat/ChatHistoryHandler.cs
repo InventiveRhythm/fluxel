@@ -1,5 +1,4 @@
-﻿using fluxel.Components.Chat;
-using fluxel.Database;
+﻿using fluxel.Database.Helpers;
 using Newtonsoft.Json.Linq;
 
 namespace fluxel.Websocket.Handlers.Chat;
@@ -13,11 +12,10 @@ public class ChatHistoryHandler : IPacketHandler {
             return;
         }
 
-        var messages = RealmAccess.Run(realm => realm.All<ChatMessage>()
-            .Where(x => x.Channel == channel)
+        var messages = ChatHelper.FromChannel(channel)
             .OrderByDescending(x => x.CreatedAt)
             .ToList()
-            .Take(50));
+            .Take(50);
 
         interaction.Reply(200, "OK!", messages);
     }

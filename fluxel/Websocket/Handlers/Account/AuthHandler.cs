@@ -1,5 +1,6 @@
 ﻿using fluxel.API.Utils;
 using fluxel.Components.Users;
+using fluxel.Database.Helpers;
 using Newtonsoft.Json.Linq;
 
 namespace fluxel.Websocket.Handlers.Account;
@@ -19,7 +20,7 @@ public class AuthHandler : IPacketHandler {
             return;
         }
 
-        var user = User.FindByUsername(username);
+        var user = UserHelper.Get(username);
 
         if (user == null) {
             interaction.Reply(400, "There is no user with that username!");

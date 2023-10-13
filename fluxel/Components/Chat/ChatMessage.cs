@@ -1,26 +1,26 @@
 ﻿using fluxel.Components.Users;
+using fluxel.Database.Helpers;
+using MongoDB.Bson.Serialization.Attributes;
 using Newtonsoft.Json;
-using Realms;
 
 namespace fluxel.Components.Chat;
 
-public class ChatMessage : RealmObject {
-    [PrimaryKey]
+public class ChatMessage {
     public Guid Id { get; set; } = Guid.NewGuid();
 
-    [Ignored]
+    [BsonIgnore]
     [JsonProperty("id")]
     public string IdString => Id.ToString();
 
     [JsonIgnore]
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.Now;
 
-    [Ignored]
+    [BsonIgnore]
     [JsonProperty("created")]
     public long CreatedAtUnix => CreatedAt.ToUnixTimeSeconds();
 
     [JsonIgnore]
-    public int SenderId { get; init; }
+    public long SenderId { get; init; }
 
     [JsonProperty("content")]
     public string Content { get; set; } = string.Empty;
@@ -28,7 +28,9 @@ public class ChatMessage : RealmObject {
     [JsonProperty("channel")]
     public string Channel { get; set; } = string.Empty;
 
-    [Ignored]
+    public bool Deleted { get; set; }
+
+    [BsonIgnore]
     [JsonProperty("sender")]
-    public UserShort Sender => User.FindById(SenderId)?.ToShort() ?? new UserShort();
+    public UserShort Sender => UserHelper.Get(SenderId)?.ToShort() ?? new UserShort();
 }

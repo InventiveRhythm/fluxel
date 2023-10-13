@@ -1,8 +1,6 @@
 ﻿using System.Net;
 using fluxel.API.Components;
-using fluxel.Components.Maps;
-using fluxel.Components.Scores;
-using fluxel.Components.Users;
+using fluxel.Database.Helpers;
 
 namespace fluxel.API.Routes;
 
@@ -13,10 +11,10 @@ public class StatsRoute : IApiRoute {
     public ApiResponse Handle(HttpListenerRequest req, HttpListenerResponse res, Dictionary<string, string> parameters) {
         return new ApiResponse {
             Data = new {
-                users = User.Count() - 1,
+                users = UserHelper.Count - 1,
                 online = GlobalStatistics.Online,
-                scores = Score.Count(),
-                mapsets = MapSet.Count()
+                scores = ScoreHelper.Count,
+                mapsets = MapSetHelper.Count
             }
         };
     }

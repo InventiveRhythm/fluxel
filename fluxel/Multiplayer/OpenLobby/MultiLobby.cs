@@ -1,6 +1,7 @@
 ﻿using System.Net;
 using fluxel.Components.Maps;
 using fluxel.Components.Users;
+using fluxel.Database.Helpers;
 using fluxel.Websocket;
 using Newtonsoft.Json;
 
@@ -17,19 +18,19 @@ public class MultiLobby {
     public int HostId { get; init; }
 
     [JsonProperty("host")]
-    public UserShort Host => User.FindById(HostId)?.ToShort() ?? new UserShort();
+    public UserShort Host => UserHelper.Get(HostId)?.ToShort() ?? new UserShort();
 
     [JsonIgnore]
-    public Dictionary<IPEndPoint, int> Users { get; set; } = new();
+    public Dictionary<IPEndPoint, long> Users { get; set; } = new();
 
     [JsonProperty("users")]
-    public List<UserShort> UsersShort => Users.Values.Select(id => User.FindById(id)?.ToShort() ?? new UserShort()).ToList();
+    public List<UserShort> UsersShort => Users.Values.Select(id => UserHelper.Get(id)?.ToShort() ?? new UserShort()).ToList();
 
     [JsonIgnore]
-    public List<int> Maps { get; init; } = new();
+    public List<long> Maps { get; init; } = new();
 
     [JsonProperty("maps")]
-    public List<MapShort> MapList => Maps.Select(id => (Map.FindById(id) ?? new Map()).ToShort()).ToList();
+    public List<MapShort> MapList => Maps.Select(id => (MapHelper.Get(id) ?? new Map()).ToShort()).ToList();
 
     private void sendToAll(string message) {
         foreach (var user in Users.Keys) {

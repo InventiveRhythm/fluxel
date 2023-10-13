@@ -1,8 +1,7 @@
 ﻿using System.Net;
 using fluxel.API.Components;
-using fluxel.Components.Maps;
 using fluxel.Constants;
-using fluxel.Database;
+using fluxel.Database.Helpers;
 
 namespace fluxel.API.Routes.Maps;
 
@@ -13,19 +12,17 @@ public class MapHashRoute : IApiRoute {
     public ApiResponse Handle(HttpListenerRequest req, HttpListenerResponse res, Dictionary<string, string> parameters) {
         var hash = parameters["hash"];
 
-        return RealmAccess.Run(realm => {
-            var map = realm.All<Map>().FirstOrDefault(m => m.Hash == hash);
+        var map = MapHelper.GetByHash(hash);
 
-            if (map == null) {
-                return new ApiResponse {
-                    Status = HttpStatusCode.NotFound,
-                    Message = ResponseStrings.MapNotFound
-                };
-            }
-
+        if (map == null) {
             return new ApiResponse {
-                Data = map
+                Status = HttpStatusCode.NotFound,
+                Message = ResponseStrings.MapNotFound
             };
-        });
+        }
+
+        return new ApiResponse {
+            Data = map
+        };
     }
 }

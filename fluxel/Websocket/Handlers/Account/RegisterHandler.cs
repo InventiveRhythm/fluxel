@@ -2,7 +2,7 @@
 using fluxel.API.Utils;
 using fluxel.Bot;
 using fluxel.Components.Users;
-using fluxel.Database;
+using fluxel.Database.Helpers;
 using fluxel.Utils;
 using Newtonsoft.Json.Linq;
 
@@ -34,7 +34,7 @@ public class RegisterHandler : IPacketHandler {
             return;
         }
 
-        if (!User.ValidUsername(username)) {
+        if (!username.ValidUsername()) {
             interaction.Reply(400, "Username can only contain A-Z, a-z, 0-9 and _!");
             return;
         }
@@ -44,22 +44,24 @@ public class RegisterHandler : IPacketHandler {
             return;
         }
 
-        if (User.UsernameExists(username)) {
+        if (username.UsernameExists()) {
             interaction.Reply(400, "Username is already taken!");
             return;
         }
 
         var user = new User {
-            Id = User.GetNextId(),
+            Id = UserHelper.NextId,
             Username = username,
             Email = email,
             Password = PasswordUtils.HashPassword(password),
             CountryCode = await IpUtils.GetCountryCode(interaction.RemoteEndPoint.Address.ToString())
         };
 
+        UserHelper.Add(user);
+
         interaction.Reply(200, "Successfully registered!", new {
             token = UserToken.GetByUserId(user.Id).Token,
-            user = RealmAccess.Run(realm => realm.Add(user))
+            user
         });
 
         GlobalStatistics.AddOnlineUser(interaction.RemoteEndPoint, user.Id);

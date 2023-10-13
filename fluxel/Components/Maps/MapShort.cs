@@ -1,14 +1,15 @@
 ﻿using fluxel.Components.Users;
+using fluxel.Database.Helpers;
 using Newtonsoft.Json;
 
 namespace fluxel.Components.Maps;
 
 public class MapShort {
     [JsonProperty("id")]
-    public int Id { get; set; }
+    public long Id { get; set; }
 
     [JsonProperty("mapset")]
-    public int MapSet { get; set; }
+    public long MapSet { get; set; }
 
     [JsonProperty("hash")]
     public string Hash { get; set; } = "";
@@ -32,8 +33,8 @@ public class MapShort {
     public int Status { get; set; }
 
     [JsonIgnore]
-    public int MapperId { get; set; }
+    public long MapperId { get; set; }
 
     [JsonProperty("mapper")]
-    public UserShort Mapper => User.FindById(MapperId)?.ToShort() ?? new UserShort();
+    public UserShort Mapper => UserHelper.Get(MapperId)?.ToShort() ?? new UserShort();
 }

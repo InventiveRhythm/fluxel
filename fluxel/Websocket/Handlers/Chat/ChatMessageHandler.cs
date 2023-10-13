@@ -1,6 +1,5 @@
 ﻿using fluxel.Components.Chat;
-using fluxel.Components.Users;
-using fluxel.Database;
+using fluxel.Database.Helpers;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -17,7 +16,7 @@ public class ChatMessageHandler : IPacketHandler {
         if (!GlobalStatistics.ONLINE_USERS.TryGetValue(interaction.RemoteEndPoint, out var id))
             return;
 
-        var user = User.FindById(id);
+        var user = UserHelper.Get(id);
         if (user == null)
             return;
 
@@ -27,7 +26,7 @@ public class ChatMessageHandler : IPacketHandler {
             Channel = channel
         };
 
-        RealmAccess.Run(realm => realm.Add(message));
+        ChatHelper.Add(message);
 
         foreach (var (_, conn) in WebsocketConnection.CONNECTIONS) {
             var json = JsonConvert.SerializeObject(new {

@@ -1,16 +1,16 @@
-﻿using System.Text.RegularExpressions;
-using fluxel.Components.Maps;
+﻿using fluxel.Components.Maps;
 using fluxel.Components.Scores;
 using fluxel.Database;
+using fluxel.Database.Helpers;
+using MongoDB.Bson.Serialization.Attributes;
+using MongoDB.Driver;
 using Newtonsoft.Json;
-using Realms;
 
 namespace fluxel.Components.Users;
 
-public class User : RealmObject {
-    [PrimaryKey]
+public class User {
     [JsonProperty("id")]
-    public int Id { get; set; }
+    public long Id { get; set; }
 
     [JsonIgnore]
     public string Password { get; init; } = "";
@@ -42,11 +42,11 @@ public class User : RealmObject {
     [JsonProperty("lastlogin")]
     public long LastLogin { get; set; } = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 
-    [Ignored]
+    [BsonIgnore]
     [JsonProperty("is_online")]
     public bool IsOnline => GlobalStatistics.GetOnlineUsers.Contains(Id) || Id == 0;
 
-    [Ignored]
+    [BsonIgnore]
     [JsonProperty("ovr")]
     public double OverallRating {
         get {
@@ -62,7 +62,7 @@ public class User : RealmObject {
         }
     }
 
-    [Ignored]
+    [BsonIgnore]
     [JsonProperty("ptr")]
     public double PotentialRating {
         get {
@@ -72,33 +72,31 @@ public class User : RealmObject {
         }
     }
 
-    [Ignored]
+    [BsonIgnore]
     [JsonIgnore]
     private List<Score>? recentScores { get; set; }
 
-    [Ignored]
+    [BsonIgnore]
     [JsonIgnore]
     private List<Score>? bestScores { get; set; }
 
-    [Ignored]
+    [BsonIgnore]
     [JsonIgnore]
     public List<Score> RecentScores {
         get {
             if (recentScores != null) return recentScores;
 
-            var scores = RealmAccess.Run(realm => realm.All<Score>().Where(s => s.UserId == Id))
-                .ToList().OrderByDescending(s => s.Time);
-
+            var scores = ScoreHelper.GetByUser(Id).OrderByDescending(s => s.Time);
             var recent = new List<Score>();
 
             foreach (var score in scores) {
                 if (score.MapInfo.Id == 0) continue;
-                var isranked = RealmAccess.Run(realm => {
+                /*var isranked = RealmAccess.Run(realm => {
                     var set = realm.Find<MapSet>(score.MapShort.MapSet);
                     return set?.Status == 3;
-                });
+                });*/
 
-                isranked = true;
+                var isranked = true;
 
                 if (recent.Any(s => s.MapId == score.MapId) || !isranked) continue;
                 recent.Add(score);
@@ -108,25 +106,23 @@ public class User : RealmObject {
         }
     }
 
-    [Ignored]
+    [BsonIgnore]
     [JsonIgnore]
     public List<Score> BestScores {
         get {
             if (bestScores != null) return bestScores;
 
-            var scores = RealmAccess.Run(realm => realm.All<Score>().Where(s => s.UserId == Id))
-                .ToList().OrderByDescending(s => s.PerformanceRating);
-
+            var scores = ScoreHelper.GetByUser(Id).OrderByDescending(s => s.PerformanceRating);
             var best = new List<Score>();
 
             foreach (var score in scores) {
                 if (score.MapInfo.Id == 0) continue;
-                var isranked = RealmAccess.Run(realm => {
+                /*var isranked = RealmAccess.Run(realm => {
                     var set = realm.Find<MapSet>(score.MapShort.MapSet);
                     return set?.Status == 3;
-                });
+                });*/
 
-                isranked = true;
+                var isranked = true;
 
                 if (best.Any(s => s.MapId == score.MapId) || !isranked) continue;
                 best.Add(score);
@@ -136,107 +132,97 @@ public class User : RealmObject {
         }
     }
 
-    [Ignored]
+    [BsonIgnore]
     [JsonProperty("max_combo")]
     public int MaxCombo {
         get {
             var max = 0;
 
-            RealmAccess.Run(realm => {
-                var scores = realm.All<Score>().Where(s => s.UserId == Id);
+            var scores = ScoreHelper.GetByUser(Id);
 
-                foreach (var score in scores)
-                {
-                    if (score.MapInfo.Id == 0) continue;
-                    // if (realm.Find<MapSet>(score.MapShort.MapSet)?.Status != 3) continue;
-                    max = Math.Max(max, score.MaxCombo);
-                }
-            });
+            foreach (var score in scores)
+            {
+                if (score.MapInfo.Id == 0) continue;
+                // if (realm.Find<MapSet>(score.MapShort.MapSet)?.Status != 3) continue;
+                max = Math.Max(max, score.MaxCombo);
+            }
 
             return max;
         }
     }
 
-    [Ignored]
+    [BsonIgnore]
     [JsonProperty("ranked_score")]
     public int RankedScore {
         get {
             var total = 0;
 
-            RealmAccess.Run(realm => {
-                var scores = realm.All<Score>().Where(s => s.UserId == Id);
+            var scores = ScoreHelper.GetByUser(Id);
 
-                foreach (var score in scores)
-                {
-                    if (score.MapInfo.Id == 0) continue;
+            foreach (var score in scores)
+            {
+                if (score.MapInfo.Id == 0) continue;
 
-                    // if (realm.Find<MapSet>(score.MapShort.MapSet)?.Status != 3) continue;
-                    total += score.TotalScore;
-                }
-            });
+                // if (realm.Find<MapSet>(score.MapShort.MapSet)?.Status != 3) continue;
+                total += score.TotalScore;
+            }
 
             return total;
         }
     }
 
-    [Ignored]
+    [BsonIgnore]
     [JsonProperty("ova")]
     public double OverallAccuracy {
         get {
             double acc = 0;
             var count = 0;
 
-            RealmAccess.Run(realm => {
-                var scores = realm.All<Score>().Where(s => s.UserId == Id);
+            var scores = ScoreHelper.GetByUser(Id);
 
-                foreach (var score in scores) {
-                    // if (realm.Find<MapSet>(score.MapShort.MapSet)?.Status != 3) continue;
+            foreach (var score in scores) {
+                // if (realm.Find<MapSet>(score.MapShort.MapSet)?.Status != 3) continue;
 
-                    acc += Math.Round(score.Accuracy, 2);
-                    count++;
-                }
-            });
+                acc += Math.Round(score.Accuracy, 2);
+                count++;
+            }
 
             if (count == 0) return 0;
             return acc / count;
         }
     }
 
-    [Ignored]
+    [BsonIgnore]
     [JsonProperty("rank")]
     public int Rank {
         get {
             if (OverallRating == 0) return 0;
             var rank = 0;
 
-            RealmAccess.Run(realm => {
-                var users = realm.All<User>().ToList().OrderByDescending(u => u.OverallRating);
+            var users = UserHelper.All.OrderByDescending(u => u.OverallRating);
 
-                foreach (var user in users) {
-                    rank++;
-                    if (user.Id == Id) break;
-                }
-            });
+            foreach (var user in users) {
+                rank++;
+                if (user.Id == Id) break;
+            }
 
             return rank;
         }
     }
 
-    [Ignored]
+    [BsonIgnore]
     [JsonProperty("country_rank")]
     public int CountryRank {
         get {
             if (OverallRating == 0) return 0;
             var rank = 0;
 
-            RealmAccess.Run(realm => {
-                var users = realm.All<User>().ToList().Where(u => u.CountryCode == CountryCode && u.OverallRating > 0).OrderByDescending(u => u.OverallRating);
+            var countryUsers = UserHelper.All.Where(u => u.CountryCode == CountryCode).OrderByDescending(u => u.OverallRating);
 
-                foreach (var user in users) {
-                    rank++;
-                    if (user.Id == Id) break;
-                }
-            });
+            foreach (var user in countryUsers) {
+                rank++;
+                if (user.Id == Id) break;
+            }
 
             return rank;
         }
@@ -253,58 +239,24 @@ public class User : RealmObject {
         };
     }
 
-    public static bool UsernameExists(string username) {
-        return RealmAccess.Run(realm => {
-            var users = realm.All<User>();
-
-            foreach (var user in users) {
-                var uname = user.Username.ToLower();
-
-                if (uname == username.ToLower()) {
-                    return user;
-                }
-            }
-
-            return null;
-        }) != null;
-    }
-
     public class UserMaps
     {
         private User user { get; }
 
         [JsonProperty("ranked")]
-        public List<MapSet> Ranked => RealmAccess.Run(realm => realm.All<MapSet>().Where(s => s.CreatorId == user.Id && s.Status == 3).ToList());
+        public List<MapSet> Ranked => MapSetHelper.GetByCreator(user.Id).Where(s => s.Status == 3).ToList();
 
         [JsonProperty("unranked")]
-        public List<MapSet> Unranked => RealmAccess.Run(realm => realm.All<MapSet>().Where(s => s.CreatorId == user.Id && s.Status != 3).ToList());
+        public List<MapSet> Unranked => MapSetHelper.GetByCreator(user.Id).Where(s => s.Status != 3).ToList();
 
         [JsonProperty("guest_diffs")]
-        public List<MapSet> GuestDiffs => RealmAccess.Run(realm => realm.All<MapSet>().ToList().Where(s => s.CreatorId != user.Id && s.MapsList.Any(m => m.MapperId == user.Id))).ToList();
+        public List<MapSet> GuestDiffs => MapSetHelper.All.Where(s => s.CreatorId != user.Id && s.MapsList.Any(m => m.MapperId == user.Id)).ToList();
 
         public UserMaps(User user) {
             this.user = user;
         }
     }
 
-    public static bool ValidUsername(string username) => Regex.IsMatch(username, "^[a-zA-Z0-9_]{3,16}$");
-    public static int Count() => RealmAccess.Run(realm => realm.All<User>().Count());
-    public static User? FindById(int id) => RealmAccess.Run(realm => realm.Find<User>(id));
-    public static User? FindByUsername(string username) => RealmAccess.Run(realm => realm.All<User>().FirstOrDefault(u => u.Username == username));
-
-    public static int GetNextId() {
-        return RealmAccess.Run(realm => {
-            var users = realm.All<User>();
-
-            var max = 0;
-
-            foreach (var user in users) {
-                if (user.Id > max) {
-                    max = user.Id;
-                }
-            }
-
-            return !users.Any() ? 1 : max + 1;
-        });
-    }
+    [Obsolete]
+    public static User? FindById(int id) => MongoDatabase.GetCollection<User>("users").Find(u => u.Id == id).FirstOrDefault();
 }

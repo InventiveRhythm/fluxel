@@ -5,7 +5,7 @@ using fluxel.Components.Maps;
 using fluxel.Components.Maps.Json;
 using fluxel.Components.Users;
 using fluxel.Constants;
-using fluxel.Database;
+using fluxel.Database.Helpers;
 using fluxel.Utils;
 using Newtonsoft.Json;
 
@@ -34,7 +34,7 @@ public class MapUploadRoute : IApiRoute {
             };
         }
 
-        var user = User.FindById(userToken.UserId);
+        var user = UserHelper.Get(userToken.Id);
 
         if (user == null) {
             return new ApiResponse {
@@ -52,12 +52,12 @@ public class MapUploadRoute : IApiRoute {
         var zip = new ZipArchive(stream);
 
         var set = new MapSet {
-            Id = MapSet.GetNextId(),
+            Id = MapHelper.NextId,
             CreatorId = user.Id,
         };
 
         var maps = new List<Map>();
-        var id = Map.GetNextId();
+        var id = MapHelper.NextId;
 
         var backgroundStream = new MemoryStream();
         var hasBackground = false;
@@ -102,7 +102,7 @@ public class MapUploadRoute : IApiRoute {
 
             var hash = Hashing.GetHash(json);
 
-            var mapper = User.FindByUsername(mapJson.Metadata.Mapper) ?? user;
+            var mapper = UserHelper.Get(mapJson.Metadata.Mapper) ?? user;
 
             var map = new Map {
                 Id = id,
@@ -169,13 +169,11 @@ public class MapUploadRoute : IApiRoute {
             coverStream.CopyTo(File.Create(coverFile));
         }
 
-        RealmAccess.Run(realm => {
-            realm.Add(set);
+        MapSetHelper.Add(set);
 
-            foreach (var map in maps) {
-                realm.Add(map);
-            }
-        });
+        foreach (var map in maps) {
+            MapHelper.Add(map);
+        }
 
         backgroundStream.Dispose();
         coverStream.Dispose();

@@ -1,8 +1,7 @@
 ﻿using System.Net;
 using fluxel.API.Components;
-using fluxel.Components.Maps;
 using fluxel.Constants;
-using fluxel.Database;
+using fluxel.Database.Helpers;
 
 namespace fluxel.API.Routes.Maps;
 
@@ -18,19 +17,17 @@ public class MapSetRoute : IApiRoute {
             };
         }
 
-        return RealmAccess.Run(realm => {
-            var set = realm.Find<MapSet>(id);
+        var set = MapSetHelper.Get(id);
 
-            if (set == null) {
-                return new ApiResponse {
-                    Status = HttpStatusCode.NotFound,
-                    Message = ResponseStrings.MapSetNotFound
-                };
-            }
-
+        if (set == null) {
             return new ApiResponse {
-                Data = set
+                Status = HttpStatusCode.NotFound,
+                Message = ResponseStrings.MapSetNotFound
             };
-        });
+        }
+
+        return new ApiResponse {
+            Data = set
+        };
     }
 }

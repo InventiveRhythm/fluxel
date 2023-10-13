@@ -1,8 +1,7 @@
 ﻿using System.Net;
 using fluxel.API.Components;
 using fluxel.API.Utils;
-using fluxel.Components.Users;
-using fluxel.Database;
+using fluxel.Database.Helpers;
 
 namespace fluxel.API.Routes.Account;
 
@@ -21,21 +20,24 @@ public class LoginRoute : IApiRoute {
             };
         }
 
-        return RealmAccess.Run(realm => {
-            var users = realm.All<User>();
+        var user = UserHelper.Get(username);
 
-            foreach (var user in users) {
-                if (user.Username == username && PasswordUtils.VerifyPassword(password, user.Password)) {
-                    return new ApiResponse {
-                        Data = user.ToShort()
-                    };
-                }
-            }
-
+        if (user == null) {
             return new ApiResponse {
                 Status = HttpStatusCode.BadRequest,
-                Message = "Invalid username or password"
+                Message = "No user with that username"
             };
-        });
+        }
+
+        if (!PasswordUtils.VerifyPassword(password, user.Password)) {
+            return new ApiResponse {
+                Status = HttpStatusCode.BadRequest,
+                Message = "The provided password is incorrect"
+            };
+        }
+
+        return new ApiResponse {
+            Data = user.ToShort()
+        };
     }
 }

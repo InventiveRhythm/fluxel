@@ -2,7 +2,7 @@ using System.Net;
 using fluxel.API.Components;
 using fluxel.Components.Users;
 using fluxel.Constants;
-using fluxel.Database;
+using fluxel.Database.Helpers;
 
 namespace fluxel.API.Routes.Users;
 
@@ -20,19 +20,17 @@ public class UserMapsRoute : IApiRoute
             };
         }
 
-        return RealmAccess.Run(realm => {
-            var user = realm.Find<User>(id);
+        var user = UserHelper.Get(id);
 
-            if (user == null) {
-                return new ApiResponse {
-                    Status = HttpStatusCode.NotFound,
-                    Message = ResponseStrings.UserNotFound
-                };
-            }
-
+        if (user == null) {
             return new ApiResponse {
-                Data = new User.UserMaps(user)
+                Status = HttpStatusCode.NotFound,
+                Message = ResponseStrings.UserNotFound
             };
-        });
+        }
+
+        return new ApiResponse {
+            Data = new User.UserMaps(user)
+        };
     }
 }

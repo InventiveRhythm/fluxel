@@ -1,9 +1,8 @@
 ﻿using System.Net;
-using System.Text.RegularExpressions;
 using fluxel.API.Components;
 using fluxel.Components.Users;
 using fluxel.Constants;
-using fluxel.Database;
+using fluxel.Database.Helpers;
 using fluxel.Utils;
 using Newtonsoft.Json;
 
@@ -33,7 +32,7 @@ public class AccountUpdateRoute : IApiRoute {
             };
         }
 
-        var user = User.FindById(userToken.UserId);
+        var user = UserHelper.Get(userToken.Id);
 
         if (user == null) {
             return new ApiResponse {
@@ -47,17 +46,15 @@ public class AccountUpdateRoute : IApiRoute {
                 var name = new StreamReader(req.InputStream).ReadToEnd();
 
                 // check if name is valid (3-20 characters, no special characters)
-                if (!Regex.IsMatch(name, @"^[a-zA-Z0-9_ ]{1,20}$") && name.Length != 0) {
+                if (!name.ValidDisplayName() && name.Length != 0) {
                     return new ApiResponse {
                         Message = "Invalid display name",
                         Status = HttpStatusCode.BadRequest
                     };
                 }
 
-                RealmAccess.Run(realm => {
-                    var rUser = realm.Find<User>(userToken.UserId);
-                    rUser.DisplayName = name;
-                });
+                user.DisplayName = name;
+                UserHelper.Update(user);
 
                 return new ApiResponse {
                     Message = "Your display name has been updated."
@@ -66,10 +63,8 @@ public class AccountUpdateRoute : IApiRoute {
             case "aboutme":
                 var aboutme = new StreamReader(req.InputStream).ReadToEnd();
 
-                RealmAccess.Run(realm => {
-                    var rUser = realm.Find<User>(userToken.UserId);
-                    rUser.AboutMe = aboutme;
-                });
+                user.AboutMe = aboutme;
+                UserHelper.Update(user);
 
                 return new ApiResponse {
                     Message = "Your about me has been updated."
@@ -86,29 +81,27 @@ public class AccountUpdateRoute : IApiRoute {
                     };
                 }
 
-                RealmAccess.Run(realm => {
-                    var rUser = realm.Find<User>(userToken.UserId);
+                foreach (var (key, value) in socials) {
+                    switch (key.ToLower()) {
+                        case "twitter":
+                            user.Socials.Twitter = value;
+                            break;
 
-                    foreach (var (key, value) in socials) {
-                        switch (key.ToLower()) {
-                            case "twitter":
-                                rUser.Socials.Twitter = value;
-                                break;
+                        case "youtube":
+                            user.Socials.YouTube = value;
+                            break;
 
-                            case "youtube":
-                                rUser.Socials.YouTube = value;
-                                break;
+                        case "twitch":
+                            user.Socials.Twitch = value;
+                            break;
 
-                            case "twitch":
-                                rUser.Socials.Twitch = value;
-                                break;
-
-                            case "discord":
-                                rUser.Socials.Discord = value;
-                                break;
-                        }
+                        case "discord":
+                            user.Socials.Discord = value;
+                            break;
                     }
-                });
+                }
+
+                UserHelper.Update(user);
 
                 return new ApiResponse {
                     Message = "Your socials have been updated."
@@ -144,14 +137,14 @@ public class AccountUpdateRoute : IApiRoute {
 
                 switch (action) {
                     case "avatar":
-                        Assets.WriteAsset(AssetType.Avatar, userToken.UserId, buffer);
+                        Assets.WriteAsset(AssetType.Avatar, userToken.Id, buffer);
 
                         return new ApiResponse {
                             Message = "Your avatar has been updated."
                         };
 
                     case "banner":
-                        Assets.WriteAsset(AssetType.Banner, userToken.UserId, buffer);
+                        Assets.WriteAsset(AssetType.Banner, userToken.Id, buffer);
 
                         return new ApiResponse {
                             Message = "Your banner has been updated."

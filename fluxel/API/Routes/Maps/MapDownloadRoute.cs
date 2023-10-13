@@ -1,8 +1,8 @@
 ﻿using System.Net;
 using System.Text;
 using fluxel.API.Components;
-using fluxel.Components.Maps;
 using fluxel.Constants;
+using fluxel.Database.Helpers;
 
 namespace fluxel.API.Routes.Maps;
 
@@ -18,7 +18,7 @@ public class MapDownloadRoute : IApiRoute {
             };
         }
 
-        var set = MapSet.FindById(id);
+        var set = MapSetHelper.Get(id);
 
         if (set == null) {
             return new ApiResponse {

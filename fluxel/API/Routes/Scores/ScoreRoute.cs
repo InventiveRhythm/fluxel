@@ -1,8 +1,7 @@
 ﻿using System.Net;
 using fluxel.API.Components;
-using fluxel.Components.Scores;
 using fluxel.Constants;
-using fluxel.Database;
+using fluxel.Database.Helpers;
 
 namespace fluxel.API.Routes.Scores;
 
@@ -18,19 +17,17 @@ public class ScoreRoute : IApiRoute {
             };
         }
 
-        return RealmAccess.Run(realm => {
-            var score = realm.Find<Score>(id);
+        var score = ScoreHelper.Get(id);
 
-            if (score == null) {
-                return new ApiResponse {
-                    Status = HttpStatusCode.NotFound,
-                    Message = ResponseStrings.ScoreNotFound
-                };
-            }
-
+        if (score == null) {
             return new ApiResponse {
-                Data = score
+                Status = HttpStatusCode.NotFound,
+                Message = ResponseStrings.ScoreNotFound
             };
-        });
+        }
+
+        return new ApiResponse {
+            Data = score
+        };
     }
 }

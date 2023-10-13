@@ -5,7 +5,7 @@ using fluxel.Components.Maps;
 using fluxel.Components.Maps.Json;
 using fluxel.Components.Users;
 using fluxel.Constants;
-using fluxel.Database;
+using fluxel.Database.Helpers;
 using fluxel.Utils;
 using Newtonsoft.Json;
 
@@ -34,7 +34,7 @@ public class MapUpdateRoute : IApiRoute {
             };
         }
 
-        var user = User.FindById(userToken.UserId);
+        var user = UserHelper.Get(userToken.Id);
 
         if (user == null) {
             return new ApiResponse {
@@ -52,201 +52,194 @@ public class MapUpdateRoute : IApiRoute {
             };
         }
 
-        return RealmAccess.Run(realm => {
-            var set = realm.Find<MapSet>(mapId);
+        var set = MapSetHelper.Get(mapId);
 
-            if (set == null) {
+        if (set == null) {
+            return new ApiResponse {
+                Status = HttpStatusCode.NotFound,
+                Message = ResponseStrings.MapSetNotFound
+            };
+        }
+
+        if (set.CreatorId != user.Id) {
+            return new ApiResponse {
+                Status = HttpStatusCode.Forbidden,
+                Message = "You are not the creator of this mapset."
+            };
+        }
+
+        if (set.Status == 3) {
+            // map ranked
+            return new ApiResponse {
+                Status = HttpStatusCode.Forbidden,
+                Message = "You cannot update a pure map."
+            };
+        }
+
+        var stream = new MemoryStream();
+        req.InputStream.CopyTo(stream);
+
+        var cleaned = StreamUtils.GetPostFile(req.ContentEncoding, req.ContentType, stream);
+        stream = new MemoryStream(cleaned);
+
+        var zip = new ZipArchive(stream);
+
+        var diffNames = new List<string>();
+
+        var newMaps = new List<Map>();
+        var newId = MapHelper.NextId;
+
+        var backgroundStream = new MemoryStream();
+        var hasBackground = false;
+
+        var coverStream = new MemoryStream();
+        var hasCover = false;
+
+        foreach (var entry in zip.Entries) {
+            if (!entry.Name.EndsWith(".fsc")) continue;
+
+            var json = new StreamReader(entry.Open()).ReadToEnd();
+            var mapJson = JsonConvert.DeserializeObject<MapJson>(json);
+
+            if (mapJson == null || !mapJson.Validate()) {
                 return new ApiResponse {
-                    Status = HttpStatusCode.NotFound,
-                    Message = ResponseStrings.MapSetNotFound
+                    Status = HttpStatusCode.BadRequest,
+                    Message = "The file " + entry.Name + " is not a valid map file."
                 };
             }
 
-            if (set.CreatorId != user.Id) {
-                return new ApiResponse {
-                    Status = HttpStatusCode.Forbidden,
-                    Message = "You are not the creator of this mapset."
+            diffNames.Add(mapJson.Metadata.Difficulty);
+            Logger.Log($"{mapJson.Metadata.Difficulty}");
+
+            var hash = Hashing.GetHash(json);
+            var mapper = UserHelper.Get(mapJson.Metadata.Mapper) ?? user;
+
+            if (set.MapsList.Any(m => m.Difficulty == mapJson.Metadata.Difficulty)) {
+                var map = set.MapsList.First(m => m.Difficulty == mapJson.Metadata.Difficulty);
+
+                if (map.Hash != hash)
+                {
+                    map.Hash = hash;
+                    map.MapperId = mapper.Id;
+                    map.Title = mapJson.Metadata.Title;
+                    map.Artist = mapJson.Metadata.Artist;
+                    map.Source = mapJson.Metadata.Source;
+                    map.Tags = mapJson.Metadata.Tags;
+                    map.Bpm = mapJson.TimingPoints.First().BPM;
+                    map.Mode = mapJson.KeyCount;
+                    map.Length = (int)mapJson.HitObjects.Max(h => h.Time);
+                    map.Hits = mapJson.HitObjects.Count(h => h.HoldTime == 0);
+                    map.LongNotes = mapJson.HitObjects.Count(h => h.HoldTime > 0) * 2;
+                }
+            }
+            else {
+                var map = new Map {
+                    Id = newId,
+                    SetId = set.Id,
+                    Hash = hash,
+                    MapperId = mapper.Id,
+                    Title = mapJson.Metadata.Title,
+                    Artist = mapJson.Metadata.Artist,
+                    Source = mapJson.Metadata.Source,
+                    Tags = mapJson.Metadata.Tags,
+                    Bpm = mapJson.TimingPoints.First().BPM,
+                    Difficulty = mapJson.Metadata.Difficulty,
+                    Mode = mapJson.KeyCount,
+                    Length = (int)mapJson.HitObjects.Max(h => h.Time),
+                    Rating = 0,
+                    Hits = mapJson.HitObjects.Count(h => h.HoldTime == 0),
+                    LongNotes = mapJson.HitObjects.Count(h => h.HoldTime > 0) * 2
                 };
+
+                newId++;
+                newMaps.Add(map);
             }
 
-            if (set.Status == 3) {
-                // map ranked
-                return new ApiResponse {
-                    Status = HttpStatusCode.Forbidden,
-                    Message = "You cannot update a pure map."
-                };
-            }
+            if (!hasBackground && mapJson.BackgroundFile != "") {
+                var background = zip.GetEntry(mapJson.BackgroundFile);
 
-            var stream = new MemoryStream();
-            req.InputStream.CopyTo(stream);
-
-            var cleaned = StreamUtils.GetPostFile(req.ContentEncoding, req.ContentType, stream);
-            stream = new MemoryStream(cleaned);
-
-            var zip = new ZipArchive(stream);
-
-            var diffNames = new List<string>();
-
-            var newMaps = new List<Map>();
-            var newId = Map.GetNextId();
-
-            var backgroundStream = new MemoryStream();
-            var hasBackground = false;
-
-            var coverStream = new MemoryStream();
-            var hasCover = false;
-
-            foreach (var entry in zip.Entries) {
-                if (!entry.Name.EndsWith(".fsc")) continue;
-
-                var json = new StreamReader(entry.Open()).ReadToEnd();
-                var mapJson = JsonConvert.DeserializeObject<MapJson>(json);
-
-                if (mapJson == null || !mapJson.Validate()) {
-                    return new ApiResponse {
-                        Status = HttpStatusCode.BadRequest,
-                        Message = "The file " + entry.Name + " is not a valid map file."
-                    };
-                }
-
-                diffNames.Add(mapJson.Metadata.Difficulty);
-                Logger.Log($"{mapJson.Metadata.Difficulty}");
-
-                var hash = Hashing.GetHash(json);
-                var mapper = User.FindByUsername(mapJson.Metadata.Mapper) ?? user;
-
-                if (set.MapsList.Any(m => m.Difficulty == mapJson.Metadata.Difficulty)) {
-                    var map = set.MapsList.First(m => m.Difficulty == mapJson.Metadata.Difficulty);
-
-                    if (map.Hash != hash)
-                    {
-                        map.Hash = hash;
-                        map.MapperId = mapper.Id;
-                        map.Title = mapJson.Metadata.Title;
-                        map.Artist = mapJson.Metadata.Artist;
-                        map.Source = mapJson.Metadata.Source;
-                        map.Tags = mapJson.Metadata.Tags;
-                        map.Bpm = mapJson.TimingPoints.First().BPM;
-                        map.Mode = mapJson.KeyCount;
-                        map.Length = (int)mapJson.HitObjects.Max(h => h.Time);
-                        map.Hits = mapJson.HitObjects.Count(h => h.HoldTime == 0);
-                        map.LongNotes = mapJson.HitObjects.Count(h => h.HoldTime > 0) * 2;
-                    }
-                }
-                else {
-                    var map = new Map {
-                        Id = newId,
-                        SetId = set.Id,
-                        Hash = hash,
-                        MapperId = mapper.Id,
-                        Title = mapJson.Metadata.Title,
-                        Artist = mapJson.Metadata.Artist,
-                        Source = mapJson.Metadata.Source,
-                        Tags = mapJson.Metadata.Tags,
-                        Bpm = mapJson.TimingPoints.First().BPM,
-                        Difficulty = mapJson.Metadata.Difficulty,
-                        Mode = mapJson.KeyCount,
-                        Length = (int)mapJson.HitObjects.Max(h => h.Time),
-                        Rating = 0,
-                        Hits = mapJson.HitObjects.Count(h => h.HoldTime == 0),
-                        LongNotes = mapJson.HitObjects.Count(h => h.HoldTime > 0) * 2
-                    };
-
-                    newId++;
-                    newMaps.Add(map);
-                }
-
-                if (!hasBackground && mapJson.BackgroundFile != "") {
-                    var background = zip.GetEntry(mapJson.BackgroundFile);
-
-                    if (background != null) {
-                        background.Open().CopyTo(backgroundStream);
-                        hasBackground = true;
-                    }
-                }
-
-                if (!hasCover && mapJson.CoverFile != "") {
-                    var cover = zip.GetEntry(mapJson.CoverFile);
-
-                    if (cover != null) {
-                        cover.Open().CopyTo(coverStream);
-                        hasCover = true;
-                    }
+                if (background != null) {
+                    background.Open().CopyTo(backgroundStream);
+                    hasBackground = true;
                 }
             }
 
-            Logger.Log($"New maps: {JsonConvert.SerializeObject(diffNames)}");
+            if (!hasCover && mapJson.CoverFile != "") {
+                var cover = zip.GetEntry(mapJson.CoverFile);
 
-            var newSplit = new List<int>();
-
-            // delete old maps
-            foreach (var map in set.MapsList) {
-                if (diffNames.Contains(map.Difficulty)) {
-                    newSplit.Add(map.Id);
-                    Logger.Log($"{map.Difficulty} exists");
-                }
-                else {
-                    Logger.Log($"{map.Difficulty} does not exist");
-                    realm.Remove(map);
+                if (cover != null) {
+                    cover.Open().CopyTo(coverStream);
+                    hasCover = true;
                 }
             }
+        }
 
-            // add new maps
-            foreach (var map in newMaps) {
-                Logger.Log($"{map.Difficulty} added");
-                realm.Add(map);
+        var newSplit = new List<long>();
+
+        // delete old maps
+        foreach (var map in set.MapsList) {
+            if (diffNames.Contains(map.Difficulty)) {
                 newSplit.Add(map.Id);
             }
-
-            // write file to disk
-            var path = $"{Environment.CurrentDirectory}/Maps";
-            if (!Directory.Exists(path)) Directory.CreateDirectory(path);
-            var file = $"{path}/{set.Id}.zip";
-
-            if (File.Exists(file)) File.Delete(file);
-
-            stream.Seek(0, SeekOrigin.Begin);
-
-            var dest = File.Create(file);
-            stream.CopyTo(dest);
-            dest.Flush();
-
-            if (!hasCover && hasBackground) {
-                coverStream = backgroundStream;
-                hasCover = true;
+            else {
+                MapHelper.Remove(map);
             }
+        }
 
-            // update background
-            if (hasBackground) {
-                var backgroundPath = $"{Environment.CurrentDirectory}/Assets/Backgrounds";
-                if (!Directory.Exists(backgroundPath)) Directory.CreateDirectory(backgroundPath);
-                var backgroundFile = $"{backgroundPath}/{set.Id}.png";
-                backgroundStream.Seek(0, SeekOrigin.Begin);
-                backgroundStream.CopyTo(File.Create(backgroundFile));
-            }
+        // add new maps
+        foreach (var map in newMaps) {
+            MapHelper.Add(map);
+            newSplit.Add(map.Id);
+        }
 
-            // update cover
-            if (hasCover) {
-                var coverPath = $"{Environment.CurrentDirectory}/Assets/Covers";
-                if (!Directory.Exists(coverPath)) Directory.CreateDirectory(coverPath);
-                var coverFile = $"{coverPath}/{set.Id}.png";
-                coverStream.Seek(0, SeekOrigin.Begin);
-                coverStream.CopyTo(File.Create(coverFile));
-            }
+        // write file to disk
+        var path = $"{Environment.CurrentDirectory}/Maps";
+        if (!Directory.Exists(path)) Directory.CreateDirectory(path);
+        var file = $"{path}/{set.Id}.zip";
 
-            backgroundStream.Dispose();
-            coverStream.Dispose();
-            stream.Dispose();
-            dest.Dispose();
-            zip.Dispose();
+        if (File.Exists(file)) File.Delete(file);
 
-            set.Maps = string.Join(',', newSplit);
-            set.LastUpdated = DateTimeOffset.Now;
+        stream.Seek(0, SeekOrigin.Begin);
 
-            return new ApiResponse {
-                Message = "Successfully updated mapset.",
-                Data = set
-            };
-        });
+        var dest = File.Create(file);
+        stream.CopyTo(dest);
+        dest.Flush();
+
+        if (!hasCover && hasBackground) {
+            coverStream = backgroundStream;
+            hasCover = true;
+        }
+
+        // update background
+        if (hasBackground) {
+            var backgroundPath = $"{Environment.CurrentDirectory}/Assets/Backgrounds";
+            if (!Directory.Exists(backgroundPath)) Directory.CreateDirectory(backgroundPath);
+            var backgroundFile = $"{backgroundPath}/{set.Id}.png";
+            backgroundStream.Seek(0, SeekOrigin.Begin);
+            backgroundStream.CopyTo(File.Create(backgroundFile));
+        }
+
+        // update cover
+        if (hasCover) {
+            var coverPath = $"{Environment.CurrentDirectory}/Assets/Covers";
+            if (!Directory.Exists(coverPath)) Directory.CreateDirectory(coverPath);
+            var coverFile = $"{coverPath}/{set.Id}.png";
+            coverStream.Seek(0, SeekOrigin.Begin);
+            coverStream.CopyTo(File.Create(coverFile));
+        }
+
+        backgroundStream.Dispose();
+        coverStream.Dispose();
+        stream.Dispose();
+        dest.Dispose();
+        zip.Dispose();
+
+        set.Maps = string.Join(',', newSplit);
+        set.LastUpdated = DateTimeOffset.Now;
+
+        return new ApiResponse {
+            Message = "Successfully updated mapset.",
+            Data = set
+        };
     }
 }

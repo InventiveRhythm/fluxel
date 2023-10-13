@@ -1,7 +1,6 @@
 ﻿using System.Net;
 using fluxel.API.Components;
-using fluxel.Components.Maps;
-using fluxel.Database;
+using fluxel.Database.Helpers;
 
 namespace fluxel.API.Routes.Maps;
 
@@ -14,7 +13,7 @@ public class MapSetsRoute : IApiRoute
     {
         return new ApiResponse
         {
-            Data = RealmAccess.Run(realm => realm.All<MapSet>())
+            Data = MapSetHelper.All
         };
     }
 }

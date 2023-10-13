@@ -1,6 +1,6 @@
 ﻿using System.Net;
 using fluxel.API.Components;
-using fluxel.Components.Users;
+using fluxel.Database.Helpers;
 
 namespace fluxel.API.Routes.Users;
 
@@ -12,7 +12,7 @@ public class OnlineUsersRoute : IApiRoute {
         return new ApiResponse {
             Data = new {
                 count = GlobalStatistics.Online,
-                users = GlobalStatistics.GetOnlineUsers.Select(u => User.FindById(u)?.ToShort())
+                users = GlobalStatistics.GetOnlineUsers.Select(u => UserHelper.Get(u)?.ToShort())
             }
         };
     }

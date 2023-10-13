@@ -1,27 +1,26 @@
 ﻿using fluxel.Components.Users;
-using fluxel.Database;
+using fluxel.Database.Helpers;
+using MongoDB.Bson.Serialization.Attributes;
 using Newtonsoft.Json;
-using Realms;
 
 namespace fluxel.Components.Maps;
 
-public class Map : RealmObject {
-    [PrimaryKey]
+public class Map {
     [JsonProperty("id")]
-    public int Id { get; set; }
+    public long Id { get; set; }
 
     [JsonProperty("mapset")]
-    public int SetId { get; set; }
+    public long SetId { get; set; }
 
     [JsonProperty("hash")]
     public string Hash { get; set; } = "";
 
     [JsonIgnore]
-    public int MapperId { get; set; }
+    public long MapperId { get; set; }
 
-    [Ignored]
+    [BsonIgnore]
     [JsonProperty("mapper")]
-    public UserShort Mapper => User.FindById(MapperId)?.ToShort() ?? new UserShort();
+    public UserShort Mapper => UserHelper.Get(MapperId)?.ToShort() ?? new UserShort();
 
     [JsonProperty("difficulty")]
     public string Difficulty { get; set; } = "";
@@ -56,11 +55,11 @@ public class Map : RealmObject {
     [JsonProperty("lns")]
     public int LongNotes { get; set; }
 
-    [Ignored]
+    [BsonIgnore]
     [JsonProperty("maxcombo")]
     public int MaxCombo => Hits + LongNotes * 2;
 
-    [Ignored]
+    [BsonIgnore]
     [JsonProperty("nps")]
     public double NotesPerSecond => Math.Round((Hits + LongNotes * 2) / (double)(Length / 1000f), 2);
 
@@ -74,41 +73,8 @@ public class Map : RealmObject {
             Difficulty = Difficulty,
             Mode = Mode,
             Rating = Rating,
-            Status = MapSet.FindById(SetId)?.Status ?? 0,
+            Status = MapSetHelper.Get(SetId)?.Status ?? 0,
             MapperId = MapperId
         };
     }
-
-    public static Map? FindById(int id) {
-        return RealmAccess.Run(realm => realm.Find<Map>(id));
-    }
-
-    public static Map? GetByHash(string hash) {
-        return RealmAccess.Run(realm => realm.All<Map>().FirstOrDefault(m => m.Hash == hash));
-    }
-
-    public static int GetNextId() {
-        return RealmAccess.Run(realm => {
-            var maps = realm.All<Map>();
-
-            var max = 0;
-
-            foreach (var set in maps) {
-                if (set.Id > max) {
-                    max = set.Id;
-                }
-            }
-
-            return !maps.Any() ? 1 : max + 1;
-        });
-    }
-
-    public static void Delete(int mapId) {
-        RealmAccess.Run(realm => {
-            var map = realm.Find<Map>(mapId);
-            if (map != null) realm.Remove(map);
-        });
-    }
-
-    public static void Insert(Map map) => RealmAccess.Run(realm => realm.Add(map));
 }

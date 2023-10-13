@@ -1,9 +1,8 @@
 ﻿using Newtonsoft.Json;
-using Realms;
 
 namespace fluxel.Components.Users;
 
-public class UserSocials : RealmObject {
+public class UserSocials {
     [JsonProperty("discord")]
     public string Discord { get; set; } = "";
 

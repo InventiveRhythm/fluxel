@@ -1,6 +1,4 @@
-﻿using fluxel.Components.Chat;
-using fluxel.Components.Users;
-using fluxel.Database;
+﻿using fluxel.Database.Helpers;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -20,7 +18,7 @@ public class ChatDeleteHandler : IPacketHandler {
             return;
         }
 
-        var user = User.FindById(userId);
+        var user = UserHelper.Get(userId);
         if (user == null) throw new Exception("User is null!");
 
         if (user.Role < 3) {
@@ -30,13 +28,14 @@ public class ChatDeleteHandler : IPacketHandler {
 
         var guid = Guid.Parse(id);
 
-        var success = RealmAccess.Run(realm => {
-            var message = realm.Find<ChatMessage>(guid);
-            if (message == null) return false;
+        var success = false;
 
-            realm.Remove(message);
-            return true;
-        });
+        var message = ChatHelper.Get(guid);
+
+        if (message != null) {
+            ChatHelper.Delete(message);
+            success = true;
+        }
 
         if (!success) {
             interaction.Reply(400, "Message not found!");

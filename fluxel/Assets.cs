@@ -19,7 +19,7 @@ public static class Assets {
         }
     }
 
-    public static void WriteAsset(AssetType type, int id, byte[] data) {
+    public static void WriteAsset(AssetType type, long id, byte[] data) {
         var prefix = getType(type);
         const string extension = "png";
 

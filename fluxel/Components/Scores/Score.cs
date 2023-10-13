@@ -1,38 +1,37 @@
 ﻿using fluxel.Components.Maps;
-using fluxel.Database;
+using fluxel.Database.Helpers;
 using fluxel.Utils;
+using MongoDB.Bson.Serialization.Attributes;
 using Newtonsoft.Json;
-using Realms;
 
 namespace fluxel.Components.Scores;
 
-public class Score : RealmObject {
-    [PrimaryKey]
+public class Score {
     [JsonProperty("id")]
-    public int Id { get; set; }
+    public long Id { get; set; }
 
     [JsonProperty("user")]
-    public int UserId { get; set; }
+    public long UserId { get; set; }
 
     [JsonIgnore]
-    public int MapId { get; init; }
+    public long MapId { get; init; }
 
-    [Ignored]
+    [BsonIgnore]
     [JsonIgnore]
-    public Map MapInfo => Map.FindById(MapId) ?? new Map();
+    public Map MapInfo => MapHelper.Get(MapId) ?? new Map();
 
-    [Ignored]
+    [BsonIgnore]
     [JsonProperty("map")]
-    public MapShort MapShort => Map.FindById(MapId)?.ToShort() ?? new MapShort();
+    public MapShort MapShort => MapHelper.Get(MapId)?.ToShort() ?? new MapShort();
 
     [JsonIgnore]
     public DateTimeOffset Time { get; init; } = DateTimeOffset.Now;
 
-    [Ignored]
+    [BsonIgnore]
     [JsonProperty("time")]
     public long TimeLong => Time.ToUnixTimeSeconds();
 
-    [Ignored]
+    [BsonIgnore]
     [JsonProperty("mode")]
     public int Mode => MapShort.Mode;
 
@@ -42,19 +41,19 @@ public class Score : RealmObject {
     [JsonProperty("mods")]
     public string Mods { get; set; } = "";
 
-    [Ignored]
+    [BsonIgnore]
     [JsonProperty("pr")]
     public double PerformanceRating => MapInfo.NotesPerSecond + this.CalculatePerformanceRating();
 
-    [Ignored]
+    [BsonIgnore]
     [JsonProperty("score")]
     public int TotalScore => this.CalculateScore();
 
-    [Ignored]
+    [BsonIgnore]
     [JsonProperty("accuracy")]
     public float Accuracy => this.CalculateAccuracy();
 
-    [Ignored]
+    [BsonIgnore]
     [JsonProperty("grade")]
     public string Grade => this.GetGrade();
 
@@ -81,23 +80,4 @@ public class Score : RealmObject {
 
     [JsonProperty("scrollspeed")]
     public float ScrollSpeed { get; set; }
-
-    public static int GetNextId() {
-        return RealmAccess.Run(realm => {
-            var scores = realm.All<Score>();
-
-            var max = 0;
-
-            foreach (var score in scores) {
-                if (score.Id > max) {
-                    max = score.Id;
-                }
-            }
-
-            return !scores.Any() ? 1 : max + 1;
-        });
-    }
-
-
-    public static int Count() => RealmAccess.Run(realm => realm.All<Score>().Count());
 }

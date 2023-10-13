@@ -1,21 +1,20 @@
 ﻿using fluxel.Components.Users;
-using fluxel.Database;
+using fluxel.Database.Helpers;
+using MongoDB.Bson.Serialization.Attributes;
 using Newtonsoft.Json;
-using Realms;
 
 namespace fluxel.Components.Maps;
 
-public class MapSet : RealmObject {
-    [PrimaryKey]
+public class MapSet {
     [JsonProperty("id")]
-    public int Id { get; set; }
+    public long Id { get; set; }
 
     [JsonIgnore]
-    public int CreatorId { get; init; }
+    public long CreatorId { get; init; }
 
-    [Ignored]
+    [BsonIgnore]
     [JsonProperty("creator")]
-    public UserShort Creator => User.FindById(CreatorId)?.ToShort() ?? new UserShort();
+    public UserShort Creator => UserHelper.Get(CreatorId)?.ToShort() ?? new UserShort();
 
     [JsonProperty("artist")]
     public string Artist { get; set; } = "";
@@ -29,7 +28,7 @@ public class MapSet : RealmObject {
     [JsonIgnore]
     public string Maps { get; set; } = "";
 
-    [Ignored]
+    [BsonIgnore]
     [JsonProperty("maps")]
     public List<Map> MapsList {
         get {
@@ -38,9 +37,9 @@ public class MapSet : RealmObject {
 
             foreach (var s in split)
             {
-                if (!int.TryParse(s, out int id)) continue;
+                if (!int.TryParse(s, out var id)) continue;
 
-                var map = Map.FindById(id);
+                var map = MapHelper.Get(id);
 
                 if (map is not null)
                     maps.Add(map);
@@ -56,15 +55,15 @@ public class MapSet : RealmObject {
     [JsonIgnore]
     public DateTimeOffset LastUpdated { get; set; } = DateTimeOffset.UtcNow;
 
-    [Ignored]
+    [BsonIgnore]
     [JsonProperty("submitted")]
     public long SubmittedLong => Submitted.ToUnixTimeSeconds();
 
-    [Ignored]
+    [BsonIgnore]
     [JsonProperty("last_updated")]
     public long LastUpdatedLong => LastUpdated.ToUnixTimeSeconds();
 
-    [Ignored]
+    [BsonIgnore]
     [JsonProperty("tags")]
     public string[] Tags {
         get {
@@ -84,7 +83,7 @@ public class MapSet : RealmObject {
         }
     }
 
-    [Ignored]
+    [BsonIgnore]
     [JsonProperty("source")]
     public string Source {
         get {
@@ -102,23 +101,4 @@ public class MapSet : RealmObject {
             return sources.Count == 0 ? "" : sources.MaxBy(pair => pair.Value).Key;
         }
     }
-
-    public static int GetNextId() {
-        return RealmAccess.Run(realm => {
-            var sets = realm.All<MapSet>();
-
-            var max = 0;
-
-            foreach (var set in sets) {
-                if (set.Id > max) {
-                    max = set.Id;
-                }
-            }
-
-            return !sets.Any() ? 1 : max + 1;
-        });
-    }
-
-    public static MapSet? FindById(int id) => RealmAccess.Run(realm => realm.Find<MapSet>(id));
-    public static int Count() => RealmAccess.Run(realm => realm.All<MapSet>().Count());
 }

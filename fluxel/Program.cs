@@ -1,6 +1,7 @@
 ﻿using System.Net;
 using fluxel.API;
 using fluxel.Bot;
+using fluxel.Database;
 using fluxel.Multiplayer.OpenLobby;
 using fluxel.Websocket;
 using Newtonsoft.Json;
@@ -10,7 +11,7 @@ namespace fluxel;
 public static class Program {
     public static Config Config { get; private set; } = null!;
 
-    public static async Task Main() {
+    public static async Task Main(string[] args) {
         Logger.Log("Starting fluxel...");
 
         AppDomain.CurrentDomain.UnhandledException += (_, eventArgs) => {
@@ -19,6 +20,8 @@ public static class Program {
             else
                 Logger.Log(e);
         };
+
+        Logger.Log("Loading config...");
 
         var configJson = await File.ReadAllTextAsync("config.json");
         var json = JsonConvert.DeserializeObject<Config>(configJson);
@@ -30,17 +33,25 @@ public static class Program {
 
         Config = json;
 
+        Logger.Log("Setting up database...");
+        MongoDatabase.Setup();
+
+        if (args.Contains("--migrate")) {
+            Logger.Log("Migrating database...");
+        }
+
         ApiServer.Start();
         WebsocketServer.Start();
         DiscordBot.Start();
 
+        Logger.Log("Adding test lobby...");
         LobbyHandler.AddLobby(new MultiLobby {
             RoomId = 1,
             Settings = new MultiLobbySettings {
                 Name = "Test Lobby"
             },
             HostId = 0,
-            Maps = new List<int> { 6 }
+            Maps = new List<long> { 6 }
         });
 
         GlobalStatistics.AddOnlineUser(new IPEndPoint(IPAddress.Parse("0.0.0.0"), 0), 0);
