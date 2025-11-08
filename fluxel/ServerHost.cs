@@ -50,11 +50,10 @@ public class ServerHost
         MapInfo.MinKeymode = 4;
         MapInfo.MaxKeymode = 8;
 
-        Scheduler = new TaskRunner();
-
         setupErrorLogging();
         setupDatabase();
 
+        Scheduler = new TaskRunner();
         Server = new HttpServer
         {
             NotFoundModule = new APIRouteModule<FluxelAPIInteraction, NotFoundRoute>()
