@@ -1,4 +1,6 @@
-﻿using fluxel.Models.Notifications;
+﻿using fluxel.API.Components;
+using fluxel.Models.Notifications;
+using fluxel.Modules.Messages;
 
 namespace fluxel.Tasks.Users;
 
@@ -15,12 +17,9 @@ public class SendNotificationTask : IBasicTask
 
     public void Run()
     {
-        // TODO: fix
-        // var conn = Program.NotificationConnections.Where(x => x.UserID == notification.UserID);
-        // var cache = new RequestCache();
-        // var notif = notification.ToAPI(cache);
+        var notif = notification.ToAPI(new RequestCache());
+        if (notif is null) return;
 
-        // foreach (var socket in conn)
-            // socket.Client.NotificationReceived(notif);
+        ServerHost.Instance.SendMessage(new UserNotificationMessage(notification.UserID, notif));
     }
 }

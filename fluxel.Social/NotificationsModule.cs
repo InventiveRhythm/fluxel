@@ -35,6 +35,12 @@ public class NotificationsModule : IModule, IOnlineStateManager
                 Sockets.Where(x => x.UserID == ach.UserID).ForEach(x => x.Client.RewardAchievement(ach.Achievement));
                 break;
             }
+
+            case UserNotificationMessage notif:
+            {
+                Sockets.Where(x => x.UserID == notif.UserID).ForEach(x => x.Client.NotificationReceived(notif.Notification));
+                break;
+            }
         }
     }
 
