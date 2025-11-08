@@ -1,4 +1,6 @@
 using System.Globalization;
+using System.Text;
+using System.Text.Json;
 using fluxel.API.Components;
 using fluxel.Constants;
 using fluxel.Database.Helpers;
@@ -140,6 +142,11 @@ public class ScoresRoute : IFluxelAPIRoute
         userScore.MaxCombo = maxCombo;
         userScore.Recalculate();
         ScoreHelper.Add(userScore);
+
+        //save replay
+        string replayJson = JsonSerializer.Serialize(payload.Replay);
+        var replayBytes = Encoding.UTF8.GetBytes(replayJson);
+        Assets.WriteAsset(AssetType.Replay, $"{userScore.ID}", replayBytes, "", "frp");
 
         //recalculate ptr/ovr/rank
         try
