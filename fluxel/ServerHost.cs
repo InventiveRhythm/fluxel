@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net;
 using System.Reflection;
 using System.Threading.Tasks;
+using fluxel.API;
 using fluxel.API.Components;
 using fluxel.Bot;
 using fluxel.Config;
@@ -14,6 +15,7 @@ using fluxel.Models;
 using fluxel.Modules;
 using fluxel.Tasks;
 using fluXis.Map;
+using Midori.API;
 using Midori.Logging;
 using Midori.Networking;
 using Midori.Utils;
@@ -52,7 +54,11 @@ public class ServerHost
         setupErrorLogging();
         setupDatabase();
 
-        Server = new HttpServer();
+        Server = new HttpServer
+        {
+            NotFoundModule = new APIRouteModule<FluxelAPIInteraction, NotFoundRoute>()
+        };
+
         Server.RegisterAPI<FluxelAPIInteraction, IFluxelAPIRoute>(typeof(ServerHost).Assembly);
 
         loadModules();
