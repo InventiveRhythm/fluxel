@@ -182,7 +182,7 @@ public static class CommandUtils
         var value = interaction.getOptions()?.Where(option => option.Name == name).Select(option => option.Value).FirstOrDefault();
         if (value is not ulong id) return null;
 
-        return await DiscordBot.Bot.GetUserAsync(id);
+        return await DiscordBot.Bot!.GetUserAsync(id);
     }
 
     public static async Task<DiscordUser?> GetMember(this DiscordInteraction interaction, string name)

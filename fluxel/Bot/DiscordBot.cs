@@ -20,7 +20,7 @@ public static class DiscordBot
 {
     private static ServerConfig.DiscordConfig config = null!;
 
-    public static DiscordClient Bot { get; private set; } = null!;
+    public static DiscordClient? Bot { get; private set; }
     private static List<ISlashCommand>? commands { get; set; }
 
     public static async Task StartAsync(ServerConfig.DiscordConfig config)
@@ -29,6 +29,9 @@ public static class DiscordBot
             throw new Exception("Bot is already running!");
 
         DiscordBot.config = config;
+
+        if (string.IsNullOrWhiteSpace(config.Token))
+            return;
 
         Bot = new DiscordClient(new DiscordConfiguration
         {
@@ -62,6 +65,8 @@ public static class DiscordBot
 
     public static async Task Stop()
     {
+        if (Bot is null) return;
+
         Logger.Log("Shutting down Discord bot.");
         await Bot.DisconnectAsync();
     }
@@ -89,7 +94,7 @@ public static class DiscordBot
 
     private static async Task ready(DiscordClient sender, ReadyEventArgs args)
     {
-        Logger.Log($"Logged in as {Bot.CurrentUser.Username}#{Bot.CurrentUser.Discriminator}!");
+        Logger.Log($"Logged in as {Bot!.CurrentUser.Username}#{Bot.CurrentUser.Discriminator}!");
 
         if (commands == null) throw new Exception("Commands are null!");
 
@@ -97,7 +102,7 @@ public static class DiscordBot
         await Bot.UpdateStatusAsync(new DiscordActivity("fluXis", ActivityType.Playing));
     }
 
-    private static DiscordChannel? getChannel(ulong id) => Bot.GetChannelAsync(id).Result;
+    private static DiscordChannel? getChannel(ulong id) => Bot?.GetChannelAsync(id).Result;
 
     public static DiscordChannel? GetChannel(ChannelType type) => type switch
     {
