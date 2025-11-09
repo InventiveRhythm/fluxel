@@ -3,12 +3,11 @@ using System.Text;
 using System.Text.Json;
 using fluxel.API.Components;
 using fluxel.Constants;
+using fluxel.Database.Extensions;
 using fluxel.Database.Helpers;
 using fluxel.Models.Maps;
 using fluxel.Models.Scores;
 using fluxel.Models.Users;
-using fluXis.Online.API.Models.Scores;
-using fluXis.Online.API.Models.Users;
 using fluXis.Online.API.Payloads.Scores;
 using fluXis.Online.API.Responses.Scores;
 using fluXis.Scoring;
@@ -157,41 +156,8 @@ public class ScoresRoute : IFluxelAPIRoute
             return;
         }
 
-        ScoreSubmissionStats response = makeScoreSubmissionStats(userScore, prevOvr, prevPrt, prevRank, user.OverallRating, user.PotentialRating, user.GetGlobalRank());
+        ScoreSubmissionStats response = new ScoreSubmissionStats(userScore.ToAPI(), prevOvr, prevPrt, prevRank, user.OverallRating, user.PotentialRating, user.GetGlobalRank());
 
         await interaction.Reply(HttpStatusCode.OK, response);
-    }
-
-    private ScoreSubmissionStats makeScoreSubmissionStats(Score score, double prevOvr, double prevPtr, int prevRank, double curOvr, double curPtr, int curRank)
-    {
-        return new ScoreSubmissionStats(
-            new APIScore
-            {
-                ID = score.ID,
-                Accuracy = score.Accuracy,
-                FlawlessCount = score.FlawlessCount,
-                PerfectCount = score.PerfectCount,
-                AlrightCount = score.AlrightCount,
-                OkayCount = score.OkayCount,
-                MissCount = score.MissCount,
-                MaxCombo = score.MaxCombo,
-                ScrollSpeed = score.ScrollSpeed,
-                Rank = score.Grade,
-                PerformanceRating = score.PerformanceRating,
-                Time = score.TimeLong,
-                Mods = score.Mods,
-                Mode = score.Mode,
-                User = new APIUser
-                {
-                    ID = score.UserID,
-                    Username = score.User.Username, //should be fine since we checked if the user existed before reaching this
-                }
-            },
-            prevOvr,
-            prevPtr,
-            prevRank,
-            curOvr,
-            curPtr,
-            curRank);
     }
 }
