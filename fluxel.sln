@@ -20,6 +20,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "fluxel.Social", "fluxel.Soc
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "fluxel.FallbackAuth", "fluxel.FallbackAuth\fluxel.FallbackAuth.csproj", "{1C6D9BDE-FFFA-42E0-8ABC-0F79654D9EBC}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "fluxel.FallbackScoreSubmission", "fluxel.FallbackScoreSubmission\fluxel.FallbackScoreSubmission.csproj", "{F70D67AB-D99F-4DBB-A0AD-3414EEEB61BC}"
+EndProject
 Global
 	GlobalSection(NestedProjects) = preSolution
 		{228618F8-B5E3-42F0-B6F5-A23861B6B3F0} = {57D50BBE-44CF-4B6B-B2D0-E4C92355043D}
@@ -31,6 +33,7 @@ Global
 		{51E6E8E6-7DED-455B-BF6A-E7F9EF0F1895} = {57D50BBE-44CF-4B6B-B2D0-E4C92355043A}
 		{4EEC910F-60B2-4C4B-978B-0DCB279508CE} = {57D50BBE-44CF-4B6B-B2D0-E4C92355043A}
 		{1C6D9BDE-FFFA-42E0-8ABC-0F79654D9EBC} = {57D50BBE-44CF-4B6B-B2D0-E4C92355043A}
+		{F70D67AB-D99F-4DBB-A0AD-3414EEEB61BC} = {57D50BBE-44CF-4B6B-B2D0-E4C92355043A}
 	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -77,5 +80,9 @@ Global
 		{1C6D9BDE-FFFA-42E0-8ABC-0F79654D9EBC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1C6D9BDE-FFFA-42E0-8ABC-0F79654D9EBC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1C6D9BDE-FFFA-42E0-8ABC-0F79654D9EBC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F70D67AB-D99F-4DBB-A0AD-3414EEEB61BC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F70D67AB-D99F-4DBB-A0AD-3414EEEB61BC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F70D67AB-D99F-4DBB-A0AD-3414EEEB61BC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F70D67AB-D99F-4DBB-A0AD-3414EEEB61BC}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

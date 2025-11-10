@@ -22,6 +22,11 @@
       Condition="!Exists('..\fluxel.Auth\fluxel.Auth.csproj')"
       Include="..\fluxel.FallbackAuth\fluxel.FallbackAuth.csproj"
     />
+    
+    <ProjectReference
+      Condition="!Exists('..\fluxel.ScoreSubmission\fluxel.ScoreSubmission.csproj')"
+      Include="..\fluxel.FallbackScoreSubmission\fluxel.FallbackScoreSubmission.csproj"
+    />
 
     <ProjectReference Include="..\fluxel.Multiplayer\fluxel.Multiplayer.csproj"/>
     <ProjectReference Include="..\fluxel.Social\fluxel.Social.csproj" />
