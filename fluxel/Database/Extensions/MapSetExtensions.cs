@@ -7,6 +7,7 @@ namespace fluxel.Database.Extensions;
 public static class MapSetExtensions
 {
     public static User? GetCreator(this MapSet set) => set.Cache.Users.Get(set.CreatorID) ?? UserHelper.Get(set.CreatorID);
+    public static string GetDescription(this MapSet set) => set.Cache.MapSets.Get(set.ID)?.Description ?? set.Description ?? "";
 
     public static bool AllowScores(this MapSet set) => set.Status >= MapStatus.Pure;
 }

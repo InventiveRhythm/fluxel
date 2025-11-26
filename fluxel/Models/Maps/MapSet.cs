@@ -79,6 +79,9 @@ public class MapSet : IHasCache
     [BsonElement("internal-flags")]
     public InternalSetFlags InternalFlags { get; set; }
 
+    [BsonElement("description")]
+    public string Description { get; set; } = "";
+
     [BsonElement("votes")]
     public Dictionary<string, int> Votes { get; set; } = new();
 
