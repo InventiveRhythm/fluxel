@@ -2,7 +2,6 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using fluxel.API.Components;
 using fluxel.Constants;
-using fluxel.Database.Extensions;
 using fluxel.Database.Helpers;
 using Midori.Networking;
 
@@ -29,6 +28,6 @@ public class MapSetGetDescriptionRoute : IFluxelAPIRoute
             return;
         }
 
-        await interaction.Reply(HttpStatusCode.OK, set.GetDescription());
+        await interaction.Reply(HttpStatusCode.OK, set.Description ?? "");
     }
 }
