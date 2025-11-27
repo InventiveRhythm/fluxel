@@ -4,6 +4,7 @@ using fluxel.API.Components;
 using fluxel.Constants;
 using fluxel.Database.Extensions;
 using fluxel.Database.Helpers;
+using fluxel.Utils;
 using Midori.API.Components.Interfaces;
 using Midori.Networking;
 
@@ -49,7 +50,7 @@ public class MapSetUpdateDescriptionRoute : IFluxelAPIRoute, INeedsAuthorization
             return;
         }
 
-        set.Description = payload;
+        set.Description = Sanitizer.Sanitize(payload);
         MapSetHelper.Update(set);
 
         await interaction.Reply(HttpStatusCode.OK);
