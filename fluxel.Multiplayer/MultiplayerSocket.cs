@@ -168,10 +168,11 @@ public class MultiplayerSocket : AuthenticatedSocket<IMultiplayerServer, IMultip
         if (player == null)
             return;
 
-        score.PlayerID = UserID;
+        //TODO: adapt for dual
+        score.Players[0].PlayerID = UserID;
         setPlayerStatus(player.ID, MultiplayerUserState.Finished);
 
-        score.HitResults = new List<HitResult>();
+        score.Players[0].HitResults = new List<HitResult>();
         player.Score = score;
 
         await endIfAllFinished();
