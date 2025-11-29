@@ -16,29 +16,44 @@ namespace fluxel.Utils;
 
 public static class ServerMapUtils
 {
-    public static Map CreateFromJson(MapInfo json, long id, long set, string entry, string hash, long mapper, string effects, string storyboard) => new()
+    public static Map CreateFromJson(MapInfo json, long id, long set, string entry, string hash, long mapper, string effects, string storyboard)
     {
-        ID = id,
-        SetID = set,
-        FileName = entry,
-        SHA256Hash = hash,
-        EffectSHA256Hash = string.IsNullOrEmpty(effects) ? "" : MapUtils.GetHash(effects),
-        StoryboardSHA256Hash = string.IsNullOrEmpty(storyboard) ? "" : MapUtils.GetHash(storyboard),
-        MapperID = mapper,
-        Title = json.Metadata.Title,
-        TitleRomanized = json.Metadata.TitleRomanized,
-        Artist = json.Metadata.Artist,
-        ArtistRomanized = json.Metadata.ArtistRomanized,
-        Source = json.Metadata.AudioSource,
-        Tags = json.Metadata.Tags,
-        BPM = json.TimingPoints.First().BPM,
-        DifficultyName = json.Metadata.Difficulty,
-        Mode = json.KeyCount,
-        Length = (int)json.HitObjects.Max(h => h.Time),
-        Hits = json.HitObjects.Count(h => h.HoldTime == 0),
-        LongNotes = json.HitObjects.Count(h => h.HoldTime > 0) * 2,
-        NotesPerSecond = MapUtils.GetNps(json.HitObjects)
-    };
+        var map = new Map
+        {
+            ID = id,
+            SetID = set,
+            FileName = entry,
+            SHA256Hash = hash,
+            EffectSHA256Hash = string.IsNullOrEmpty(effects) ? "" : MapUtils.GetHash(effects),
+            StoryboardSHA256Hash = string.IsNullOrEmpty(storyboard) ? "" : MapUtils.GetHash(storyboard),
+            MapperID = mapper,
+            Title = json.Metadata.Title,
+            TitleRomanized = json.Metadata.TitleRomanized,
+            Artist = json.Metadata.Artist,
+            ArtistRomanized = json.Metadata.ArtistRomanized,
+            Source = json.Metadata.AudioSource,
+            Tags = json.Metadata.Tags,
+            BPM = json.TimingPoints.First().BPM,
+            DifficultyName = json.Metadata.Difficulty,
+            Mode = json.SinglePlayerKeyCount,
+            Length = (int)json.HitObjects.Max(h => h.Time),
+            Hits = json.HitsForPlayer(0),
+            LongNotes = json.LongNotesForPlayer(0),
+            NotesPerSecond = MapUtils.GetNps(json.HitObjects), //TODO: distinct nps for each dual sides?
+            PlayerCount = json.PlayerCount
+        };
+
+        for (int i = 1; i < json.PlayerCount; ++i)
+        {
+            map.DualSides.Add(new()
+            {
+                Hits = json.HitsForPlayer(i),
+                LongNotes = json.LongNotesForPlayer(i)
+            });
+        }
+
+        return map;
+    }
 
     public static bool ReadFile(this ZipArchive archive, string? name, [NotNullWhen(true)] out string? content)
     {

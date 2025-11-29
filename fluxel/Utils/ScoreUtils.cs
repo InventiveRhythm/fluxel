@@ -7,13 +7,35 @@ public static class ScoreUtils
 {
     public static int CalculateScore(this Score score)
     {
-        var maxScore = (int)(1000000 * getMulitpliers(score));
+        var maxScore = (int)(1000000 * getMultipliers(score));
         var accBased = (int)(score.Accuracy / 100f * (maxScore * .9f));
-        var comboBased = (int)(score.MaxCombo / (float)score.Map.MaxCombo * (maxScore * .1f));
+        var comboBased = (int)(score.MaxCombo / (float)score.Map.MaxComboForPlayer(0) * (maxScore * .1f));
+        return accBased + comboBased;
+    }
+
+    public static int CalculateScore(this ScoreExtraPlayer score, int playerIndex)
+    {
+        var maxScore = (int)(1000000 * getMultipliers(score.Score));
+        var accBased = (int)(score.Accuracy / 100f * (maxScore * .9f));
+        var comboBased = (int)(score.MaxCombo / (float)score.Score.Map.MaxComboForPlayer(playerIndex) * (maxScore * .1f));
         return accBased + comboBased;
     }
 
     public static float CalculateAccuracy(this Score score)
+    {
+        var rated = 0f;
+        var total = score.FlawlessCount + score.PerfectCount + score.GreatCount + score.AlrightCount + score.OkayCount + score.MissCount;
+
+        rated += score.FlawlessCount;
+        rated += score.PerfectCount * .98f;
+        rated += score.GreatCount * .65f;
+        rated += score.AlrightCount * .25f;
+        rated += score.OkayCount * .1f;
+
+        return rated / total * 100f;
+    }
+
+    public static float CalculateAccuracy(this ScoreExtraPlayer score)
     {
         var rated = 0f;
         var total = score.FlawlessCount + score.PerfectCount + score.GreatCount + score.AlrightCount + score.OkayCount + score.MissCount;
@@ -39,10 +61,14 @@ public static class ScoreUtils
         };
     }
 
-    private static float getMulitpliers(this Score score)
+    private static float getMultipliers(this Score score)
     {
         var mods = score.Mods.Split(",");
+        return getMultipliers(mods);
+    }
 
+    private static float getMultipliers(string[] mods)
+    {
         var multiplier = 1f;
 
         foreach (var mod in mods)
@@ -77,9 +103,13 @@ public static class ScoreUtils
         return multiplier;
     }
 
-    public static string GetGrade(this Score score)
+    public static string GetGrade(this Score score) => getGrade(score.Accuracy);
+
+    public static string GetGrade(this ScoreExtraPlayer score) => getGrade(score.Accuracy);
+
+    private static string getGrade(float accuracy)
     {
-        return score.Accuracy switch
+        return accuracy switch
         {
             100 => "X",
             >= 99 => "SS",
