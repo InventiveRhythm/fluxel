@@ -24,6 +24,9 @@ public class ChatChannel
     [BsonElement("dm_target_2")]
     public long? Target2 { get; set; }
 
+    [BsonElement("club")]
+    public long? Club { get; set; }
+
     public ChatChannel(string name, APIChannelType type)
     {
         Name = name;

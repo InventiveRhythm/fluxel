@@ -49,14 +49,13 @@ public class AcceptInviteRoute : IFluxelAPIRoute, INeedsAuthorization
             return;
         }
 
-        if (club.Members.Contains(interaction.UserID))
+        if (club.IsInClub(interaction.UserID))
         {
             await interaction.ReplyMessage(HttpStatusCode.BadRequest, "You are already in this club.");
             return;
         }
 
-        club.Members.Add(interaction.UserID);
-        ClubHelper.Update(club);
+        club.AddMember(interaction.UserID);
         await interaction.ReplyMessage(HttpStatusCode.OK, "You have joined the club.");
 
         ClubHelper.RemoveForUser(interaction.UserID);

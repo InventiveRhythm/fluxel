@@ -74,6 +74,17 @@ public static class ChatHelper
         return chan;
     }
 
+    public static ChatChannel CreateClubChannel(string name, long club)
+    {
+        var chan = new ChatChannel(name, APIChannelType.Club)
+        {
+            Club = club
+        };
+
+        channels.InsertOne(chan);
+        return chan;
+    }
+
     public static ChatChannel? GetChannel(string name) => channels.Find(x => x.Name.ToLowerInvariant() == name.ToLowerInvariant()).FirstOrDefault();
 
     public static IEnumerable<ChatChannel> WithMember(long id) => channels.Find(x => x.Users.Contains(id)).ToList();
@@ -86,7 +97,7 @@ public static class ChatHelper
             return false;
 
         chan.Users.Add(id);
-        update(chan);
+        Update(chan);
         return true;
     }
 
@@ -98,11 +109,11 @@ public static class ChatHelper
             return false;
 
         chan.Users.Remove(id);
-        update(chan);
+        Update(chan);
         return true;
     }
 
-    private static void update(ChatChannel channel)
+    public static void Update(ChatChannel channel)
         => channels.ReplaceOne(x => x.Name == channel.Name, channel);
 
     #endregion

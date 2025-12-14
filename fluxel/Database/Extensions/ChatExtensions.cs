@@ -12,6 +12,7 @@ public static class ChatExtensions
         Type = channel.Type,
         UserCount = channel.Users.Count,
         Target1 = channel.Target1 is null ? null : UserHelper.Get(channel.Target1.Value)?.ToAPI(),
-        Target2 = channel.Target2 is null ? null : UserHelper.Get(channel.Target2.Value)?.ToAPI()
+        Target2 = channel.Target2 is null ? null : UserHelper.Get(channel.Target2.Value)?.ToAPI(),
+        Club = channel.Club is null ? null : ClubHelper.Get(channel.Club.Value)?.ToAPI()
     };
 }

@@ -2,7 +2,6 @@
 using System.Threading.Tasks;
 using fluxel.API.Components;
 using fluxel.Constants;
-using fluxel.Database.Helpers;
 using fluXis.Online.API.Models.Clubs;
 using Midori.API.Components.Interfaces;
 using Midori.Networking;
@@ -57,14 +56,13 @@ public class AddClubMemberRoute : IFluxelAPIRoute, INeedsAuthorization
             return;
         }
 
-        if (club.Members.Contains(user.ID))
+        if (club.IsInClub(user.ID))
         {
             await interaction.ReplyMessage(HttpStatusCode.BadRequest, "You already are in this club!");
             return;
         }
 
-        club.Members.Add(user.ID);
-        ClubHelper.Update(club);
+        club.AddMember(user.ID);
         await interaction.Reply(HttpStatusCode.Created);
     }
 

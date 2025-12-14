@@ -24,6 +24,24 @@ public class NotificationsModule : IModule, IOnlineStateManager
 
         Sockets = host.Server.MapModule<NotificationSocket>("/notifications");
         host.Scheduler.Schedule(new CleanupOnlineStatesCronTask());
+
+        createClubChannels();
+    }
+
+    private void createClubChannels()
+    {
+        var clubs = ClubHelper.All;
+
+        foreach (var club in clubs)
+        {
+            var name = club.ChatChannel;
+            var channel = ChatHelper.GetChannel(name) ?? ChatHelper.CreateClubChannel(name, club.ID);
+
+            channel.Users.Clear();
+            channel.Users.AddRange(club.Members);
+
+            ChatHelper.Update(channel);
+        }
     }
 
     public void OnMessage(object data)

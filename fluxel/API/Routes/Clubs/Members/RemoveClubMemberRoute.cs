@@ -3,7 +3,6 @@ using System.Threading.Tasks;
 using fluxel.API.Components;
 using fluxel.Constants;
 using fluxel.Database.Extensions;
-using fluxel.Database.Helpers;
 using Midori.API.Components.Interfaces;
 using Midori.Networking;
 
@@ -52,14 +51,13 @@ public class RemoveClubMemberRoute : IFluxelAPIRoute, INeedsAuthorization
             return;
         }
 
-        if (!club.Members.Contains(memberid))
+        if (!club.IsInClub(memberid))
         {
             await interaction.ReplyMessage(HttpStatusCode.BadRequest, "This user is not a member of this club.");
             return;
         }
 
-        club.Members.Remove(memberid);
-        ClubHelper.Update(club);
+        club.RemoveMember(memberid);
         await interaction.Reply(HttpStatusCode.NoContent);
     }
 }

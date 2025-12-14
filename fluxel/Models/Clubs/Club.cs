@@ -54,6 +54,26 @@ public class Club
 
     [BsonIgnore]
     public RequestCache Cache { get; set; } = new();
+
+    [BsonIgnore]
+    public string ChatChannel => $"club_{ID}";
+
+    public bool IsInClub(User user) => IsInClub(user.ID);
+    public bool IsInClub(long user) => Members.Contains(user);
+
+    public void AddMember(long user)
+    {
+        Members.Add(user);
+        ClubHelper.Update(this);
+        ChatHelper.AddToChannel(ChatChannel, user);
+    }
+
+    public void RemoveMember(long user)
+    {
+        Members.Remove(user);
+        ClubHelper.Update(this);
+        ChatHelper.RemoveFromChannel(ChatChannel, user);
+    }
 }
 
 public enum ClubIncludes
