@@ -30,7 +30,7 @@ public class FriendsRoute : IFluxelAPIRoute, INeedsAuthorization
 
         await interaction.Reply(HttpStatusCode.OK, new APIFriends
         {
-            Users = friends.Select(x => x.ToAPI(interaction.UserID, include: UserIncludes.LastLogin)).ToList(),
+            Users = friends.Select(x => x.ToAPI(interaction.UserID, include: UserIncludes.LastLogin | UserIncludes.Following)).ToList(),
             Rooms = lobbies
         });
     }
