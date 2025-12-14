@@ -53,6 +53,6 @@ public class CreateChannelRoute : IFluxelAPIRoute, INeedsAuthorization
         ChatHelper.AddToChannel(channel.Name, interaction.UserID);
         interaction.GetSocket()?.Client.AddToChatChannel(channel.ToAPI());
 
-        await interaction.Reply(HttpStatusCode.Created);
+        await interaction.Reply(HttpStatusCode.OK, channel.Name);
     }
 }
