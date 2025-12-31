@@ -75,11 +75,16 @@ public class Map : IHasCache
     [BsonElement("rating")]
     public double Rating { get; set; }
 
+    //these are the hits only for the main player. For dual maps, see "DualSides"
     [BsonElement("hits")]
     public int Hits { get; set; }
 
+    //these are the lns only for the main player. For dual maps, see "DualSides"
     [BsonElement("lns")]
     public int LongNotes { get; set; }
+
+    [BsonElement("dual-sides")]
+    public List<MapDualSide> DualSides { get; set; } = new();
 
     [BsonElement("effects")]
     public MapEffectType Effects { get; set; }
@@ -89,6 +94,9 @@ public class Map : IHasCache
 
     [BsonElement("votes")]
     public Dictionary<string, int>? Votes { get; set; } = new();
+
+    [BsonElement("player-count")]
+    public int PlayerCount { get; set; } = 1;
 
     [BsonIgnore]
     public int MaxCombo => Hits + LongNotes * 2;
@@ -145,6 +153,29 @@ public class Map : IHasCache
         var baseRate = baseTotal / count;
         var effectRate = (readTotal + trackTotal + perceptTotal) / 3 / count;
         return Rating = baseRate + effectRate * 2;
+    }
+
+    public int MaxComboForPlayer(int playerIndex)
+    {
+        if (playerIndex < 0 || playerIndex >= PlayerCount) return 0;
+        if (playerIndex == 0) return MaxCombo;
+
+        int dualIndex = playerIndex - 1;
+        if (dualIndex >= DualSides.Count) return 0;
+
+        return DualSides[dualIndex].MaxCombo;
+    }
+
+    public class MapDualSide
+    {
+        [BsonElement("hits")]
+        public int Hits { get; set; }
+
+        [BsonElement("lns")]
+        public int LongNotes { get; set; }
+
+        [BsonIgnore]
+        public int MaxCombo => Hits + LongNotes * 2;
     }
 }
 

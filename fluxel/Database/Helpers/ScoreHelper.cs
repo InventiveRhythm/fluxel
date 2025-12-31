@@ -8,6 +8,8 @@ using MongoDB.Driver;
 
 namespace fluxel.Database.Helpers;
 
+//TODO: right now when querying anything from here the Score field of the ScoreExtraPlayers won't be filled
+//(but maybe that's not a big deal, since currently it is only useful when processing the score?)
 public static class ScoreHelper
 {
     private static IMongoCollection<Score> scores => MongoDatabase.GetCollection<Score>("scores");

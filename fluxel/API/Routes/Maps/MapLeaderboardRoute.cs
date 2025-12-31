@@ -46,6 +46,11 @@ public class MapLeaderboardRoute : IFluxelAPIRoute, INeedsAuthorization
         var type = interaction.GetStringQuery("type") ?? "global";
         var version = interaction.GetStringQuery("version") ?? map.SHA256Hash;
 
+        //assume index 0 by default to not break previous versions of the game
+        long playerIndex = 0;
+        interaction.TryGetLongQuery("playerIndex", out playerIndex);
+        if (playerIndex >= map.PlayerCount) playerIndex = 0;
+
         switch (type)
         {
             case "global":
@@ -53,7 +58,10 @@ public class MapLeaderboardRoute : IFluxelAPIRoute, INeedsAuthorization
                 var all = ScoreHelper.FromMap(map, version).ToList();
                 all.ForEach(s => s.Cache = interaction.Cache);
 
-                reply(interaction, set, map, filterList(all.OrderByDescending(s => s.PerformanceRating).ToList()));
+                reply(interaction, set, map,
+                    playerIndex == 0
+                        ? filterList(all.OrderByDescending(s => s.PerformanceRating).ToList())
+                        : filterList(all.OrderByDescending(s => s.ExtraPlayers[(int)playerIndex - 1].PerformanceRating).ToList()));
                 break;
             }
 
@@ -64,7 +72,7 @@ public class MapLeaderboardRoute : IFluxelAPIRoute, INeedsAuthorization
                     return;
                 }
 
-                reply(interaction, set, map, getCountry(map, version, interaction.User.CountryCode));
+                reply(interaction, set, map, getCountry(map, version, interaction.User.CountryCode, (int)playerIndex));
                 break;
 
             case "club":
@@ -74,7 +82,7 @@ public class MapLeaderboardRoute : IFluxelAPIRoute, INeedsAuthorization
                     return;
                 }
 
-                reply(interaction, set, map, getClub(map, version, interaction.User.Club.ID));
+                reply(interaction, set, map, getClub(map, version, interaction.User.Club.ID, (int)playerIndex));
                 break;
 
             case "friends":
@@ -82,12 +90,17 @@ public class MapLeaderboardRoute : IFluxelAPIRoute, INeedsAuthorization
                 var following = RelationHelper.GetFollowing(interaction.User.ID);
                 following.Add(interaction.UserID);
 
-                var all = ScoreHelper.FromMap(map, version).Where(s => following.Contains(s.UserID)).ToList();
+                var all =
+                    playerIndex == 0
+                        ? ScoreHelper.FromMap(map, version).Where(s => following.Contains(s.UserID)).ToList()
+                        : ScoreHelper.FromMap(map, version).Where(s => following.Contains(s.ExtraPlayers[(int)playerIndex - 1].UserID)).ToList();
+
                 reply(interaction, set, map, filterList(all.OrderByDescending(s => s.PerformanceRating).ToList()));
                 break;
             }
 
             case "clubs":
+                //TODO: consider dual maps?
                 await interaction.Reply(HttpStatusCode.OK, new MapLeaderboardClubs(map.ToAPI(), ClubHelper.GetScoresOnMap(map.ID).OrderByDescending(s => s.PerformanceRating).Select(s => s.ToAPI())));
                 break;
 
@@ -106,6 +119,12 @@ public class MapLeaderboardRoute : IFluxelAPIRoute, INeedsAuthorization
             // but also the best way
             if (interaction.UserID != -1)
                 api.User.Following = RelationHelper.GetFollowState(interaction.UserID, api.User.ID);
+
+            foreach (var apiScoreExtraPlayer in api.ExtraPlayers)
+            {
+                if (interaction.UserID != -1)
+                    apiScoreExtraPlayer.User.Following = RelationHelper.IsFollowing(interaction.UserID, apiScoreExtraPlayer.User.ID);
+            }
 
             return api;
         })));
@@ -128,16 +147,37 @@ public class MapLeaderboardRoute : IFluxelAPIRoute, INeedsAuthorization
         return scores;
     }
 
-    private List<Score> getCountry(Map map, string? version, string code)
-        => filterList(ScoreHelper.FromMap(map, version)
-                                 .Where(s => s.User?.CountryCode == code)
-                                 .OrderByDescending(s => s.PerformanceRating).ToList());
-
-    private List<Score> getClub(Map map, string? version, long id)
+    private List<Score> getCountry(Map map, string? version, string code, int playerIndex)
     {
-        return filterList(ScoreHelper.FromMap(map, version)
-                                     .Where(s => s.User?.Club?.ID == id)
-                                     .OrderByDescending(s => s.PerformanceRating)
-                                     .ToList());
+        if (playerIndex == 0)
+        {
+            return filterList(ScoreHelper.FromMap(map, version)
+                                         .Where(s => s.User?.CountryCode == code)
+                                         .OrderByDescending(s => s.PerformanceRating).ToList());
+        }
+        else
+        {
+            return filterList(ScoreHelper.FromMap(map, version)
+                                         .Where(s => s.ExtraPlayers[playerIndex - 1].User?.CountryCode == code)
+                                         .OrderByDescending(s => s.ExtraPlayers[playerIndex - 1].PerformanceRating).ToList());
+        }
+    }
+
+    private List<Score> getClub(Map map, string? version, long id, int playerIndex)
+    {
+        if (playerIndex == 0)
+        {
+            return filterList(ScoreHelper.FromMap(map, version)
+                                         .Where(s => s.User?.Club?.ID == id)
+                                         .OrderByDescending(s => s.PerformanceRating)
+                                         .ToList());
+        }
+        else
+        {
+            return filterList(ScoreHelper.FromMap(map, version)
+                                         .Where(s => s.ExtraPlayers[playerIndex - 1].User?.Club?.ID == id)
+                                         .OrderByDescending(s => s.ExtraPlayers[playerIndex - 1].PerformanceRating)
+                                         .ToList());
+        }
     }
 }

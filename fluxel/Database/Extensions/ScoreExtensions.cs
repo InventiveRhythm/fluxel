@@ -30,6 +30,29 @@ public static class ScoreExtensions
             ScrollSpeed = score.ScrollSpeed
         };
 
+        foreach (var scoreExtraPlayer in score.ExtraPlayers)
+        {
+            var apiScoreExtraPlayer = new APIScoreExtraPlayer
+            {
+                User = scoreExtraPlayer.APIUser,
+                PerformanceRating = scoreExtraPlayer.PerformanceRating,
+                TotalScore = scoreExtraPlayer.TotalScore,
+                Accuracy = scoreExtraPlayer.Accuracy,
+                Rank = scoreExtraPlayer.Grade,
+                MaxCombo = scoreExtraPlayer.MaxCombo,
+                FlawlessCount = scoreExtraPlayer.FlawlessCount,
+                PerfectCount = scoreExtraPlayer.PerfectCount,
+                GreatCount = scoreExtraPlayer.GreatCount,
+                AlrightCount = scoreExtraPlayer.AlrightCount,
+                OkayCount = scoreExtraPlayer.OkayCount,
+                MissCount = scoreExtraPlayer.MissCount,
+                ScrollSpeed = scoreExtraPlayer.ScrollSpeed,
+                Score = apiScore
+            };
+
+            apiScore.ExtraPlayers.Add(apiScoreExtraPlayer);
+        }
+
         if (include == null || include.Count == 0)
             return apiScore;
 
