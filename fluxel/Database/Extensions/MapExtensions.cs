@@ -66,6 +66,7 @@ public static class MapExtensions
             MaxCombo = map.MaxCombo,
             NoteCount = map.Hits,
             LongNoteCount = map.LongNotes,
+            LandminesCount = map.Landmines,
             NotesPerSecond = map.NotesPerSecond,
             AccuracyDifficulty = map.AccuracyDifficulty,
             HealthDifficulty = map.HealthDifficulty,
