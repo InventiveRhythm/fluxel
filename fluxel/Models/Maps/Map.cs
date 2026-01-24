@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using fluxel.API.Components;
 using fluxel.Database.Helpers;
 using fluXis.Online.API.Models.Maps;
@@ -81,6 +82,9 @@ public class Map : IHasCache
     [BsonElement("lns")]
     public int LongNotes { get; set; }
 
+    [BsonElement("landmines")]
+    public int Landmines { get; set; }
+
     [BsonElement("effects")]
     public MapEffectType Effects { get; set; }
 
@@ -91,7 +95,7 @@ public class Map : IHasCache
     public Dictionary<string, int>? Votes { get; set; } = new();
 
     [BsonIgnore]
-    public int MaxCombo => Hits + LongNotes * 2;
+    public int MaxCombo => Hits + LongNotes * 2 + Landmines;
 
     [BsonIgnore]
     public RequestCache Cache { get; set; } = new();
@@ -145,6 +149,14 @@ public class Map : IHasCache
         var baseRate = baseTotal / count;
         var effectRate = (readTotal + trackTotal + perceptTotal) / 3 / count;
         return Rating = baseRate + effectRate * 2;
+    }
+
+    public int GetMaxComboWithMods(string[] mods)
+    {
+        int hitCount = Hits + (mods.Contains("NLN") ? LongNotes : 0);
+        int lnCount = mods.Contains("NLN") ? 0 : LongNotes;
+        int mineCount = mods.Contains("NMN") ? 0 : Landmines;
+        return hitCount + lnCount * 2 + mineCount;
     }
 }
 

@@ -12,7 +12,7 @@ namespace fluxel.WebSocket;
 public abstract class AuthenticatedSocket<S, C> : TypedWebSocketSession<S, C>
     where S : class where C : class
 {
-    public virtual Version SupportedVersion => new(2025, 1214);
+    public virtual Version SupportedVersion => new(2026, 124);
 
     public IPEndPoint? Address { get; private set; }
     public long UserID { get; set; }

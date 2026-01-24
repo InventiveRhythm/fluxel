@@ -62,6 +62,7 @@ public class RecalculateMapTask : IBasicTask
             _ => false
         });
         dbMap.LongNotes = map.HitObjects.Count(x => x.Type == 0 && x.HoldTime > 0);
+        dbMap.Landmines = map.HitObjects.Count(x => x.Type == 2);
 
         dbMap.AccuracyDifficulty = map.AccuracyDifficulty;
         dbMap.HealthDifficulty = map.HealthDifficulty;
