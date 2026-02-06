@@ -159,23 +159,17 @@ public class MapSetSearchFilter : SearchFilters<MapSet>
 
     public override bool Match(MapSet set)
     {
-        if (Status != null)
-        {
-            if (!Status.Value.HasFlag(set.Status switch
-                {
-                    MapStatus.Blacklisted or MapStatus.Unsubmitted => StatusFlags.Unsubmitted,
-                    MapStatus.Pending => StatusFlags.Pending,
-                    MapStatus.Impure => StatusFlags.Impure,
-                    MapStatus.Pure or MapStatus.Ranked => StatusFlags.Pure,
-                    _ => throw new ArgumentOutOfRangeException()
-                }))
-                return false;
-        }
-        else
-        {
-            if (set.Status < MapStatus.Pure)
-                return false;
-        }
+        Status ??= StatusFlags.Pure;
+
+        if (!Status.Value.HasFlag(set.Status switch
+            {
+                MapStatus.Blacklisted or MapStatus.Unsubmitted => StatusFlags.Unsubmitted,
+                MapStatus.Pending => StatusFlags.Pending,
+                MapStatus.Impure => StatusFlags.Impure,
+                MapStatus.Pure or MapStatus.Ranked => StatusFlags.Pure,
+                _ => throw new ArgumentOutOfRangeException()
+            }))
+            return false;
 
         if (bpm != null)
         {
