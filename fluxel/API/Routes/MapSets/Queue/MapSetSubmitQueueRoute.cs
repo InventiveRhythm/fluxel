@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 using fluxel.API.Components;
@@ -49,6 +50,12 @@ public class MapSetSubmitQueueRoute : IFluxelAPIRoute, INeedsAuthorization
         if (set.Status == MapStatus.Pending)
         {
             await interaction.ReplyMessage(HttpStatusCode.Conflict, "This mapset is already in the queue.");
+            return;
+        }
+
+        if (set.MapsList.Any(x => x.Mode is < 4 or > 8))
+        {
+            await interaction.ReplyMessage(HttpStatusCode.BadRequest, "A map in this mapset is not between 4 and 8 keys.");
             return;
         }
 

@@ -47,8 +47,8 @@ public class ServerHost
     {
         osu.Framework.Logging.Logger.Enabled = false;
 
-        MapInfo.MinKeymode = 4;
-        MapInfo.MaxKeymode = 8;
+        MapInfo.MinKeymode = 1;
+        MapInfo.MaxKeymode = 10;
 
         setupErrorLogging();
         setupDatabase();
