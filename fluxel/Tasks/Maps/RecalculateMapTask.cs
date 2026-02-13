@@ -1,6 +1,6 @@
 ﻿using System;
-using System.Linq;
 using fluxel.Database.Helpers;
+using fluxel.Models.Maps;
 using fluxel.Utils;
 using fluXis.Online.API.Models.Maps;
 using fluXis.Utils;
@@ -55,13 +55,20 @@ public class RecalculateMapTask : IBasicTask
         dbMap.SHA256Hash = MapUtils.GetHash(map.RawContent);
 
         dbMap.NotesPerSecond = MapUtils.GetNps(map.HitObjects);
-        dbMap.Hits = map.HitObjects.Count(x => x.Type switch
+        dbMap.Hits = map.HitsForPlayer(0);
+        dbMap.LongNotes = map.LongNotesForPlayer(0);
+
+        dbMap.PlayerCount = map.PlayerCount;
+        dbMap.DualSides.Clear();
+
+        for (int i = 1; i < map.PlayerCount; i++)
         {
-            0 => x.HoldTime <= 0,
-            1 => true,
-            _ => false
-        });
-        dbMap.LongNotes = map.HitObjects.Count(x => x.Type == 0 && x.HoldTime > 0);
+            dbMap.DualSides.Add(new Map.MapDualSide
+            {
+                Hits = map.HitsForPlayer(i),
+                LongNotes = map.LongNotesForPlayer(i)
+            });
+        }
 
         dbMap.AccuracyDifficulty = map.AccuracyDifficulty;
         dbMap.HealthDifficulty = map.HealthDifficulty;

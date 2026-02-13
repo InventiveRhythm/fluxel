@@ -1,13 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
+using System;
 using System.Linq;
 using fluxel.API.Components;
 using fluxel.Database.Extensions;
 using fluxel.Database.Helpers;
-using fluxel.Models.Maps;
 using fluxel.Models.Users;
 using fluxel.Utils;
-using fluXis.Online.API.Models.Maps;
 using fluXis.Online.API.Models.Users;
 using fluXis.Scoring.Processing;
 using fluXis.Utils;
@@ -15,10 +12,10 @@ using MongoDB.Bson.Serialization.Attributes;
 
 namespace fluxel.Models.Scores;
 
-public class Score
+public class ScoreExtraPlayer
 {
-    [BsonId]
-    public long ID { get; set; }
+    [BsonIgnore]
+    public Score? Score { get; set; }
 
     [BsonElement("user")]
     public long UserID { get; init; }
@@ -28,39 +25,6 @@ public class Score
 
     [BsonIgnore]
     public APIUser APIUser => User?.ToAPI() ?? APIUser.CreateUnknown(UserID);
-
-    [BsonElement("map")]
-    public long MapID { get; init; }
-
-    /// <summary>
-    /// Hash of the map when the score was submitted.
-    /// </summary>
-    [BsonElement("hash")]
-    public string MapHash { get; init; } = string.Empty;
-
-    [BsonIgnore]
-    public Map Map => Cache.Maps.Get(MapID) ?? MapHelper.Get(MapID) ?? new Map();
-
-    [BsonIgnore]
-    public APIMap APIMap => Map.ToAPI();
-
-    [BsonElement("time")]
-    public DateTimeOffset Time { get; init; } = DateTimeOffset.Now;
-
-    [BsonIgnore]
-    public long TimeLong => Time.ToUnixTimeSeconds();
-
-    [BsonIgnore]
-    public int Mode => Map.Mode;
-
-    /// <summary>
-    /// List of mods seperated by commas.
-    /// </summary>
-    [BsonElement("mods")]
-    public string Mods { get; init; } = "";
-
-    [BsonIgnore]
-    public List<string> ModList => Mods.Split(',').ToList();
 
     [BsonElement("pr")]
     public double PerformanceRating { get; set; }
@@ -101,21 +65,20 @@ public class Score
     [BsonElement("scrollspeed")]
     public float ScrollSpeed { get; set; }
 
-    [BsonElement("replay")]
-    public bool HasReplay { get; set; }
-
-    [BsonElement("extra-players")]
-    public List<ScoreExtraPlayer> ExtraPlayers { get; set; } = new();
-
     [BsonIgnore]
     public RequestCache Cache { get; set; } = new();
 
-    public void Recalculate()
+    public void Recalculate(int playerIndex)
     {
+        if (Score is null)
+        {
+            throw new Exception("Score is null");
+        }
+
         Accuracy = this.CalculateAccuracy();
-        TotalScore = this.CalculateScore();
+        TotalScore = this.CalculateScore(playerIndex);
         PerformanceRating = ScoreProcessor.CalculatePerformance(
-            (float)Map.Rating,
+            (float)Score.Map.Rating,
             Accuracy,
             FlawlessCount,
             PerfectCount,
@@ -123,13 +86,8 @@ public class Score
             AlrightCount,
             OkayCount,
             MissCount,
-            ModList.Select(ModUtils.GetFromAcronym).ToList()
+            Score.ModList.Select(ModUtils.GetFromAcronym).ToList()
         );
         Grade = this.GetGrade();
     }
-}
-
-public enum ScoreIncludes
-{
-    Map
 }
