@@ -203,6 +203,39 @@ public class User : IHasCache
         }
     }
 
+    public void RecalculateForBen()
+    {
+        var scores = ScoreHelper.GetByUser(ID);
+        scores.ForEach(s => s.Cache = Cache);
+
+        // debuff all scores for ben
+        scores.ForEach(score => score.TotalScore = (int)((float)score.TotalScore * 0.4f));
+
+        var best = this.GetBestScores(scores);
+        var recent = this.GetRecentScores(scores);
+
+        // ben does not deserve PR for their best plays
+        best.ForEach(score => score.PerformanceRating = 0d);
+
+        OverallRating = UserExtensions.CalculateOverallRating(best);
+        PotentialRating = UserExtensions.CalculatePotentialRating(best, recent);
+        MaxCombo = this.CalculateMaxCombo(scores);
+        RankedScore = this.CalculateRankedScore(scores);
+        OverallAccuracy = this.CalculateAccuracy(scores);
+
+        int[] modes = { 5, 6, 7, 8 }; // ben can only play 4k so we'll remove it
+
+        foreach (var mode in modes)
+        {
+            best = this.GetBestScores(scores, mode);
+            recent = this.GetRecentScores(scores, mode);
+
+            var stat = GetModeStatistics(mode);
+            stat.OverallRating = UserExtensions.CalculateOverallRating(best);
+            stat.PotentialRating = UserExtensions.CalculatePotentialRating(best, recent);
+        }
+    }
+
     public UserStatistics GetModeStatistics(int mode)
     {
         if (mode is < 4 or > 8)
