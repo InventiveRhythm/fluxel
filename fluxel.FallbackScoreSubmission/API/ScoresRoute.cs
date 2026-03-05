@@ -85,15 +85,28 @@ public class ScoresRoute : IFluxelAPIRoute
         //handle results
         HitWindows hitWindows = new HitWindows(map.AccuracyDifficulty, rate);
         ReleaseWindows releaseWindows = new ReleaseWindows(map.AccuracyDifficulty, rate);
+        LandmineWindows landmineWindows = new LandmineWindows(map.AccuracyDifficulty, rate);
         int combo = 0;
         int maxCombo = 0;
         int judgementCount = 0;
+        int hits = 0;
+        int lns = 0;
+        int mines = 0;
 
         foreach (var result in payload.Scores[0].Results)
         {
-            Judgement judgement = result.HoldEnd
-                ? releaseWindows.JudgementFor(result.Difference)
-                : hitWindows.JudgementFor(result.Difference);
+            if (result.Type == ResultType.Landmine) mines++;
+            else if (result.Type == ResultType.HoldEnd)
+            {
+                hits--; //this is a head that was previously treated as a regular hit
+                lns++;
+            }
+            else hits++;
+
+            Judgement judgement =
+                result.Type == ResultType.Landmine ? landmineWindows.JudgementFor(result.Difference) :
+                result.Type == ResultType.HoldEnd ? releaseWindows.JudgementFor(result.Difference) :
+                hitWindows.JudgementFor(result.Difference);
 
             combo++;
             judgementCount++;
@@ -119,8 +132,31 @@ public class ScoresRoute : IFluxelAPIRoute
             if (combo > maxCombo) maxCombo = combo;
         }
 
+        //make sure individual object count is correct
+        int expectedHitCount = userScore.Map.Hits + (payload.Mods.Contains("NLN") ? userScore.Map.LongNotes : 0);
+        int expectedLnCount = payload.Mods.Contains("NLN") ? 0 : userScore.Map.LongNotes;
+        int expectedMineCount = payload.Mods.Contains("NMN") ? 0 : userScore.Map.Landmines;
+
+        if (hits != expectedHitCount)
+        {
+            await interaction.ReplyMessage(HttpStatusCode.BadRequest, "hit count doesn't match the map's hit count");
+            return;
+        }
+
+        if (lns != expectedLnCount)
+        {
+            await interaction.ReplyMessage(HttpStatusCode.BadRequest, "ln count doesn't match the map's ln count");
+            return;
+        }
+
+        if (mines != expectedMineCount)
+        {
+            await interaction.ReplyMessage(HttpStatusCode.BadRequest, "mines doesn't match the map's mines");
+            return;
+        }
+
         //make sure the judgement count is correct
-        if (judgementCount != userScore.Map.MaxCombo)
+        if (judgementCount != expectedHitCount + expectedLnCount * 2 + expectedMineCount)
         {
             await interaction.ReplyMessage(HttpStatusCode.BadRequest, "judgement count doesn't match the map's hit object count");
             return;
@@ -141,7 +177,7 @@ public class ScoresRoute : IFluxelAPIRoute
         {
             UserHelper.UpdateLocked(userScore.UserID, u => u.Recalculate());
         }
-        catch (Exception e)
+        catch
         {
             await interaction.ReplyMessage(HttpStatusCode.InternalServerError, "failed to recalculate user stats");
             return;
