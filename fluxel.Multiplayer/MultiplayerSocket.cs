@@ -158,6 +158,25 @@ public class MultiplayerSocket : AuthenticatedSocket<IMultiplayerServer, IMultip
         return Task.CompletedTask;
     }
 
+    public Task VoteSkip(bool unskip = false)
+    {
+        if (Room is null)
+            throw RoomException.NotInRoom();
+
+        var player = Room.GetPlayer(UserID);
+
+        // vote skips are not important enough to throw
+        if (player == null)
+            return Task.CompletedTask;
+
+        player.RequestingSkip = !unskip;
+
+        int playersSkipping = Room.Participants.Count(p => p.RequestingSkip);
+        bool canSkip = ((float)playersSkipping / (float)Room.Participants.Count) > 0.75f;
+
+        return All.ForEachAsync(c => c.Client.VoteSkipUpdated(playersSkipping, canSkip));
+    }
+
     public async Task FinishPlay(ScoreInfo score)
     {
         if (Room is null)

@@ -133,6 +133,8 @@ public class ServerMultiplayerRoom
         public MultiplayerUserState State { get; set; } = MultiplayerUserState.Idle;
         public ScoreInfo? Score { get; set; }
 
+        public bool RequestingSkip { get; set; }
+
         public Participant(MultiplayerSocket sock)
         {
             Socket = sock;
