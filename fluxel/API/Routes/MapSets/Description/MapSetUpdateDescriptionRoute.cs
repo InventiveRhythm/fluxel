@@ -28,9 +28,8 @@ public class MapSetUpdateDescriptionRoute : IFluxelAPIRoute, INeedsAuthorization
             await interaction.ReplyMessage(HttpStatusCode.BadRequest, ResponseStrings.InvalidBodyJson);
             return;
         }
-        
 
-        if (payload.Length > 2000)
+        if (payload.Length > 4000)
         {
             await interaction.ReplyMessage(HttpStatusCode.BadRequest, "Description cannot exceed 2000 characters.");
             return;
