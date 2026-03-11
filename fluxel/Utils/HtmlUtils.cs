@@ -4,15 +4,18 @@ namespace fluxel.Utils;
 
 public static class Sanitizer
 {
-    private static readonly string[] default_allowed_tags = new[] {
+    private static readonly string[] default_allowed_tags = new[]
+    {
         "p", "br", "span", "div", "h1", "h2", "h3", "h4", "h5", "h6",
-        "strong", "em", "b", "i", "u", "s", "strike", "del", "blockquote", 
-        "code", "pre", "ul", "ol", "li", "a", "img", "table", "thead", 
+        "strong", "em", "b", "i", "u", "s", "strike", "del", "blockquote",
+        "code", "pre", "ul", "ol", "li", "a", "img", "table", "thead",
+        "details", "summary",
         "tbody", "tr", "th", "td", "hr"
     };
 
-    private static readonly string[] default_allowed_attributes = new[] {
-        "href", "src", "alt", "title", "class", "id", "text", "level", 
+    private static readonly string[] default_allowed_attributes = new[]
+    {
+        "href", "src", "alt", "title", "class", "id", "text", "level",
         "lang", "type", "path", "num", "to"
     };
 
@@ -20,34 +23,31 @@ public static class Sanitizer
 
     public static string Sanitize(string dirty)
     {
-        if (string.IsNullOrEmpty(dirty))
-            return string.Empty;
-
-        return sanitizer.Sanitize(dirty);
+        return string.IsNullOrEmpty(dirty)
+            ? string.Empty
+            : sanitizer.Sanitize(dirty).Replace("&gt;", ">"); // so it doesn't break blockquotes
     }
 
     private static HtmlSanitizer createSanitizer()
     {
-        var sanitizer = new HtmlSanitizer();
-        
-        sanitizer.AllowedTags.Clear();
+        var htmlSanitizer = new HtmlSanitizer();
+
+        htmlSanitizer.AllowedTags.Clear();
+
         foreach (var tag in default_allowed_tags)
-        {
-            sanitizer.AllowedTags.Add(tag);
-        }
+            htmlSanitizer.AllowedTags.Add(tag);
 
-        sanitizer.AllowedAttributes.Clear();
+        htmlSanitizer.AllowedAttributes.Clear();
+
         foreach (var attr in default_allowed_attributes)
-        {
-            sanitizer.AllowedAttributes.Add(attr);
-        }
+            htmlSanitizer.AllowedAttributes.Add(attr);
 
-        sanitizer.AllowedSchemes.Add("https");
-        sanitizer.AllowedSchemes.Add("http");
-        
-        sanitizer.AllowDataAttributes = false;
-        sanitizer.KeepChildNodes = true;
+        htmlSanitizer.AllowedSchemes.Add("https");
+        htmlSanitizer.AllowedSchemes.Add("http");
 
-        return sanitizer;
+        htmlSanitizer.AllowDataAttributes = false;
+        htmlSanitizer.KeepChildNodes = true;
+
+        return htmlSanitizer;
     }
 }
