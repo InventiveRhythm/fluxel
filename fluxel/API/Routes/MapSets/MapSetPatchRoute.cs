@@ -191,7 +191,7 @@ public class MapSetPatchRoute : IFluxelAPIRoute, INeedsAuthorization
         await interaction.Reply(HttpStatusCode.OK, set.ToAPI(mapInclude: MapIncludes.FileName));
         set.Maps.ForEach(m => ServerHost.Instance.Scheduler.Schedule(new RecalculateMapTask(m)));
 
-        if (MapSetHelper.HasActions(set.ID))
+        if (MapSetHelper.HasActions(set.ID) && set.Status == MapStatus.Pending)
             MapSetHelper.CreateModAction(set.ID, interaction.UserID, APIModdingActionType.Update);
     }
 }
