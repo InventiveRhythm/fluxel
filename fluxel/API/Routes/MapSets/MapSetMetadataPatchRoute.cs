@@ -4,8 +4,7 @@ using fluxel.API.Components;
 using fluxel.Constants;
 using fluxel.Database.Extensions;
 using fluxel.Database.Helpers;
-using fluxel.Models.Maps;
-using fluxel.Tasks.Scores;
+using fluXis.Online.API.Models.Maps;
 using Midori.API.Components.Interfaces;
 using Midori.Networking;
 using Newtonsoft.Json;
@@ -45,22 +44,16 @@ public class MapSetMetadataPatchRoute : IFluxelAPIRoute, INeedsAuthorization
             return;
         }
 
-        var status = payload.Status != null;
-
-        if (status)
-            set.Status = payload.Status!.Value;
+        if (payload.Flags.HasValue)
+            set.Flags = payload.Flags.Value;
 
         MapSetHelper.Update(set);
-
         await interaction.Reply(HttpStatusCode.OK);
-
-        if (status)
-            ServerHost.Instance.Scheduler.Schedule(new UpdateSetStatusBulkTask(set.ID));
     }
 
     private class Payload
     {
-        [JsonProperty("status")]
-        public MapStatus? Status { get; set; }
+        [JsonProperty("flags")]
+        public MapSetFlag? Flags { get; set; }
     }
 }
