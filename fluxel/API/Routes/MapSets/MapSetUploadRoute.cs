@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
@@ -177,7 +176,7 @@ public class MapSetUploadRoute : IFluxelAPIRoute, INeedsAuthorization
 
     private bool checkLimit(FluxelAPIInteraction interaction)
     {
-        var current = MapSetHelper.GetUploadedCount(interaction.UserID, new DateTimeOffset(new DateTime(2026, 1, 1)));
+        var current = MapSetHelper.GetUploadedCount(interaction.UserID, MapSetHelper.UploadLimitStartDate);
         var maximum = MapSetHelper.GetUploadLimit(interaction.UserID);
 
         return current < maximum;

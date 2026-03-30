@@ -28,6 +28,6 @@ public class UserMapsRoute : IFluxelAPIRoute
         }
 
         user.Cache = interaction.Cache;
-        await interaction.Reply(HttpStatusCode.OK, new User.UserMaps(user));
+        await interaction.Reply(HttpStatusCode.OK, new User.UserMaps(user, interaction.User));
     }
 }

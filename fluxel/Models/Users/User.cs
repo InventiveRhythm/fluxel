@@ -240,7 +240,13 @@ public class User : IHasCache
         [JsonProperty("guest_diffs")]
         public IEnumerable<APIMapSet> GuestDiffs { get; }
 
-        public UserMaps(User user)
+        [JsonProperty("limit_uploaded")]
+        public long? LimitUploadedCount { get; }
+
+        [JsonProperty("limit_max")]
+        public long? LimitMaximumCount { get; }
+
+        public UserMaps(User user, User? requestedBy)
         {
             this.user = user;
 
@@ -256,6 +262,12 @@ public class User : IHasCache
 
             var ids = maps.Select(m => m.SetID).Distinct();
             GuestDiffs = ids.Select(MapSetHelper.Get).OfType<MapSet>().Select(x => x.ToAPI());
+
+            if (user.ID != requestedBy?.ID)
+                return;
+
+            LimitUploadedCount = MapSetHelper.GetUploadedCount(user.ID, MapSetHelper.UploadLimitStartDate);
+            LimitMaximumCount = MapSetHelper.GetUploadLimit(user.ID);
         }
     }
 }

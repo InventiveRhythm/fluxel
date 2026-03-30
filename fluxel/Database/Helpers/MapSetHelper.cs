@@ -52,6 +52,8 @@ public static class MapSetHelper
         return count + inc * pure;
     }
 
+    public static DateTimeOffset UploadLimitStartDate => new(new DateTime(2026, 1, 1));
+
     public static long GetUploadedCount(long uid, DateTimeOffset? after = null)
         => sets.CountDocuments(x => x.CreatorID == uid && x.Submitted >= (after ?? DateTimeOffset.MinValue));
 
