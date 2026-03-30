@@ -83,7 +83,7 @@ public static class Events
         var message = new DiscordMessageBuilder();
         var embed = new DiscordEmbedBuilder();
 
-        var link = $"[{set.Artist[..Math.Min(set.Artist.Length, 256)]} - {set.Title[..Math.Min(set.Title.Length, 256)]}]({set.Url})";
+        var link = $"[{set.Artist[..Math.Min(set.Artist.Length, 256)]} - {set.Title[..Math.Min(set.Title.Length, 256)]}]({set.Url}/modding)";
 
         switch (action.Type)
         {

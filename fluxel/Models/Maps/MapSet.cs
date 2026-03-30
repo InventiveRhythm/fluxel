@@ -133,7 +133,7 @@ public class MapSet : IHasCache
     public RequestCache Cache { get; set; } = new();
 
     [BsonIgnore]
-    public string Url => ServerHost.Configuration.Urls.Website.Replace("fluxis.", "dev.") + $"/set/{ID}";
+    public string Url => ServerHost.Configuration.Urls.Website + $"/set/{ID}";
 
     [BsonIgnore]
     public string BackgroundUrl => ServerHost.Configuration.Urls.Assets + $"/background/{ID}-lg";
