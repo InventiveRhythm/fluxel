@@ -10,11 +10,11 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "fluXis", "..\fluXis\fluXis\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "fluxel.Startup", "fluxel.Startup\fluxel.Startup.csproj", "{77062E32-F070-4E75-9840-276F6CBE2064}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "fluxel.ScoreSubmission", "fluxel.ScoreSubmission\fluxel.ScoreSubmission.csproj", "{493F215F-3360-4616-8399-0F9E42BCBF0C}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "fluxel.ScoreSubmission", "Private\fluxel.ScoreSubmission\fluxel.ScoreSubmission.csproj", "{493F215F-3360-4616-8399-0F9E42BCBF0C}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "fluxel.Multiplayer", "fluxel.Multiplayer\fluxel.Multiplayer.csproj", "{9EA4B4EC-F407-4132-9D3B-9494A902081A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "fluxel.Auth", "fluxel.Auth\fluxel.Auth.csproj", "{51E6E8E6-7DED-455B-BF6A-E7F9EF0F1895}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "fluxel.Auth", "Private\fluxel.Auth\fluxel.Auth.csproj", "{51E6E8E6-7DED-455B-BF6A-E7F9EF0F1895}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "fluxel.Social", "fluxel.Social\fluxel.Social.csproj", "{4EEC910F-60B2-4C4B-978B-0DCB279508CE}"
 EndProject

@@ -10,7 +10,4 @@ obj
 
 .env
 
-fluxel.Auth/
-fluxel.ScoreSubmission/
-
 username-blacklist.txt

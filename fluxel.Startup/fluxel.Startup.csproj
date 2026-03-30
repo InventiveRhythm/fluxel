@@ -9,22 +9,22 @@
 
   <ItemGroup Label="Modules">
     <ProjectReference
-      Condition="Exists('..\fluxel.ScoreSubmission\fluxel.ScoreSubmission.csproj')"
-      Include="..\fluxel.ScoreSubmission\fluxel.ScoreSubmission.csproj"
+      Condition="Exists('..\Private\fluxel.ScoreSubmission\fluxel.ScoreSubmission.csproj')"
+      Include="..\Private\fluxel.ScoreSubmission\fluxel.ScoreSubmission.csproj"
     />
     <ProjectReference
-      Condition="Exists('..\fluxel.Auth\fluxel.Auth.csproj')"
-      Include="..\fluxel.Auth\fluxel.Auth.csproj"
+      Condition="Exists('..\Private\fluxel.Auth\fluxel.Auth.csproj')"
+      Include="..\Private\fluxel.Auth\fluxel.Auth.csproj"
     />
 
     <!-- fallback auth module (for contributors) -->
     <ProjectReference
-      Condition="!Exists('..\fluxel.Auth\fluxel.Auth.csproj')"
+      Condition="!Exists('..\Private\fluxel.Auth\fluxel.Auth.csproj')"
       Include="..\fluxel.FallbackAuth\fluxel.FallbackAuth.csproj"
     />
-    
+
     <ProjectReference
-      Condition="!Exists('..\fluxel.ScoreSubmission\fluxel.ScoreSubmission.csproj')"
+      Condition="!Exists('..\Private\fluxel.ScoreSubmission\fluxel.ScoreSubmission.csproj')"
       Include="..\fluxel.FallbackScoreSubmission\fluxel.FallbackScoreSubmission.csproj"
     />
 
