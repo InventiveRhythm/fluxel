@@ -14,7 +14,7 @@ internal static class Program
             Port = Env.GetInt("PORT"),
             FfmpegPath = Env.GetString("FFMPEG_PATH"),
             KoFiSecret = Env.GetString("KOFI_SECRET"),
-            BundledSets = envLongList("BUNDLES_SETS").ToArray(),
+            BundledSets = envLongList("BUNDLED_SETS").ToArray(),
             Limits = new ServerConfig.LimitsConfig
             {
                 MaxMapSets = Env.GetInt("LIMITS_MAX_MAPSETS"),
@@ -81,7 +81,7 @@ internal static class Program
 
     private static List<long> envLongList(string key)
     {
-        var var = Environment.GetEnvironmentVariable(key);
+        var var = Env.GetString(key);
         if (string.IsNullOrWhiteSpace(var)) return [];
 
         var split = var.Split(",", StringSplitOptions.RemoveEmptyEntries);
