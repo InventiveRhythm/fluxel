@@ -9,7 +9,6 @@ using fluXis.Utils;
 using Midori.Logging;
 using Midori.Networking;
 using Newtonsoft.Json;
-using Sentry;
 
 namespace fluxel.API.Routes.Payment;
 
@@ -56,21 +55,21 @@ public class KoFiWebhookRoute : IFluxelAPIRoute
 
             if (string.IsNullOrEmpty(payload.MessageID))
             {
-                SentrySdk.CaptureMessage($"Received Ko-Fi webhook with empty message ID. ({json})", SentryLevel.Error);
+                // SentrySdk.CaptureMessage($"Received Ko-Fi webhook with empty message ID. ({json})", SentryLevel.Error);
                 await interaction.ReplyMessage(HttpStatusCode.BadRequest, "Invalid message ID.");
                 return;
             }
 
             if (string.IsNullOrEmpty(payload.Email))
             {
-                SentrySdk.CaptureMessage($"Received Ko-Fi webhook with empty email. ({json})", SentryLevel.Error);
+                // SentrySdk.CaptureMessage($"Received Ko-Fi webhook with empty email. ({json})", SentryLevel.Error);
                 await interaction.ReplyMessage(HttpStatusCode.BadRequest, "Invalid E-Mail.");
                 return;
             }
 
             if (!payload.Amount.TryParseDoubleInvariant(out var amount))
             {
-                SentrySdk.CaptureMessage($"Received Ko-Fi webhook with invalid amount. ({json})", SentryLevel.Error);
+                // SentrySdk.CaptureMessage($"Received Ko-Fi webhook with invalid amount. ({json})", SentryLevel.Error);
                 await interaction.ReplyMessage(HttpStatusCode.BadRequest, "Invalid amount.");
                 return;
             }

@@ -20,7 +20,6 @@ using Midori.API;
 using Midori.Logging;
 using Midori.Networking;
 using Midori.Utils;
-using Sentry;
 
 namespace fluxel;
 
@@ -98,13 +97,13 @@ public class ServerHost
 
         Logger.Log("Setting up sentry...");
 
-        SentrySdk.Init(opt =>
+        /*SentrySdk.Init(opt =>
         {
             opt.Dsn = "https://1f54b9e0beadd0f97cad8a52c74cabce@sentry.flux.moe/5";
             opt.AutoSessionTracking = true;
             opt.Release = "current";
             opt.Environment = "server";
-        });
+        });*/
 
         Logger.OnEntry += captureError;
     }
@@ -119,11 +118,11 @@ public class ServerHost
         if (ex == null)
             return;
 
-        SentrySdk.CaptureEvent(new SentryEvent(ex)
+        /*SentrySdk.CaptureEvent(new SentryEvent(ex)
         {
             Message = entry.Message,
             Level = SentryLevel.Error
-        }, _ => { });
+        }, _ => { });*/
     }
 
     #endregion
