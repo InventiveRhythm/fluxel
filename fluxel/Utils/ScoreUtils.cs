@@ -7,9 +7,11 @@ public static class ScoreUtils
 {
     public static int CalculateScore(this Score score)
     {
+        var mapMaxCombo = score.Map.GetMaxComboWithMods(score.Mods.Split(','));
+
         var maxScore = (int)(1000000 * getMulitpliers(score));
         var accBased = (int)(score.Accuracy / 100f * (maxScore * .9f));
-        var comboBased = (int)(score.MaxCombo / (float)score.Map.MaxCombo * (maxScore * .1f));
+        var comboBased = (int)(score.MaxCombo / (float)mapMaxCombo * (maxScore * .1f));
         return accBased + comboBased;
     }
 
@@ -62,6 +64,10 @@ public static class ScoreUtils
                     break;
 
                 case "NLN":
+                    multiplier -= .2f;
+                    break;
+
+                case "NMN":
                     multiplier -= .2f;
                     break;
 

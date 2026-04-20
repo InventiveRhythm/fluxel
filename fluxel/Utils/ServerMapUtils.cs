@@ -35,8 +35,9 @@ public static class ServerMapUtils
         DifficultyName = json.Metadata.Difficulty,
         Mode = json.KeyCount,
         Length = (int)json.HitObjects.Max(h => h.Time),
-        Hits = json.HitObjects.Count(h => h.HoldTime == 0),
-        LongNotes = json.HitObjects.Count(h => h.HoldTime > 0) * 2,
+        Hits = json.HitObjects.Count(h => h.HoldTime == 0 && h.Type == 0),
+        LongNotes = json.HitObjects.Count(h => h.HoldTime > 0 && h.Type == 0) * 2,
+        Landmines = json.HitObjects.Count(h => h.Landmine),
         NotesPerSecond = MapUtils.GetNps(json.HitObjects)
     };
 
