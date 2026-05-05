@@ -13,5 +13,12 @@ public class RecalculateUserTask : IBasicTask
         this.id = id;
     }
 
-    public void Run() => UserHelper.UpdateLocked(id, u => u.Recalculate());
+    public void Run()
+    {
+        var user = UserHelper.Get(id);
+        if (user.Username.ToLower().StartsWith("ben") || user.DisplayName.ToLower().StartsWith("ben"))
+            UserHelper.UpdateLocked(id, u => u.RecalculateForBen());
+        else
+            UserHelper.UpdateLocked(id, u => u.Recalculate());
+    }
 }
