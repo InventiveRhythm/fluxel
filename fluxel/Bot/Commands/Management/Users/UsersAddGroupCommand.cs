@@ -1,8 +1,10 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using DSharpPlus.Entities;
 using fluxel.Bot.Components;
 using fluxel.Bot.Utils;
-using fluxel.Database.Helpers;
+using fluxel.Database;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace fluxel.Bot.Commands.Management.Users;
 
@@ -17,8 +19,10 @@ public class UsersAddGroupCommand : ISlashCommand
         new(OptionType.String, "group", "The group to add to the user.", true)
     };
 
-    public void Handle(DiscordInteraction interaction)
+    public void Handle(DiscordInteraction interaction, IServiceProvider services)
     {
+        var users = services.GetRequiredService<UserManager>();
+
         var userId = interaction.GetInt("user");
         var groupId = interaction.GetString("group");
 
@@ -28,7 +32,7 @@ public class UsersAddGroupCommand : ISlashCommand
             return;
         }
 
-        var user = UserHelper.Get(userId.Value);
+        var user = users.Get(userId.Value);
 
         if (user is null)
         {
@@ -36,7 +40,7 @@ public class UsersAddGroupCommand : ISlashCommand
             return;
         }
 
-        var group = GroupHelper.Get(groupId);
+        var group = services.GetRequiredService<GroupManager>().Get(groupId);
 
         if (group is null)
         {
@@ -50,7 +54,7 @@ public class UsersAddGroupCommand : ISlashCommand
             return;
         }
 
-        UserHelper.UpdateLocked(user.ID, u => u.GroupIDs.Add(group.ID));
+        users.UpdateLocked(user.ID, u => u.GroupIDs.Add(group.ID));
         interaction.Reply($"Added {user.Username} to {group.Name} ({group.Tag}).", true);
     }
 }

@@ -1,14 +1,16 @@
 ﻿using DSharpPlus.Entities;
 using fluxel.Bot;
-using fluxel.Database.Extensions;
-using fluxel.Database.Helpers;
+using fluxel.Components;
+using fluxel.Database;
 using fluxel.Modules;
 using fluxel.Modules.Messages;
 using fluxel.Modules.Messages.Chat;
+using fluxel.Tasks;
 using fluxel.Tasks.Management;
 using fluxel.Utils;
 using fluXis.Graphics.UserInterface.Color;
 using fluXis.Online.API.Models.Users;
+using Microsoft.Extensions.DependencyInjection;
 using Midori.Networking;
 using osu.Framework.Extensions.IEnumerableExtensions;
 
@@ -16,36 +18,51 @@ namespace fluxel.Social;
 
 public class NotificationsModule : IModule, IOnlineStateManager
 {
-    public static HttpConnectionManager<NotificationSocket> Sockets { get; private set; } = null!;
+    public HttpConnectionManager<NotificationSocket> Sockets { get; }
 
-    public void OnLoad(ServerHost host)
+    private readonly UserManager users;
+    private readonly ClubManager clubs;
+    private readonly ChatManager chat;
+    private readonly DiscordBot discord;
+    private readonly UrlFormatter urls;
+    private readonly IServiceProvider services;
+
+    public NotificationsModule(UserManager users, DiscordBot discord, ClubManager clubs, ChatManager chat, UrlFormatter urls, HttpRouter router, TaskRunner tasks, IServiceProvider services)
     {
+        this.users = users;
+        this.discord = discord;
+        this.clubs = clubs;
+        this.chat = chat;
+        this.urls = urls;
+        this.services = services;
+
+        Sockets = router.MapModule<NotificationSocket>("/notifications", manager: true)!;
+
+        tasks.Schedule(new CleanupOnlineStatesCronTask());
         fixInvalidOnlineStates();
-
-        Sockets = host.Server.MapModule<NotificationSocket>("/notifications");
-        host.Scheduler.Schedule(new CleanupOnlineStatesCronTask());
-
         createClubChannels();
     }
 
     private void createClubChannels()
     {
-        var clubs = ClubHelper.All;
+        var c = clubs.All;
 
-        foreach (var club in clubs)
+        foreach (var club in c)
         {
             var name = club.ChatChannel;
-            var channel = ChatHelper.GetChannel(name) ?? ChatHelper.CreateClubChannel(name, club.ID);
+            var channel = chat.GetChannel(name) ?? chat.CreateClubChannel(name, club.ID);
 
             channel.Users.Clear();
             channel.Users.AddRange(club.Members);
 
-            ChatHelper.Update(channel);
+            chat.Update(channel);
         }
     }
 
     public void OnMessage(object data)
     {
+        var translator = services.CreateScope().ServiceProvider.GetRequiredService<ModelTranslator>();
+
         switch (data)
         {
             case UserCollectionMessage coll:
@@ -68,15 +85,15 @@ public class NotificationsModule : IModule, IOnlineStateManager
 
             case UserOnlineStateMessage onl:
             {
-                var user = UserHelper.Get(onl.UserID) ?? throw new InvalidOperationException("Received online state update with non-existing user.");
-                var followers = RelationHelper.GetFollowers(onl.UserID);
+                var user = users.Get(onl.UserID) ?? throw new InvalidOperationException("Received online state update with non-existing user.");
+                var followers = users.GetFollowers(onl.UserID);
 
                 Sockets.Where(s => followers.Contains(s.UserID))
-                       .ForEach(s => s.Client.NotifyFriendStatus(user.ToAPI(), onl.Online));
+                       .ForEach(s => s.Client.NotifyFriendStatus(translator.ToAPI(user), onl.Online));
 
                 if (onl.Online)
                 {
-                    UserHelper.LogOnline(onl.UserID, true);
+                    users.LogOnline(onl.UserID, true);
 
                     if (Sockets.Count(x => x.UserID == onl.UserID) > 1)
                     {
@@ -88,8 +105,8 @@ public class NotificationsModule : IModule, IOnlineStateManager
                 }
                 else
                 {
-                    UserHelper.UpdateLocked(onl.UserID, u => u.LastLogin = DateTimeOffset.UtcNow.ToUnixTimeSeconds());
-                    UserHelper.LogOnline(onl.UserID, false);
+                    users.UpdateLocked(onl.UserID, u => u.LastLogin = DateTimeOffset.UtcNow.ToUnixTimeSeconds());
+                    users.LogOnline(onl.UserID, false);
                 }
 
                 break;
@@ -97,34 +114,33 @@ public class NotificationsModule : IModule, IOnlineStateManager
 
             case ChatMessageCreateMessage cmc:
             {
-                var message = ChatHelper.Get(cmc.Message);
+                var message = chat.Get(cmc.Message);
                 if (message is null) throw new InvalidOperationException();
 
-                Sockets.ForEach(x => x.Client.ReceiveChatMessage(message.ToAPI()));
+                Sockets.ForEach(x => x.Client.ReceiveChatMessage(translator.ToAPI(message)));
 
                 if (message.Channel != "general" || message.DiscordID != null) return;
 
-                var user = UserHelper.Get(message.SenderID);
+                var user = users.Get(message.SenderID);
                 if (user is null) return; // this vexes me
 
-                var dmsg = DiscordBot.GetChannel(DiscordBot.ChannelType.ChatLink)?.SendMessageAsync(
+                var dmsg = discord.GetChannel(DiscordBot.ChannelType.ChatLink)?.SendMessageAsync(
                     new DiscordMessageBuilder()
-                        .WithEmbed(new DiscordEmbedBuilder()
+                        .WithEmbed(new DiscordEmbedBuilder { Author = user.ToEmbedAuthor(urls) }
                                    .WithColor(Theme.Highlight.ToDiscord())
-                                   .WithAuthor(user.Username, user.Url, user.AvatarUrl)
                                    .WithDescription(message.Content)
                         )
                 ).Result;
 
                 if (dmsg is null) return;
 
-                ChatHelper.AttachDiscordID(message.ID, dmsg.Id);
+                chat.AttachDiscordID(message.ID, dmsg.Id);
                 break;
             }
 
             case ChatMessageDeleteMessage cmd:
             {
-                var message = ChatHelper.Get(cmd.Message);
+                var message = chat.Get(cmd.Message);
                 if (message is null) throw new InvalidOperationException();
 
                 Sockets.ForEach(c => c.Client.DeleteChatMessage(message.Channel, message.ID.ToString()));
@@ -135,12 +151,12 @@ public class NotificationsModule : IModule, IOnlineStateManager
         }
     }
 
-    public static NotificationSocket? SocketByID(long id) => Sockets.FirstOrDefault(x => x.UserID == id);
+    public NotificationSocket? SocketByID(long id) => Sockets.FirstOrDefault(x => x.UserID == id);
 
-    private static void fixInvalidOnlineStates()
+    private void fixInvalidOnlineStates()
     {
-        var online = UserHelper.LastOnlineLogs();
-        online.ForEach(x => UserHelper.LogOnline(x, false));
+        var online = users.LastOnlineLogs();
+        online.ForEach(x => users.LogOnline(x, false));
     }
 
     long[] IOnlineStateManager.AllOnline => Sockets.Select(x => x.UserID).ToArray();

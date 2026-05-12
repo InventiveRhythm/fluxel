@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using fluxel.API.Components;
-using fluxel.Database.Helpers;
+using fluxel.Database;
 using fluXis.Online.API.Models.Maps;
 using fluXis.Utils;
 using MongoDB.Bson.Serialization.Attributes;
@@ -10,7 +9,7 @@ using Newtonsoft.Json;
 namespace fluxel.Models.Maps;
 
 [JsonObject(MemberSerialization.OptIn)]
-public class Map : IHasCache
+public class Map : IHasID
 {
     [BsonId]
     public long ID { get; set; }
@@ -81,6 +80,12 @@ public class Map : IHasCache
     [BsonElement("lns")]
     public int LongNotes { get; set; }
 
+    [BsonElement("ticks")]
+    public int TickNotes { get; set; }
+
+    [BsonElement("mines")]
+    public int Landmines { get; set; }
+
     [BsonElement("effects")]
     public MapEffectType Effects { get; set; }
 
@@ -94,13 +99,7 @@ public class Map : IHasCache
     public bool NeedsScoreRefresh { get; set; } = true;
 
     [BsonIgnore]
-    public int MaxCombo => Hits + LongNotes * 2;
-
-    [BsonIgnore]
-    public RequestCache Cache { get; set; } = new();
-
-    [BsonIgnore]
-    public MapSet? MapSet => Cache.MapSets.Get(SetID);
+    public int MaxCombo => Hits + LongNotes * 2 + TickNotes + Landmines;
 
     [BsonIgnore]
     public string SortingTitle => string.IsNullOrEmpty(TitleRomanized) ? Title : TitleRomanized;
@@ -111,20 +110,11 @@ public class Map : IHasCache
     [BsonIgnore]
     public string Metadata => $"{Title} - {Artist} [{DifficultyName}]";
 
-    [BsonIgnore]
-    public string Url => ServerHost.Configuration.Urls.Website + $"/mapset/{SetID}";
-
-    [BsonIgnore]
-    public string BackgroundUrl => ServerHost.Configuration.Urls.Assets + $"/background/{SetID}-lg";
-
-    [BsonIgnore]
-    public string CoverUrl => ServerHost.Configuration.Urls.Assets + $"/cover/{SetID}-lg";
-
-    public double RecalculateRating()
+    public double RecalculateRating(MapManager maps)
     {
         var r = Rating;
 
-        var votes = MapHelper.GetVotesByMap(ID);
+        var votes = maps.GetRateVotesByMap(ID);
 
         if (votes.Count == 0)
             return Rating = 0;

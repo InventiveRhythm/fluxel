@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using DSharpPlus.Entities;
 using fluxel.Bot.Components;
 using fluxel.Bot.Utils;
+using fluxel.Components;
+using Microsoft.Extensions.DependencyInjection;
 using Midori.Logging;
 
 namespace fluxel.Bot.Commands.Management;
@@ -17,12 +19,12 @@ public class SendKoFiEmail : ISlashCommand
         new(OptionType.String, "email", "the target", true),
     };
 
-    public void Handle(DiscordInteraction interaction)
+    public void Handle(DiscordInteraction interaction, IServiceProvider services)
     {
         try
         {
             var mail = interaction.GetString("email") ?? throw new ArgumentNullException();
-            Donations.SendLink(mail);
+            services.GetRequiredService<Donations>().SendLink(mail);
             interaction.Reply("cool", true);
         }
         catch (Exception ex)

@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using fluxel.Database.Helpers;
+using System.Threading.Tasks;
+using fluxel.Database;
 using fluxel.Models.Users;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace fluxel.Tasks.Clubs;
 
@@ -17,19 +19,21 @@ public class RecalculateClubTask : IBasicTask
         this.id = id;
     }
 
-    public void Run()
+    public Task Run(IServiceProvider services)
     {
-        var club = ClubHelper.Get(id);
+        var clubs = services.GetRequiredService<ClubManager>();
+        var club = clubs.Get(id);
 
         if (club == null)
             throw new ArgumentException($"No club with id {id} was found!");
 
-        var members = club.MembersList;
-        var scores = ClubHelper.GetScores(club.ID);
+        var members = club.GetMemberList(services.GetRequiredService<UserManager>());
+        var scores = clubs.GetScores(club.ID);
 
         club.OverallRating = overall(members);
         club.TotalScore = scores.Sum(s => s.TotalScore);
-        ClubHelper.Update(club);
+        clubs.Update(club);
+        return Task.CompletedTask;
     }
 
     private static double overall(List<User> members)

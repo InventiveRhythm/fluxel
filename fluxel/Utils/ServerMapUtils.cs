@@ -7,6 +7,7 @@ using System.Linq;
 using fluxel.Models.Maps;
 using fluxel.Models.Maps.Json;
 using fluXis.Map;
+using fluXis.Map.Structures;
 using fluXis.Storyboards;
 using fluXis.Utils;
 using Midori.Logging;
@@ -35,8 +36,10 @@ public static class ServerMapUtils
         DifficultyName = json.Metadata.Difficulty,
         Mode = json.KeyCount,
         Length = (int)json.HitObjects.Max(h => h.Time),
-        Hits = json.HitObjects.Count(h => h.HoldTime == 0),
-        LongNotes = json.HitObjects.Count(h => h.HoldTime > 0) * 2,
+        Hits = json.HitObjects.Count(h => h.Type == HitObjectType.Normal && !h.LongNote),
+        LongNotes = json.HitObjects.Count(h => h.Type == HitObjectType.Normal && h.LongNote),
+        TickNotes = json.HitObjects.Count(h => h.Type == HitObjectType.Tick),
+        Landmines = json.HitObjects.Count(h => h.Landmine),
         NotesPerSecond = MapUtils.GetNps(json.HitObjects)
     };
 

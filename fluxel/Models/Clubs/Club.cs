@@ -1,7 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
-using fluxel.API.Components;
-using fluxel.Database.Helpers;
+using fluxel.Components;
+using fluxel.Database;
 using fluxel.Models.Other;
 using fluxel.Models.Users;
 using fluXis.Online.API.Models.Clubs;
@@ -11,7 +12,7 @@ using Newtonsoft.Json;
 namespace fluxel.Models.Clubs;
 
 [JsonObject(MemberSerialization.OptIn)]
-public class Club
+public class Club : IHasID
 {
     [BsonId]
     public long ID { get; set; }
@@ -47,39 +48,39 @@ public class Club
     public long TotalScore { get; set; }
 
     [BsonIgnore]
-    public List<User> MembersList => Members.Select(x => Cache.Users.Get(x) ?? UserHelper.Get(x)).OfType<User>().ToList();
-
-    [BsonIgnore]
-    public User? Owner => Cache.Users.Get(OwnerID) ?? UserHelper.Get(OwnerID);
-
-    [BsonIgnore]
-    public RequestCache Cache { get; set; } = new();
-
-    [BsonIgnore]
     public string ChatChannel => $"club_{ID}";
 
     public bool IsInClub(User user) => IsInClub(user.ID);
     public bool IsInClub(long user) => Members.Contains(user);
 
-    public void AddMember(long user)
+    public void AddMember(long user, ClubManager clubs, ChatManager chats)
     {
         Members.Add(user);
-        ClubHelper.Update(this);
-        ChatHelper.AddToChannel(ChatChannel, user);
+        clubs.Update(this);
+        chats.AddToChannel(ChatChannel, user);
     }
 
-    public void RemoveMember(long user)
+    public void RemoveMember(long user, ClubManager clubs, ChatManager chats)
     {
         Members.Remove(user);
-        ClubHelper.Update(this);
-        ChatHelper.RemoveFromChannel(ChatChannel, user);
+        clubs.Update(this);
+        chats.RemoveFromChannel(ChatChannel, user);
     }
+
+    public User? GetOwner(UserManager users, RequestCache? cache = null)
+        => cache?.Users.Get(OwnerID) ?? users.Get(OwnerID);
+
+    public List<User> GetMemberList(UserManager users, RequestCache? cache = null)
+        => Members.Select(x => cache?.Users.Get(x) ?? users.Get(x)).OfType<User>().ToList();
 }
 
+[Flags]
 public enum ClubIncludes
 {
-    Owner,
-    JoinType,
-    Members,
-    Statistics
+    Owner = 1 << 0,
+    JoinType = 1 << 1,
+    Members = 1 << 2,
+    Statistics = 1 << 3,
+
+    Everything = int.MaxValue
 }

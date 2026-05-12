@@ -10,8 +10,6 @@
     <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
     <PackageReference Include="DSharpPlus" Version="4.4.9" />
     <PackageReference Include="Fido2" Version="3.0.1" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="8.0.1" />
-    <PackageReference Include="MongoDB.Driver" Version="2.28.0" />
     <PackageReference Include="Otp.NET" Version="1.4.0" />
   </ItemGroup>
 
@@ -25,7 +23,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Models\Ranking\" />
+    <Folder Include="API\Routes\" />
   </ItemGroup>
 
 </Project>

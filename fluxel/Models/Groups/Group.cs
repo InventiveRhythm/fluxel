@@ -1,8 +1,4 @@
-﻿using System.Linq;
-using fluxel.Database.Extensions;
-using fluxel.Database.Helpers;
-using fluXis.Online.API.Models.Groups;
-using MongoDB.Bson.Serialization.Attributes;
+﻿using MongoDB.Bson.Serialization.Attributes;
 using Newtonsoft.Json;
 
 namespace fluxel.Models.Groups;
@@ -30,13 +26,4 @@ public class Group
     /// </summary>
     [BsonElement("color")]
     public string Color { get; set; } = "#ffffff";
-
-    public APIGroup ToAPI(bool members = false) => new()
-    {
-        ID = ID,
-        Color = Color,
-        Name = Name,
-        Tag = Tag,
-        Members = members ? UserHelper.InGroup(ID).Select(u => u.ToAPI()) : null
-    };
 }

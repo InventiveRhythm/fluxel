@@ -1,9 +1,11 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using DSharpPlus.Entities;
 using fluxel.Bot.Components;
 using fluxel.Bot.Utils;
-using fluxel.Database.Helpers;
+using fluxel.Database;
 using fluxel.Models.Groups;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace fluxel.Bot.Commands.Management.Groups;
 
@@ -20,7 +22,7 @@ public class GroupsAddCommand : ISlashCommand
         new(OptionType.String, "color", "The color of the group in hex. (#rrggbb)", false)
     };
 
-    public void Handle(DiscordInteraction interaction)
+    public void Handle(DiscordInteraction interaction, IServiceProvider services)
     {
         var id = interaction.GetString("id");
         var name = interaction.GetString("name");
@@ -41,7 +43,7 @@ public class GroupsAddCommand : ISlashCommand
             Color = color
         };
 
-        GroupHelper.Add(group);
+        services.GetRequiredService<GroupManager>().Add(group);
         interaction.Reply($"Added group {name} ({tag}).", true);
     }
 }

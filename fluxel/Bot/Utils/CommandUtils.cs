@@ -177,12 +177,12 @@ public static class CommandUtils
         return opt?.Select(option => option.Value).FirstOrDefault() as bool?;
     }
 
-    public static async Task<DiscordUser?> GetUser(this DiscordInteraction interaction, string name)
+    public static async Task<DiscordUser?> GetUser(this DiscordInteraction interaction, DiscordBot bot, string name)
     {
         var value = interaction.getOptions()?.Where(option => option.Name == name).Select(option => option.Value).FirstOrDefault();
         if (value is not ulong id) return null;
 
-        return await DiscordBot.Bot!.GetUserAsync(id);
+        return await bot.Bot!.GetUserAsync(id);
     }
 
     public static async Task<DiscordUser?> GetMember(this DiscordInteraction interaction, string name)

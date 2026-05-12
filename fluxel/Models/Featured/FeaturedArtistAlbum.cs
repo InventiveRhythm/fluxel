@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using fluxel.Database.Helpers;
 using MongoDB.Bson.Serialization.Attributes;
 using Newtonsoft.Json;
 
@@ -29,7 +27,7 @@ public class FeaturedArtistAlbum
     [JsonProperty("colors")]
     public AlbumColors Colors { get; set; } = new();
 
-    [BsonIgnore]
+    /*[BsonIgnore]
     [JsonProperty("tracks")]
     public List<FeaturedArtistTrack> Songs
     {
@@ -38,7 +36,7 @@ public class FeaturedArtistAlbum
             var split = InternalID.Split("/");
             return FeaturedArtistHelper.FromAlbum(split[0], split[1]);
         }
-    }
+    }*/
 
     public FeaturedArtistAlbum(string artist, string id)
     {

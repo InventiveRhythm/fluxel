@@ -10,22 +10,6 @@ namespace fluxel.Utils;
 
 public static class ExtensionMethods
 {
-    public static bool EqualsLower(this string first, string second)
-    {
-        if (first is null || second is null)
-            return false;
-
-        return first.ToLower().Equals(second, StringComparison.InvariantCultureIgnoreCase);
-    }
-
-    public static bool ContainsLower(this string first, string second)
-    {
-        if (first is null || second is null)
-            return false;
-
-        return first.ToLower().Contains(second, StringComparison.InvariantCultureIgnoreCase);
-    }
-
     public static async Task ForEachAsync<T>(this IEnumerable<T> tasks, Func<T, Task> func)
     {
         foreach (var task in tasks)

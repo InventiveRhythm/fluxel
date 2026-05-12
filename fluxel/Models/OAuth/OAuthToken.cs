@@ -1,5 +1,4 @@
 ﻿using System;
-using fluxel.Database.Helpers;
 using MongoDB.Bson.Serialization.Attributes;
 
 namespace fluxel.Models.OAuth;
@@ -7,7 +6,7 @@ namespace fluxel.Models.OAuth;
 public class OAuthToken
 {
     [BsonId]
-    public string AccessToken { get; init; } = SessionHelper.GenerateToken();
+    public string AccessToken { get; init; } = string.Empty;
 
     [BsonElement("user")]
     public long UserID { get; init; }

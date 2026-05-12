@@ -7,8 +7,9 @@ using DSharpPlus.Entities;
 using fluxel.Bot.Components;
 using fluxel.Bot.Utils;
 using fluxel.Tasks;
-using fluXis.Utils;
+using Microsoft.Extensions.DependencyInjection;
 using Midori.Logging;
+using Midori.Utils.Extensions;
 
 namespace fluxel.Bot.Commands.Management;
 
@@ -23,7 +24,7 @@ public class RunTaskCommand : ISlashCommand
         new(OptionType.String, "args", "Constructor arguments, seperated by a colon. (:)", true),
     };
 
-    public async void Handle(DiscordInteraction interaction)
+    public async void Handle(DiscordInteraction interaction, IServiceProvider services)
     {
         await interaction.AcknowledgeEphemeral();
 
@@ -63,7 +64,7 @@ public class RunTaskCommand : ISlashCommand
         {
             var task = Activator.CreateInstance(taskType, parameters.ToArray());
             Logger.Log("created instance");
-            ServerHost.Instance.Scheduler.Schedule((task as IBasicTask)!);
+            services.GetRequiredService<TaskRunner>().Schedule((task as IBasicTask)!);
             Logger.Log("scheduled");
             interaction.Followup("done");
         }

@@ -1,5 +1,4 @@
-﻿using fluxel.API.Components;
-using fluxel.Database.Extensions;
+﻿using fluxel.Components;
 using fluXis.Online.API.Models.Maps.Modding;
 using fluXis.Online.API.Models.Users;
 using MongoDB.Bson;
@@ -27,13 +26,13 @@ public class ModdingAction
     [BsonElement("time")]
     public long Time { get; set; }
 
-    public object ToAPI(RequestCache? cache)
+    public APIModdingAction ToAPI(ModelTranslator translator)
     {
-        cache ??= new RequestCache();
+        var user = translator.Cache.Users.Get(UserID);
 
         return new APIModdingAction(
             ID.ToString(),
-            cache.Users.Get(UserID)?.ToAPI() ?? APIUser.CreateUnknown(UserID),
+            user != null ? translator.ToAPI(user) : APIUser.CreateUnknown(UserID),
             Type, APIModdingActionState.Pending, Content, Time
         );
     }

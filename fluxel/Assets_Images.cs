@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
 using fluXis.Utils;
-using Midori.Logging;
+using Microsoft.Extensions.Logging;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;

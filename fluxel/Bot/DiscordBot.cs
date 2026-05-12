@@ -2,37 +2,47 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using DSharpPlus;
 using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
 using fluxel.Bot.Commands;
 using fluxel.Bot.Commands.Management;
-using fluxel.Bot.Commands.Messages;
 using fluxel.Bot.Commands.Testing;
 using fluxel.Bot.Components;
 using fluxel.Bot.Utils;
 using fluxel.Config;
-using fluxel.Database.Helpers;
+using fluxel.Database;
+using fluxel.Modules;
 using fluxel.Modules.Messages.Chat;
+using Microsoft.Extensions.Hosting;
 using Midori.Logging;
 
 namespace fluxel.Bot;
 
-public static class DiscordBot
+public class DiscordBot : BackgroundService
 {
-    private static ServerConfig.DiscordConfig config = null!;
+    private readonly ServerConfig.DiscordConfig config;
+    private readonly ChatManager chat;
+    private readonly ModuleManager modules;
+    private readonly UserManager users;
+    private readonly IServiceProvider services;
 
-    public static DiscordClient? Bot { get; private set; }
+    public DiscordClient? Bot { get; private set; }
     private static List<ISlashCommand>? commands { get; set; }
 
-    public static async Task StartAsync(ServerConfig.DiscordConfig config)
+    public DiscordBot(ServerConfig config, UserManager users, ChatManager chat, ModuleManager modules, IServiceProvider services)
     {
-        if (Bot != null)
-            throw new Exception("Bot is already running!");
+        this.users = users;
+        this.chat = chat;
+        this.modules = modules;
+        this.services = services;
+        this.config = config.Discord;
+    }
 
-        DiscordBot.config = config;
-
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    {
         if (string.IsNullOrWhiteSpace(config.Token))
             return;
 
@@ -49,9 +59,7 @@ public static class DiscordBot
         {
             new AchievementTestCommand(),
             new GroupsCommandGroup(),
-            new ImageMessageCommand(),
             new MaintenanceCommand(),
-            new MessageCommand(),
             new MapSetCommand(),
             new ModdingInactiveCommand(),
             new RecalculateCommand(),
@@ -68,15 +76,7 @@ public static class DiscordBot
         await Bot.ConnectAsync();
     }
 
-    public static async Task Stop()
-    {
-        if (Bot is null) return;
-
-        Logger.Log("Shutting down Discord bot.");
-        await Bot.DisconnectAsync();
-    }
-
-    private static async Task onInteraction(DiscordClient sender, InteractionCreateEventArgs args)
+    private async Task onInteraction(DiscordClient sender, InteractionCreateEventArgs args)
     {
         var command = commands!.FirstOrDefault(x => x.Name == args.Interaction.Data.Name);
 
@@ -88,7 +88,7 @@ public static class DiscordBot
 
         try
         {
-            command.Handle(args.Interaction);
+            command.Handle(args.Interaction, services);
         }
         catch (Exception e)
         {
@@ -97,7 +97,7 @@ public static class DiscordBot
         }
     }
 
-    private static async Task ready(DiscordClient sender, ReadyEventArgs args)
+    private async Task ready(DiscordClient sender, ReadyEventArgs args)
     {
         Logger.Log($"Logged in as {Bot!.CurrentUser.Username}#{Bot.CurrentUser.Discriminator}!");
 
@@ -107,7 +107,7 @@ public static class DiscordBot
         await Bot.UpdateStatusAsync(new DiscordActivity("fluXis", ActivityType.Playing));
     }
 
-    private static Task messageCreated(DiscordClient _, MessageCreateEventArgs args)
+    private Task messageCreated(DiscordClient _, MessageCreateEventArgs args)
     {
         if (args.Channel.Id != config.ChatLink)
             return Task.CompletedTask;
@@ -120,7 +120,7 @@ public static class DiscordBot
             return Task.CompletedTask;
         }
 
-        var user = UserHelper.GetByDiscordID(args.Author.Id);
+        var user = users.GetByDiscordID(args.Author.Id);
 
         if (user is null)
         {
@@ -141,28 +141,28 @@ public static class DiscordBot
             return Task.CompletedTask;
         }
 
-        var message = ChatHelper.Add(user.ID, args.Message.Content, "general", args.Message.Id);
-        ServerHost.Instance.SendMessage(new ChatMessageCreateMessage(message.ID));
+        var message = chat.Add(user.ID, args.Message.Content, "general", args.Message.Id);
+        modules.SendMessage(new ChatMessageCreateMessage(message.ID));
 
         return Task.CompletedTask;
     }
 
-    private static Task messageDeleted(DiscordClient _, MessageDeleteEventArgs args)
+    private Task messageDeleted(DiscordClient _, MessageDeleteEventArgs args)
     {
         if (args.Channel.Id != config.ChatLink)
             return Task.CompletedTask;
 
-        var message = ChatHelper.GetByDiscordID(args.Message.Id);
+        var message = chat.GetByDiscordID(args.Message.Id);
         if (message is null) return Task.CompletedTask;
 
-        ChatHelper.Delete(message);
-        ServerHost.Instance.SendMessage(new ChatMessageDeleteMessage(message.ID));
+        chat.Delete(message);
+        modules.SendMessage(new ChatMessageDeleteMessage(message.ID));
         return Task.CompletedTask;
     }
 
-    private static DiscordChannel? getChannel(ulong id) => Bot?.GetChannelAsync(id).Result;
+    private DiscordChannel? getChannel(ulong id) => Bot?.GetChannelAsync(id).Result;
 
-    public static DiscordChannel? GetChannel(ChannelType type) => type switch
+    public DiscordChannel? GetChannel(ChannelType type) => type switch
     {
         ChannelType.Registrations => getChannel(config.Registrations),
         ChannelType.Logging => getChannel(config.Logging),
@@ -174,7 +174,7 @@ public static class DiscordBot
         _ => null
     };
 
-    public static void SendException(Exception e)
+    public void SendException(Exception e)
     {
         var channel = GetChannel(ChannelType.Logging);
 

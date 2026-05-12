@@ -2,9 +2,4 @@
 
 namespace fluxel.FallbackAuth;
 
-public class FallbackAuthModule : IModule
-{
-    public void OnLoad(ServerHost host)
-    {
-    }
-}
+public class FallbackAuthModule : IModule;

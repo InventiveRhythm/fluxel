@@ -6,8 +6,9 @@ using System.Linq;
 using DSharpPlus.Entities;
 using fluxel.Bot.Components;
 using fluxel.Bot.Utils;
-using fluxel.Database.Helpers;
+using fluxel.Database;
 using fluxel.Utils;
+using Microsoft.Extensions.DependencyInjection;
 using Midori.Logging;
 
 namespace fluxel.Bot.Commands.Management.Regenerate;
@@ -17,14 +18,15 @@ public class RegenerateMapSetAssetsCommand : ISlashCommand
     public string Name => "mapset-assets";
     public string Description => "Regenerates all mapset assets.";
 
-    public void Handle(DiscordInteraction interaction)
+    public void Handle(DiscordInteraction interaction, IServiceProvider services)
     {
         interaction.Reply("Recalculating all assets...", true);
+        var maps = services.GetRequiredService<MapManager>();
 
         try
         {
             var i = 0;
-            var sets = MapSetHelper.All;
+            var sets = maps.AllSets;
 
             var issues = new List<string>();
 

@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using fluxel.API.Components;
-using fluxel.Database.Helpers;
+using System.Threading.Tasks;
+using fluxel.Components;
+using fluxel.Database;
 using fluxel.Models.Scores;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace fluxel.Tasks.Scores;
 
@@ -20,21 +22,18 @@ public class RecalculateClubScoreTask : IBasicTask
         this.clubID = clubID;
     }
 
-    public void Run()
+    public Task Run(IServiceProvider services)
     {
-        var map = MapHelper.Get(mapID);
+        var clubs = services.GetRequiredService<ClubManager>();
+        var map = services.GetRequiredService<MapManager>().GetMap(mapID);
 
         if (map == null)
             throw new ArgumentException($"No map with id {mapID} was found!");
 
-        var scores = ScoreHelper.FromMap(map, map.SHA256Hash);
-        var cache = new RequestCache();
+        var scores = services.GetRequiredService<ScoreManager>().FromMap(map, map.SHA256Hash);
+        var cache = services.GetRequiredService<RequestCache>();
 
-        // to make it a little bit faster
-        foreach (var score in scores)
-            score.Cache = cache;
-
-        scores = scores.Where(s => s.User?.Club?.ID == clubID).ToList();
+        scores = scores.Where(s => cache.Users.TryGet(s.UserID, out var u) && clubs.GetWhereUserIsMember(u.ID)?.ID == clubID).ToList();
         scores = scores.OrderByDescending(s => s.TotalScore).ToList();
 
         // only take one score per user
@@ -50,7 +49,7 @@ public class RecalculateClubScoreTask : IBasicTask
 
         scores = uniqueScores;
 
-        var clubScore = ClubHelper.GetScore(clubID, mapID, true)!;
+        var clubScore = clubs.GetScore(clubID, mapID, true)!;
         var idx = 0;
 
         // reset stats
@@ -67,6 +66,7 @@ public class RecalculateClubScoreTask : IBasicTask
         }
 
         clubScore.Accuracy /= scores.Count; // average accuracy
-        ClubHelper.UpdateScore(clubScore);
+        clubs.UpdateScore(clubScore);
+        return Task.CompletedTask;
     }
 }

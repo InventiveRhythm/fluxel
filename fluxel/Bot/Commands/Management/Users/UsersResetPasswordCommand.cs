@@ -4,8 +4,9 @@ using DSharpPlus;
 using DSharpPlus.Entities;
 using fluxel.Bot.Components;
 using fluxel.Bot.Utils;
-using fluxel.Database.Helpers;
+using fluxel.Database;
 using fluxel.Models.OAuth;
+using Microsoft.Extensions.DependencyInjection;
 using Midori.Logging;
 
 namespace fluxel.Bot.Commands.Management.Users;
@@ -21,14 +22,16 @@ public class UsersResetPasswordCommand : ISlashCommand
         new(OptionType.Integer, "user", "The user to create a password reset token for", true)
     };
 
-    public void Handle(DiscordInteraction interaction)
+    public void Handle(DiscordInteraction interaction, IServiceProvider services)
     {
+        var users = services.GetRequiredService<UserManager>();
+
         try
         {
             var id = interaction.GetInt("user");
             if (id == null) return;
 
-            var user = UserHelper.Get(id.Value);
+            var user = users.Get(id.Value);
 
             if (user == null)
             {
@@ -40,7 +43,7 @@ public class UsersResetPasswordCommand : ISlashCommand
                 return;
             }
 
-            var token = OAuthHelper.CreateToken(user.ID, 4, OAuthScopes.PasswordReset);
+            var token = services.GetRequiredService<OAuthManager>().CreateToken(user.ID, 4, OAuthScopes.PasswordReset);
             interaction.Reply($"Created password reset token for **{user.Username}**\n`https://auth.flux.moe/reset?token={token.AccessToken}`", true);
         }
         catch (Exception e)

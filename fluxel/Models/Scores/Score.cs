@@ -1,33 +1,21 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using fluxel.API.Components;
-using fluxel.Database.Extensions;
-using fluxel.Database.Helpers;
-using fluxel.Models.Maps;
-using fluxel.Models.Users;
+using fluxel.Database;
 using fluxel.Utils;
-using fluXis.Online.API.Models.Maps;
-using fluXis.Online.API.Models.Users;
 using fluXis.Scoring.Processing;
 using fluXis.Utils;
 using MongoDB.Bson.Serialization.Attributes;
 
 namespace fluxel.Models.Scores;
 
-public class Score
+public class Score : IHasID
 {
     [BsonId]
     public long ID { get; set; }
 
     [BsonElement("user")]
     public long UserID { get; init; }
-
-    [BsonIgnore]
-    public User? User => Cache.Users.Get(UserID) ?? UserHelper.Get(UserID);
-
-    [BsonIgnore]
-    public APIUser APIUser => User?.ToAPI() ?? APIUser.CreateUnknown(UserID);
 
     [BsonElement("map")]
     public long MapID { get; init; }
@@ -38,23 +26,14 @@ public class Score
     [BsonElement("hash")]
     public string MapHash { get; init; } = string.Empty;
 
-    [BsonIgnore]
-    public Map Map => Cache.Maps.Get(MapID) ?? MapHelper.Get(MapID) ?? new Map();
-
-    [BsonIgnore]
-    public APIMap APIMap => Map.ToAPI();
-
     [BsonElement("time")]
     public DateTimeOffset Time { get; init; } = DateTimeOffset.Now;
 
     [BsonIgnore]
     public long TimeLong => Time.ToUnixTimeSeconds();
 
-    [BsonIgnore]
-    public int Mode => Map.Mode;
-
     /// <summary>
-    /// List of mods seperated by commas.
+    /// List of mods separated by commas.
     /// </summary>
     [BsonElement("mods")]
     public string Mods { get; init; } = "";
@@ -101,15 +80,15 @@ public class Score
     [BsonElement("replay")]
     public bool HasReplay { get; set; }
 
-    [BsonIgnore]
-    public RequestCache Cache { get; set; } = new();
-
-    public void Recalculate()
+    public void Recalculate(MapManager maps)
     {
+        var map = maps.GetMap(MapID);
+        if (map is null) return;
+
         Accuracy = this.CalculateAccuracy();
-        TotalScore = this.CalculateScore();
+        TotalScore = this.CalculateScore(map);
         PerformanceRating = ScoreProcessor.CalculatePerformance(
-            (float)Map.Rating,
+            (float)map.Rating,
             Accuracy,
             FlawlessCount,
             PerfectCount,

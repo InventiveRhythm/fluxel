@@ -1,4 +1,5 @@
 ﻿using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 using Midori.Logging;
 using Newtonsoft.Json;
 using osu.Framework.IO.Network;

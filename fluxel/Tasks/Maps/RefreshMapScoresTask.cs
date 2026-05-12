@@ -1,7 +1,10 @@
+using System;
 using System.Collections.Generic;
-using fluxel.Database.Helpers;
+using System.Threading.Tasks;
+using fluxel.Database;
 using fluxel.Tasks.Scores;
 using fluxel.Tasks.Users;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace fluxel.Tasks.Maps;
 
@@ -13,27 +16,33 @@ public class RefreshMapScoresTask : ICronTask
     public int Minute => 0;
     public bool Valid { get; set; }
 
-    public void Run()
+    public Task Run(IServiceProvider services)
     {
-        var maps = MapHelper.NeedRefresh;
+        var mm = services.GetRequiredService<MapManager>();
+        var sm = services.GetRequiredService<ScoreManager>();
+        var tasks = services.GetRequiredService<TaskRunner>();
+
+        var maps = mm.NeedRefresh;
         var users = new List<long>();
 
         foreach (var map in maps)
         {
-            var scores = ScoreHelper.FromMap(map, map.SHA256Hash);
+            var scores = sm.FromMap(map, map.SHA256Hash);
 
             foreach (var score in scores)
             {
-                ServerHost.Instance.Scheduler.Schedule(new RecalculateScoreTask(score.ID));
+                tasks.Schedule(new RecalculateScoreTask(score.ID));
                 if (!users.Contains(score.UserID)) users.Add(score.UserID);
             }
 
-            MapHelper.QuickUpdate(map.ID, m => m.NeedsScoreRefresh = false);
+            mm.QuickUpdate(map.ID, m => m.NeedsScoreRefresh = false);
         }
 
         foreach (var user in users)
         {
-            ServerHost.Instance.Scheduler.Schedule(new RecalculateUserTask(user));
+            tasks.Schedule(new RecalculateUserTask(user));
         }
+
+        return Task.CompletedTask;
     }
 }

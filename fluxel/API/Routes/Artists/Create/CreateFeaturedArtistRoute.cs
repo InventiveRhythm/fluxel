@@ -1,9 +1,7 @@
-﻿using System.Net.Http;
+﻿/*
+using System.Net.Http;
 using System.Threading.Tasks;
-using fluxel.API.Components;
 using fluxel.Constants;
-using fluxel.Database.Extensions;
-using fluxel.Database.Helpers;
 using fluxel.Models.Featured;
 using fluxel.Utils;
 using fluXis.Online.API.Models.Featured;
@@ -65,3 +63,4 @@ public class CreateFeaturedArtistRoute : IFluxelAPIRoute, INeedsAuthorization
         await interaction.Reply(HttpStatusCode.OK, artist);
     }
 }
+*/

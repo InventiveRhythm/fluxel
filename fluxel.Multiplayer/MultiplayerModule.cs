@@ -1,7 +1,9 @@
-﻿using fluxel.Modules;
+﻿using fluxel.Components;
+using fluxel.Modules;
 using fluxel.Modules.Messages;
 using fluxel.Multiplayer.Lobby;
 using fluXis.Online.API.Models.Multi;
+using Microsoft.Extensions.DependencyInjection;
 using Midori.Networking;
 
 namespace fluxel.Multiplayer;
@@ -10,10 +12,12 @@ public class MultiplayerModule : IModule, IMultiRoomManager
 {
     public static HttpConnectionManager<MultiplayerSocket> Sockets { get; private set; } = null!;
 
-    public void OnLoad(ServerHost host)
-    {
-        Sockets = host.Server.MapModule<MultiplayerSocket>("/multiplayer");
+    private readonly IServiceProvider services;
 
+    public MultiplayerModule(HttpRouter router, IServiceProvider services)
+    {
+        this.services = services;
+        Sockets = router.MapModule<MultiplayerSocket>("/multiplayer", manager: true)!;
         MultiplayerRoomManager.StartThread();
     }
 
@@ -32,5 +36,5 @@ public class MultiplayerModule : IModule, IMultiRoomManager
         }
     }
 
-    MultiplayerRoom? IMultiRoomManager.WithPlayer(long id) => MultiplayerRoomManager.GetCurrentRoom(id)?.ToAPI();
+    MultiplayerRoom? IMultiRoomManager.WithPlayer(long id) => MultiplayerRoomManager.GetCurrentRoom(id)?.ToAPI(services.CreateScope().ServiceProvider.GetRequiredService<ModelTranslator>());
 }

@@ -1,19 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using fluxel.API.Components;
+using fluxel.Components;
+using fluxel.Database;
 using fluxel.Database.Extensions;
-using fluxel.Database.Helpers;
 using fluxel.Models.Clubs;
+using fluxel.Models.Groups;
 using fluxel.Models.Maps;
-using fluXis.Online.API.Models.Groups;
 using fluXis.Online.API.Models.Maps;
 using MongoDB.Bson.Serialization.Attributes;
 using Newtonsoft.Json;
 
 namespace fluxel.Models.Users;
 
-public class User : IHasCache
+public class User : IHasID
 {
     [BsonId]
     public long ID { get; init; }
@@ -81,9 +81,6 @@ public class User : IHasCache
     [BsonElement("groups")]
     public List<string> GroupIDs { get; set; } = new();
 
-    [BsonIgnore]
-    public List<APIGroup> Groups => GroupIDs.Select(id => Cache.GetGroup(id)?.ToAPI() ?? APIGroup.CreateDummy(id)).ToList();
-
     [BsonElement("role")]
     public int RoleInt { get; set; }
 
@@ -93,9 +90,6 @@ public class User : IHasCache
     [BsonElement("country")]
     public string? CountryCode { get; set; } = string.Empty;
 
-    [BsonIgnore]
-    public Club? Club => ClubHelper.GetWhereUserIsMember(ID);
-
     [BsonElement("social")]
     public UserSocials Socials { get; init; } = new();
 
@@ -104,9 +98,6 @@ public class User : IHasCache
 
     [BsonElement("lastlogin")]
     public long LastLogin { get; set; } = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-
-    [BsonIgnore]
-    public bool IsOnline => (ServerHost.Instance.OnlineStates?.IsOnline(ID) ?? false) || ID == 0;
 
     [BsonElement("modes")]
     public Dictionary<string, UserStatistics> ModeStatistics { get; set; } = new();
@@ -129,29 +120,22 @@ public class User : IHasCache
     [BsonIgnore]
     public bool IsSupporter => SupportEndTime > DateTime.UtcNow || this.IsPurifier() || this.IsModerator();
 
-    [BsonIgnore]
-    public RequestCache Cache { get; set; } = new();
+    public List<Group> GetGroups(GroupManager gm)
+        => GroupIDs.Select(gm.Get).OfType<Group>().ToList();
 
-    [BsonIgnore]
-    public string Url => ServerHost.Configuration.Urls.Website + $"/u/{ID}";
+    public Club? GetClub(ClubManager cm) => cm.GetWhereUserIsMember(this);
 
-    [BsonIgnore]
-    public string AvatarUrl => ServerHost.Configuration.Urls.Assets + $"/avatar/{AvatarHash}";
+    public int GetGlobalRank(RequestCache cache, int mode = 0) => getRank(mode, cache);
+    public int GetCountryRank(RequestCache cache, int mode = 0) => getRank(mode, cache, e => e.Where(u => u.CountryCode == CountryCode));
 
-    [BsonIgnore]
-    public string BannerUrl => ServerHost.Configuration.Urls.Assets + $"/banner/{BannerHash}";
-
-    public int GetGlobalRank(int mode = 0) => getRank(mode);
-    public int GetCountryRank(int mode = 0) => getRank(mode, e => e.Where(u => u.CountryCode == CountryCode));
-
-    private int getRank(int mode, Func<IEnumerable<User>, IEnumerable<User>>? func = null)
+    private int getRank(int mode, RequestCache cache, Func<IEnumerable<User>, IEnumerable<User>>? func = null)
     {
         if (OverallRating == 0)
             return 0;
 
         var rank = 0;
 
-        var users = Cache.Users.All.AsEnumerable();
+        var users = cache.Users.All.AsEnumerable();
 
         if (func is not null)
             users = func(users);
@@ -176,26 +160,24 @@ public class User : IHasCache
         }
     }
 
-    public void Recalculate()
+    public void Recalculate(ScoreManager sm, MapManager maps, RequestCache cache)
     {
-        var scores = ScoreHelper.GetByUser(ID);
-        scores.ForEach(s => s.Cache = Cache);
-
-        var best = this.GetBestScores(scores);
-        var recent = this.GetRecentScores(scores);
+        var scores = sm.GetByUser(ID);
+        var best = this.GetBestScores(cache, scores);
+        var recent = this.GetRecentScores(cache, scores);
 
         OverallRating = UserExtensions.CalculateOverallRating(best);
         PotentialRating = UserExtensions.CalculatePotentialRating(best, recent);
-        MaxCombo = this.CalculateMaxCombo(scores);
-        RankedScore = this.CalculateRankedScore(scores);
-        OverallAccuracy = this.CalculateAccuracy(scores);
+        MaxCombo = this.CalculateMaxCombo(maps, scores);
+        RankedScore = this.CalculateRankedScore(maps, scores);
+        OverallAccuracy = this.CalculateAccuracy(cache, scores);
 
         int[] modes = { 4, 5, 6, 7, 8 };
 
         foreach (var mode in modes)
         {
-            best = this.GetBestScores(scores, mode);
-            recent = this.GetRecentScores(scores, mode);
+            best = this.GetBestScores(cache, scores, mode);
+            recent = this.GetRecentScores(cache, scores, mode);
 
             var stat = GetModeStatistics(mode);
             stat.OverallRating = UserExtensions.CalculateOverallRating(best);
@@ -229,7 +211,6 @@ public class User : IHasCache
     public class UserMaps
     {
         private User user { get; }
-        private RequestCache cache => user.Cache!;
 
         [JsonProperty("ranked")]
         public IEnumerable<APIMapSet> Ranked { get; }
@@ -246,28 +227,28 @@ public class User : IHasCache
         [JsonProperty("limit_max")]
         public long? LimitMaximumCount { get; }
 
-        public UserMaps(User user, User? requestedBy)
+        public UserMaps(MapManager mm, ModelTranslator translator, User user, User? requestedBy)
         {
             this.user = user;
 
-            var byUser = MapSetHelper.GetByCreator(user.ID).Reverse().ToList();
-            byUser.ForEach(s => s.Cache = user.Cache);
+            var byUser = mm.GetSetsByCreator(user.ID);
+            byUser.Reverse();
 
-            Ranked = byUser.Where(s => s.Status >= MapStatus.Pure).Select(x => x.ToAPI());
-            Unranked = byUser.Where(s => s.Status < MapStatus.Pure).Select(x => x.ToAPI());
+            Ranked = byUser.Where(s => s.Status >= MapStatus.Pure).Select(x => translator.ToAPI(x));
+            Unranked = byUser.Where(s => s.Status < MapStatus.Pure).Select(x => translator.ToAPI(x));
 
-            var maps = MapHelper.GetByMapper(user.ID);
+            var maps = mm.GetByMapsByMapper(user.ID);
             maps.Reverse();
             maps.RemoveAll(map => byUser.Any(s => s.ID == map.SetID));
 
             var ids = maps.Select(m => m.SetID).Distinct();
-            GuestDiffs = ids.Select(MapSetHelper.Get).OfType<MapSet>().Select(x => x.ToAPI());
+            GuestDiffs = ids.Select(mm.GetSet).OfType<MapSet>().Select(x => translator.ToAPI(x));
 
             if (user.ID != requestedBy?.ID)
                 return;
 
-            LimitUploadedCount = MapSetHelper.GetUploadedCount(user.ID, MapSetHelper.UploadLimitStartDate);
-            LimitMaximumCount = MapSetHelper.GetUploadLimit(user.ID);
+            LimitUploadedCount = mm.CountUploaded(user.ID, mm.UploadLimitStartDate);
+            LimitMaximumCount = mm.GetUploadLimit(user.ID);
         }
     }
 }

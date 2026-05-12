@@ -29,15 +29,17 @@
     />
 
     <ProjectReference Include="..\fluxel.Multiplayer\fluxel.Multiplayer.csproj"/>
-    <ProjectReference Include="..\fluxel.Social\fluxel.Social.csproj" />
+    <ProjectReference Include="..\fluxel.Social\fluxel.Social.csproj"/>
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\fluxel\fluxel.csproj"/>
+    <ProjectReference Include="..\..\..\flustix\Midori\Midori.Database.MongoDB\Midori.Database.MongoDB.csproj"/>
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="DotNetEnv" Version="3.1.1"/>
+    <PackageReference Include="flustix.Midori.Database.MongoDB" Version="2026.505.0" />
   </ItemGroup>
 
 </Project>

@@ -1,15 +1,16 @@
 ﻿using System.Globalization;
+using fluxel.Models.Maps;
 using fluxel.Models.Scores;
 
 namespace fluxel.Utils;
 
 public static class ScoreUtils
 {
-    public static int CalculateScore(this Score score)
+    public static int CalculateScore(this Score score, Map map)
     {
         var maxScore = (int)(1000000 * getMulitpliers(score));
         var accBased = (int)(score.Accuracy / 100f * (maxScore * .9f));
-        var comboBased = (int)(score.MaxCombo / (float)score.Map.MaxCombo * (maxScore * .1f));
+        var comboBased = (int)(score.MaxCombo / (float)map.MaxCombo * (maxScore * .1f));
         return accBased + comboBased;
     }
 

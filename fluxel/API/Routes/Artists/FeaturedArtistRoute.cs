@@ -1,8 +1,7 @@
-﻿using System.Net.Http;
+﻿/*
+using System.Net.Http;
 using System.Threading.Tasks;
-using fluxel.API.Components;
 using fluxel.Constants;
-using fluxel.Database.Helpers;
 using Midori.Networking;
 
 namespace fluxel.API.Routes.Artists;
@@ -31,3 +30,4 @@ public class FeaturedArtistRoute : IFluxelAPIRoute
         await interaction.Reply(HttpStatusCode.OK, artist);
     }
 }
+*/

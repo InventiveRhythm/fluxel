@@ -2,8 +2,8 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
-using fluxel.API.Components;
-using fluxel.Database.Helpers;
+using fluxel.Components;
+using fluxel.Database;
 using fluxel.Models.Maps.Modding;
 using fluXis.Online.API.Models.Maps;
 using fluXis.Online.API.Models.Maps.Modding;
@@ -13,7 +13,7 @@ using Newtonsoft.Json;
 namespace fluxel.Models.Maps;
 
 [JsonObject(MemberSerialization.OptIn)]
-public class MapSet : IHasCache
+public class MapSet : IHasID
 {
     [BsonId]
     public long ID { get; set; }
@@ -54,16 +54,6 @@ public class MapSet : IHasCache
     [BsonIgnore]
     public string SortingArtist => string.IsNullOrEmpty(ArtistRomanized) ? Artist : ArtistRomanized;
 
-    [BsonIgnore]
-    public List<Map> MapsList
-    {
-        get
-        {
-            var maps = Maps.Select(Cache.Maps.Get).OfType<Map>().ToList();
-            return maps;
-        }
-    }
-
     [BsonElement("submitted")]
     public DateTimeOffset Submitted { get; set; } = DateTimeOffset.UtcNow;
 
@@ -88,60 +78,42 @@ public class MapSet : IHasCache
     [BsonIgnore]
     public long DownVotes => Votes.Count(x => x.Value == -1);
 
-    [BsonIgnore]
-    public string[] Tags
+    public List<Map> GetMaps(RequestCache cache) => Maps.Select(cache.Maps.Get).OfType<Map>().ToList();
+
+    public string[] GetTags(RequestCache cache)
     {
-        get
+        var tags = new List<string>();
+
+        GetMaps(cache).ForEach(map =>
         {
-            var tags = new List<string>();
+            var split = map.Tags.Split(',');
 
-            MapsList.ForEach(map =>
+            foreach (var s in split)
             {
-                var split = map.Tags.Split(',');
+                var trim = s.Trim();
 
-                foreach (var s in split)
-                {
-                    var trim = s.Trim();
+                if (!tags.Contains(trim))
+                    tags.Add(trim);
+            }
+        });
 
-                    if (!tags.Contains(trim))
-                        tags.Add(trim);
-                }
-            });
-
-            return tags.ToArray();
-        }
+        return tags.ToArray();
     }
 
-    [BsonIgnore]
-    public string Source
+    public string GetSource(RequestCache cache)
     {
-        get
+        Dictionary<string, int> sources = new();
+
+        GetMaps(cache).ForEach(map =>
         {
-            Dictionary<string, int> sources = new();
+            if (!sources.TryAdd(map.Source, 1))
+                sources[map.Source]++;
+        });
 
-            MapsList.ForEach(map =>
-            {
-                if (!sources.TryAdd(map.Source, 1))
-                    sources[map.Source]++;
-            });
-
-            return sources.Count == 0 ? "" : sources.MaxBy(pair => pair.Value).Key;
-        }
+        return sources.Count == 0 ? "" : sources.MaxBy(pair => pair.Value).Key;
     }
 
-    [BsonIgnore]
-    public RequestCache Cache { get; set; } = new();
-
-    [BsonIgnore]
-    public string Url => ServerHost.Configuration.Urls.Website + $"/set/{ID}";
-
-    [BsonIgnore]
-    public string BackgroundUrl => ServerHost.Configuration.Urls.Assets + $"/background/{ID}-lg";
-
-    [BsonIgnore]
-    public string CoverUrl => ServerHost.Configuration.Urls.Assets + $"/cover/{ID}-lg";
-
-    public bool AddModdingEntry(APIModdingActionType type, long user, out string error)
+    public bool AddModdingEntry(APIModdingActionType type, long user, MapManager maps, ScoreManager scores, out string error)
     {
         error = "";
 
@@ -158,7 +130,7 @@ public class MapSet : IHasCache
 
         var approve = type == APIModdingActionType.Approve;
 
-        if (approve && Maps.Any(map => !MapHelper.HasVoted(user, map)))
+        if (approve && Maps.Any(map => !maps.HasRateVoted(user, map)))
         {
             error = "You have not submitted a rate vote for all maps.";
             return false;
@@ -168,19 +140,19 @@ public class MapSet : IHasCache
 
         if (approve)
         {
-            if (QueueVotes.Count(x => x.Approve) >= MapSetHelper.REQUIRED_VOTES)
+            if (QueueVotes.Count(x => x.Approve) >= MapManager.REQUIRED_VOTES)
             {
                 Status = MapStatus.Pure;
                 DateRanked = DateTimeOffset.UtcNow;
 
                 foreach (var map in Maps)
-                    ScoreHelper.DeleteAllFromMap(map);
+                    scores.DeleteAllFromMap(map);
             }
         }
         else
             Status = MapStatus.Impure;
 
-        MapSetHelper.Update(this);
+        maps.Update(this);
         return true;
     }
 }

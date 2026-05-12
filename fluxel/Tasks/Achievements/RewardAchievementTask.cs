@@ -1,6 +1,10 @@
-﻿using fluxel.Constants.Achievements;
-using fluxel.Database.Helpers;
+﻿using System;
+using System.Threading.Tasks;
+using fluxel.Constants.Achievements;
+using fluxel.Database;
+using fluxel.Modules;
 using fluxel.Modules.Messages;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace fluxel.Tasks.Achievements;
 
@@ -19,17 +23,18 @@ public class RewardAchievementTask : IBasicTask
         this.aid = aid;
     }
 
-    public void Run()
+    public Task Run(IServiceProvider services)
     {
+        var modules = services.GetRequiredService<ModuleManager>();
+        var achievements = services.GetRequiredService<AchievementManager>();
+
         var achievement = AchievementList.Find(aid);
 
-        if (achievement == null)
-            return;
+        if (achievement == null || achievements.HasRewarded(aid, uid))
+            return Task.CompletedTask;
 
-        if (AchievementHelper.HasRewarded(aid, uid))
-            return;
-
-        ServerHost.Instance.SendMessage(new UserAchievementMessage(uid, achievement));
-        AchievementHelper.Reward(aid, uid);
+        modules.SendMessage(new UserAchievementMessage(uid, achievement));
+        achievements.Reward(aid, uid);
+        return Task.CompletedTask;
     }
 }

@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Net;
 using fluxel.Constants;
-using fluxel.Database.Helpers;
+using fluxel.Database;
 using fluxel.Models.Users;
 using fluxel.Utils;
+using Microsoft.Extensions.Logging;
 using Midori.Logging;
 using Midori.Networking.WebSockets.Typed;
 
@@ -12,12 +13,19 @@ namespace fluxel.WebSocket;
 public abstract class AuthenticatedSocket<S, C> : TypedWebSocketSession<S, C>
     where S : class where C : class
 {
-    public virtual Version SupportedVersion => new(2025, 1214);
+    public virtual Version SupportedVersion => new(2026, 508);
 
     public IPEndPoint? Address { get; private set; }
     public long UserID { get; set; }
 
-    public User CurrentUser => UserHelper.Get(UserID) ?? throw new InvalidOperationException("Tried to get user before login.");
+    public User CurrentUser => Users.Get(UserID) ?? throw new InvalidOperationException("Tried to get user before login.");
+
+    protected UserManager Users { get; }
+
+    protected AuthenticatedSocket(UserManager users)
+    {
+        Users = users;
+    }
 
     protected override bool Authenticate(out string message)
     {
@@ -81,7 +89,7 @@ public abstract class AuthenticatedSocket<S, C> : TypedWebSocketSession<S, C>
     private bool login(string token, string ip, out string issue)
     {
         issue = "";
-        var session = SessionHelper.Get(token);
+        var session = Users.GetSessionFromToken(token);
 
         if (session == null)
         {
@@ -89,7 +97,7 @@ public abstract class AuthenticatedSocket<S, C> : TypedWebSocketSession<S, C>
             return false;
         }
 
-        if (!UserHelper.TryGet(session.UserID, out var user))
+        if (!Users.TryGet(session.UserID, out var user))
         {
             issue = ResponseStrings.TokenUserNotFound;
             return false;
@@ -101,7 +109,7 @@ public abstract class AuthenticatedSocket<S, C> : TypedWebSocketSession<S, C>
             return true;
 
         var code = IpUtils.GetCountryCode(ip).Result;
-        UserHelper.UpdateLocked(UserID, u => u.CountryCode = code);
+        Users.UpdateLocked(UserID, u => u.CountryCode = code);
         return true;
     }
 }

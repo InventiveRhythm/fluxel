@@ -1,14 +1,15 @@
 ﻿using DSharpPlus.Entities;
+using fluxel.Components;
 using fluxel.Models.Users;
 
 namespace fluxel.Utils;
 
 public static class DiscordExtensions
 {
-    public static DiscordEmbedBuilder.EmbedAuthor ToEmbedAuthor(this User user) => new()
+    public static DiscordEmbedBuilder.EmbedAuthor ToEmbedAuthor(this User user, UrlFormatter urls) => new()
     {
         Name = user.Username,
-        IconUrl = user.AvatarUrl,
-        Url = user.Url
+        IconUrl = urls.Avatar(user),
+        Url = urls.Web(user)
     };
 }

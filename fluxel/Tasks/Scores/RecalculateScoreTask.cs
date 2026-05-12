@@ -1,5 +1,7 @@
 ﻿using System;
-using fluxel.Database.Helpers;
+using System.Threading.Tasks;
+using fluxel.Database;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace fluxel.Tasks.Scores;
 
@@ -14,14 +16,16 @@ public class RecalculateScoreTask : IBasicTask
         this.id = id;
     }
 
-    public void Run()
+    public Task Run(IServiceProvider services)
     {
-        var score = ScoreHelper.Get(id);
+        var scores = services.GetRequiredService<ScoreManager>();
+        var score = scores.Get(id);
 
         if (score == null)
             throw new ArgumentException($"No score with id {id} was found!");
 
-        score.Recalculate();
-        ScoreHelper.Update(score);
+        score.Recalculate(services.GetRequiredService<MapManager>());
+        scores.Update(score);
+        return Task.CompletedTask;
     }
 }

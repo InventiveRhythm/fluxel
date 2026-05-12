@@ -14,7 +14,7 @@ public interface ISlashCommand
     Permissions Permissions => Permissions.Administrator;
     IEnumerable<Option> Options => Array.Empty<Option>();
 
-    void Handle(DiscordInteraction interaction);
+    void Handle(DiscordInteraction interaction, IServiceProvider services);
 
     public class Option
     {

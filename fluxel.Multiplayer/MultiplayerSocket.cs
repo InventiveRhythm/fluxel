@@ -1,5 +1,5 @@
-﻿using fluxel.Database.Extensions;
-using fluxel.Database.Helpers;
+﻿using fluxel.Components;
+using fluxel.Database;
 using fluxel.Multiplayer.Lobby;
 using fluxel.Utils;
 using fluxel.WebSocket;
@@ -17,13 +17,23 @@ public class MultiplayerSocket : AuthenticatedSocket<IMultiplayerServer, IMultip
 
     public IEnumerable<MultiplayerSocket> All => Room is null ? [] : Room.All;
 
+    private readonly MapManager maps;
+    private readonly ModelTranslator translator;
+
+    public MultiplayerSocket(UserManager users, MapManager maps, ModelTranslator translator)
+        : base(users)
+    {
+        this.maps = maps;
+        this.translator = translator;
+    }
+
     public Task<MultiplayerRoom> CreateRoom(string name, MultiplayerPrivacy privacy, string password, long map, string hash)
     {
         if (Room is not null)
             throw RoomException.AlreadyInRoom();
 
         Room = MultiplayerRoomManager.Create(this, name, privacy, password, map);
-        return Task.FromResult(Room.ToAPI());
+        return Task.FromResult(Room.ToAPI(translator));
     }
 
     public async Task<MultiplayerRoom> JoinRoom(long id, string password)
@@ -48,15 +58,15 @@ public class MultiplayerSocket : AuthenticatedSocket<IMultiplayerServer, IMultip
                 break;
         }
 
-        if (!UserHelper.TryGet(UserID, out _))
+        if (!Users.TryGet(UserID, out _))
             return null!;
 
         var participant = new ServerMultiplayerRoom.Participant(this);
         room.Participants.Add(participant);
         Room = room;
 
-        await All.ForEachAsync(c => c.Client.UserJoined(participant.ToAPI()));
-        return Room.ToAPI();
+        await All.ForEachAsync(c => c.Client.UserJoined(participant.ToAPI(translator)));
+        return Room.ToAPI(translator);
     }
 
     public Task KickPlayer(long id)
@@ -136,12 +146,12 @@ public class MultiplayerSocket : AuthenticatedSocket<IMultiplayerServer, IMultip
     {
         if (Room is null) throw RoomException.NotInRoom();
         if (Room.HostID != UserID) throw RoomException.NotHost();
-        if (!MapHelper.TryGetMap(map, out var m)) throw MultiMapException.NotFound();
+        if (!maps.TryGetMap(map, out var m)) throw MultiMapException.NotFound();
         if (m.SHA256Hash != hash) throw MultiMapException.Mismatch();
 
         Room.MapID = map;
         Room.CurrentMods = mods.ToList();
-        await All.ForEachAsync(c => c.Client.MapUpdated(m.ToAPI(), Room.CurrentMods));
+        await All.ForEachAsync(c => c.Client.MapUpdated(translator.ToAPI(m), Room.CurrentMods));
 
         foreach (var user in Room.Participants.Where(u => u.State < MultiplayerUserState.Playing))
             setPlayerStatus(user.ID, MultiplayerUserState.Idle);

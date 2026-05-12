@@ -1,9 +1,12 @@
 ﻿using System;
 using System.Linq;
-using fluxel.Database.Helpers;
+using System.Threading.Tasks;
+using fluxel.Database;
 using fluxel.Utils;
+using fluXis.Map.Structures;
 using fluXis.Online.API.Models.Maps;
 using fluXis.Utils;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace fluxel.Tasks.Maps;
 
@@ -18,9 +21,10 @@ public class RecalculateMapTask : IBasicTask
         this.id = id;
     }
 
-    public void Run()
+    public Task Run(IServiceProvider services)
     {
-        var dbMap = MapHelper.Get(id);
+        var maps = services.GetRequiredService<MapManager>();
+        var dbMap = maps.GetMap(id);
 
         if (dbMap == null)
             throw new ArgumentException($"No map with id {id} was found!");
@@ -55,18 +59,16 @@ public class RecalculateMapTask : IBasicTask
         dbMap.SHA256Hash = MapUtils.GetHash(map.RawContent);
 
         dbMap.NotesPerSecond = MapUtils.GetNps(map.HitObjects);
-        dbMap.Hits = map.HitObjects.Count(x => x.Type switch
-        {
-            0 => x.HoldTime <= 0,
-            1 => true,
-            _ => false
-        });
-        dbMap.LongNotes = map.HitObjects.Count(x => x.Type == 0 && x.HoldTime > 0);
+        dbMap.Hits = map.HitObjects.Count(x => x.Type == HitObjectType.Normal && !x.LongNote);
+        dbMap.LongNotes = map.HitObjects.Count(x => x.Type == HitObjectType.Normal && x.LongNote);
+        dbMap.TickNotes = map.HitObjects.Count(x => x.Type == HitObjectType.Tick);
+        dbMap.Landmines = map.HitObjects.Count(x => x.Type == HitObjectType.Landmine);
 
         dbMap.AccuracyDifficulty = map.AccuracyDifficulty;
         dbMap.HealthDifficulty = map.HealthDifficulty;
 
-        MapHelper.Update(dbMap);
+        maps.Update(dbMap);
         archive.Dispose();
+        return Task.CompletedTask;
     }
 }

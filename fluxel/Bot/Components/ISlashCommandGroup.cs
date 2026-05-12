@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using DSharpPlus.Entities;
 using fluxel.Bot.Utils;
@@ -10,7 +11,7 @@ public interface ISlashCommandGroup : ISlashCommand
     int Depth => 1;
     IEnumerable<ISlashCommand> Subcommands { get; }
 
-    void ISlashCommand.Handle(DiscordInteraction interaction)
+    void ISlashCommand.Handle(DiscordInteraction interaction, IServiceProvider services)
     {
         var option = interaction.Data.Options.First();
         var subcommand = option.Name;
@@ -29,6 +30,6 @@ public interface ISlashCommandGroup : ISlashCommand
             return;
         }
 
-        command.Handle(interaction);
+        command.Handle(interaction, services);
     }
 }

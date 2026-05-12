@@ -1,4 +1,7 @@
-﻿using fluxel.Database.Helpers;
+﻿using System;
+using System.Threading.Tasks;
+using fluxel.Database;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace fluxel.Tasks.Users;
 
@@ -13,10 +16,12 @@ public class AddToDefaultChannelsTask : IBasicTask
         this.id = id;
     }
 
-    public void Run()
+    public Task Run(IServiceProvider services)
     {
-        ChatHelper.AddToChannel("general", id);
-        ChatHelper.AddToChannel("mapping", id);
-        ChatHelper.AddToChannel("off-topic", id);
+        var chats = services.GetRequiredService<ChatManager>();
+        chats.AddToChannel("general", id);
+        chats.AddToChannel("mapping", id);
+        chats.AddToChannel("off-topic", id);
+        return Task.CompletedTask;
     }
 }

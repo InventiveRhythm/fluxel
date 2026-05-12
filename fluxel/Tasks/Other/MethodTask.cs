@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 
 namespace fluxel.Tasks.Other;
 
@@ -13,8 +14,9 @@ public class MethodTask : IBasicTask
         this.function = function;
     }
 
-    public void Run()
+    public Task Run(IServiceProvider services)
     {
         function.DynamicInvoke();
+        return Task.CompletedTask;
     }
 }

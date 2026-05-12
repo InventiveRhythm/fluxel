@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-using fluxel.Database.Helpers;
-using MongoDB.Bson.Serialization.Attributes;
+﻿using MongoDB.Bson.Serialization.Attributes;
 using Newtonsoft.Json;
 
 namespace fluxel.Models.Featured;
@@ -44,7 +42,7 @@ public class FeaturedArtist
     [JsonProperty("unofficial")]
     public bool Unofficial { get; set; }
 
-    [BsonIgnore]
+    /*[BsonIgnore]
     [JsonProperty("albums")]
-    public List<FeaturedArtistAlbum> Albums => FeaturedArtistHelper.FromArtist(ID);
+    public List<FeaturedArtistAlbum> Albums => FeaturedArtistHelper.FromArtist(ID);*/
 }

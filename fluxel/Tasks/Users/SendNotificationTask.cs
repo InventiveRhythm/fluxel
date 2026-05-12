@@ -1,6 +1,10 @@
-﻿using fluxel.API.Components;
+﻿using System;
+using System.Threading.Tasks;
+using fluxel.Components;
 using fluxel.Models.Notifications;
+using fluxel.Modules;
 using fluxel.Modules.Messages;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace fluxel.Tasks.Users;
 
@@ -15,11 +19,12 @@ public class SendNotificationTask : IBasicTask
         this.notification = notification;
     }
 
-    public void Run()
+    public Task Run(IServiceProvider services)
     {
-        var notif = notification.ToAPI(new RequestCache());
-        if (notif is null) return;
+        var notif = services.GetRequiredService<ModelTranslator>().ToAPI(notification);
+        if (notif is null) return Task.CompletedTask;
 
-        ServerHost.Instance.SendMessage(new UserNotificationMessage(notification.UserID, notif));
+        services.GetRequiredService<ModuleManager>().SendMessage(new UserNotificationMessage(notification.UserID, notif));
+        return Task.CompletedTask;
     }
 }

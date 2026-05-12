@@ -1,5 +1,25 @@
-﻿using DotNetEnv;
+﻿using System.Net;
+using DotNetEnv;
+using fluxel.API;
+using fluxel.API.Components;
+using fluxel.Bot;
+using fluxel.Components;
 using fluxel.Config;
+using fluxel.Database;
+using fluxel.Modules;
+using fluxel.Tasks;
+using fluxel.Tasks.Maps;
+using fluXis.Map;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Midori.API;
+using Midori.API.Handlers;
+using Midori.Database.MongoDB;
+using Midori.Logging;
+using Midori.Networking;
+using Midori.Networking.Handlers;
+using Midori.Utils.Extensions;
 
 namespace fluxel.Startup;
 
@@ -64,9 +84,72 @@ internal static class Program
             }
         };
 
-        var server = new ServerHost(config);
-        await server.StartBlocking();
+        osu.Framework.Logging.Logger.Enabled = false;
+
+        MapInfo.MinKeymode = 1;
+        MapInfo.MaxKeymode = 10;
+
+        var builder = new HostApplicationBuilder();
+
+        builder.Logging.ClearProviders();
+        builder.Logging.AddProvider(new MidoriLoggerProvider());
+
+        builder.Services.AddSingleton<ServerConfig>(_ => config);
+
+        builder.Services.AddSingleton<IHttpReplyHandler, DefaultAPIReplyHandler>();
+        builder.Services.AddSingleton<IAPIAuthenticator, FluxelAPIAuthenticator>();
+        builder.Services.AddScoped<RequestCache>();
+
+        builder.Services.AddMongoDatabase(config.Mongo.Connection, config.Mongo.Database);
+        builder.Services.AddSingleton<AchievementManager>();
+        builder.Services.AddSingleton<ArtistManager>();
+        builder.Services.AddSingleton<AuthManager>();
+        builder.Services.AddSingleton<ChatManager>();
+        builder.Services.AddSingleton<ClubManager>();
+        builder.Services.AddSingleton<CollectionManager>();
+        builder.Services.AddSingleton<CounterManager>();
+        builder.Services.AddSingleton<EventManager>();
+        builder.Services.AddSingleton<GroupManager>();
+        builder.Services.AddSingleton<MapManager>();
+        builder.Services.AddSingleton<NotificationManager>();
+        builder.Services.AddSingleton<ScoreManager>();
+        builder.Services.AddSingleton<UserManager>();
+
+        builder.Services.AddSingleton<DiscordBot>();
+        builder.Services.AddSingleton<Donations>();
+        builder.Services.AddSingleton<MailDelivery>();
+        builder.Services.AddScoped<ModelTranslator>();
+        builder.Services.AddSingleton<PreviewGenerator>();
+        builder.Services.AddSingleton<ServerEvents>();
+        builder.Services.AddSingleton<Statistics>();
+        builder.Services.AddSingleton<TaskRunner>();
+        builder.Services.AddSingleton<UrlFormatter>();
+
+        builder.Services.AddHttpServer(c =>
+        {
+            c.Address = IPAddress.Loopback;
+            c.Port = (ushort)config.Port;
+        });
+
+        var modules = new ModuleManager();
+        builder.Services.AddSingleton(_ => modules);
+        modules.RegisterServices(builder);
+
+        var host = builder.Build();
+        modules.BuildModules(host.Services);
+
+        var router = host.Services.GetRequiredService<HttpRouter>();
+        router.AddMiddleware<FluxelAtMeMiddleware>();
+        router.RegisterControllersFromAssembly(typeof(ServerHost).Assembly);
+        modules.RegisterControllers(router);
+
+        var tasks = host.Services.GetRequiredService<TaskRunner>();
+        tasks.Schedule(new RefreshMapScoresTask());
+
+        await host.RunAsync();
     }
+
+    #region Env
 
     private static ulong envULong(string key)
     {
@@ -97,4 +180,6 @@ internal static class Program
 
         return nums;
     }
+
+    #endregion
 }

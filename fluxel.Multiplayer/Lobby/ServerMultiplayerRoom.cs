@@ -1,11 +1,10 @@
-﻿using fluxel.Database.Extensions;
-using fluxel.Database.Helpers;
+﻿using fluxel.Components;
 using fluxel.Utils;
 using fluXis.Online.API.Models.Maps;
 using fluXis.Online.API.Models.Multi;
 using fluXis.Online.API.Models.Users;
 using fluXis.Scoring;
-using Midori.Logging;
+using Microsoft.Extensions.Logging;
 using osu.Framework.Extensions.IEnumerableExtensions;
 
 namespace fluxel.Multiplayer.Lobby;
@@ -115,15 +114,21 @@ public class ServerMultiplayerRoom
     public bool HasPlayer(long id) => Participants.Any(u => u.ID == id);
     public Participant? GetPlayer(long id) => Participants.FirstOrDefault(u => u.ID == id);
 
-    public MultiplayerRoom ToAPI() => new()
+    public MultiplayerRoom ToAPI(ModelTranslator translator)
     {
-        RoomID = RoomID,
-        Name = RoomName,
-        Privacy = Privacy,
-        Host = UserHelper.Get(HostID)?.ToAPI() ?? APIUser.CreateUnknown(HostID),
-        Participants = Participants.Select(x => x.ToAPI()).ToList(),
-        Map = MapHelper.Get(MapID)?.ToAPI() ?? APIMap.CreateUnknown(MapID)
-    };
+        var host = translator.Cache.Users.Get(HostID);
+        var map = translator.Cache.Maps.Get(MapID);
+
+        return new MultiplayerRoom
+        {
+            RoomID = RoomID,
+            Name = RoomName,
+            Privacy = Privacy,
+            Host = host != null ? translator.ToAPI(host) : APIUser.CreateUnknown(HostID),
+            Participants = Participants.Select(x => x.ToAPI(translator)).ToList(),
+            Map = map != null ? translator.ToAPI(map) : APIMap.CreateUnknown(MapID)
+        };
+    }
 
     public class Participant
     {
@@ -138,10 +143,15 @@ public class ServerMultiplayerRoom
             Socket = sock;
         }
 
-        public MultiplayerParticipant ToAPI() => new()
+        public MultiplayerParticipant ToAPI(ModelTranslator translator)
         {
-            Player = UserHelper.Get(ID)?.ToAPI() ?? APIUser.CreateUnknown(ID),
-            State = State
-        };
+            var user = translator.Cache.Users.Get(ID);
+
+            return new MultiplayerParticipant
+            {
+                Player = user != null ? translator.ToAPI(user) : APIUser.CreateUnknown(ID),
+                State = State
+            };
+        }
     }
 }

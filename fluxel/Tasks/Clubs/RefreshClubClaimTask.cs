@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Linq;
-using fluxel.Database.Helpers;
+using System.Threading.Tasks;
+using fluxel.Database;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace fluxel.Tasks.Clubs;
 
@@ -15,19 +17,21 @@ public class RefreshClubClaimTask : IBasicTask
         this.id = id;
     }
 
-    public void Run()
+    public Task Run(IServiceProvider services)
     {
-        var map = MapHelper.Get(id);
+        var clubs = services.GetRequiredService<ClubManager>();
+        var map = services.GetRequiredService<MapManager>().GetMap(id);
 
         if (map == null)
             throw new ArgumentException($"No map with id {id} was found!");
 
-        var claim = ClubHelper.GetClaim(map.ID, true)!;
+        var claim = clubs.GetClaim(map.ID, true)!;
 
-        var scores = ClubHelper.GetScoresOnMap(map.ID);
+        var scores = clubs.GetScoresOnMap(map.ID);
         scores = scores.OrderByDescending(s => s.PerformanceRating).ToList();
 
         claim.ClubID = scores.FirstOrDefault()?.ClubID ?? 0;
-        ClubHelper.UpdateClaim(claim);
+        clubs.UpdateClaim(claim);
+        return Task.CompletedTask;
     }
 }

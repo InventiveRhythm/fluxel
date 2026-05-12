@@ -1,5 +1,4 @@
-﻿using fluxel.API.Components;
-using MongoDB.Bson;
+﻿using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 
 namespace fluxel.Models.Scores;
@@ -23,7 +22,4 @@ public class ClubScore
 
     [BsonElement("accuracy")]
     public double Accuracy { get; set; }
-
-    [BsonIgnore]
-    public RequestCache Cache { get; set; } = new();
 }

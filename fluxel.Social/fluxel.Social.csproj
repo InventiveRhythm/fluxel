@@ -10,8 +10,4 @@
       <ProjectReference Include="..\fluxel\fluxel.csproj" />
     </ItemGroup>
 
-    <ItemGroup>
-      <Folder Include="API\" />
-    </ItemGroup>
-
 </Project>

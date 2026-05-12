@@ -1,10 +1,13 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using DSharpPlus;
 using DSharpPlus.Entities;
 using fluxel.Bot.Components;
 using fluxel.Bot.Utils;
 using fluxel.Constants.Achievements;
+using fluxel.Modules;
 using fluxel.Modules.Messages;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace fluxel.Bot.Commands.Testing;
 
@@ -20,7 +23,7 @@ public class AchievementTestCommand : ISlashCommand
         new(OptionType.String, "id", "The achievement id", true)
     };
 
-    public void Handle(DiscordInteraction interaction)
+    public void Handle(DiscordInteraction interaction, IServiceProvider services)
     {
         var user = interaction.GetInt("user");
         var id = interaction.GetString("id");
@@ -39,13 +42,13 @@ public class AchievementTestCommand : ISlashCommand
             return;
         }
 
-        if (!(ServerHost.Instance.OnlineStates?.IsOnline(user.Value) ?? false))
+        if (!(services.GetService<IOnlineStateManager>()?.IsOnline(user.Value) ?? false))
         {
             interaction.Reply("User is not online", true);
             return;
         }
 
-        ServerHost.Instance.SendMessage(new UserAchievementMessage(user.Value, achievement));
+        services.GetRequiredService<ModuleManager>().SendMessage(new UserAchievementMessage(user.Value, achievement));
         interaction.Reply("Showing achievement", true);
     }
 }

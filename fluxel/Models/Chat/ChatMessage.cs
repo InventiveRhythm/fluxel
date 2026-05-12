@@ -1,8 +1,4 @@
 ﻿using System;
-using fluxel.API.Components;
-using fluxel.Database.Extensions;
-using fluXis.Online.API.Models.Chat;
-using fluXis.Online.API.Models.Users;
 using MongoDB.Bson.Serialization.Attributes;
 using Newtonsoft.Json;
 
@@ -31,16 +27,4 @@ public class ChatMessage
 
     [BsonElement("deleted")]
     public bool Deleted { get; set; }
-
-    [BsonIgnore]
-    public RequestCache Cache { get; set; } = new();
-
-    public APIChatMessage ToAPI() => new()
-    {
-        ID = ID.ToString(),
-        CreatedAtUnix = CreatedAt.ToUnixTimeSeconds(),
-        Content = Content,
-        Channel = Channel,
-        Sender = Cache.Users.Get(SenderID)?.ToAPI() ?? APIUser.CreateUnknown(SenderID)
-    };
 }

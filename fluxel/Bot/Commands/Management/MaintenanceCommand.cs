@@ -16,7 +16,7 @@ public class MaintenanceCommand : ISlashCommand
         new(OptionType.Integer, "time", "Unix timestamp of the time the server will go down", true)
     };
 
-    public void Handle(DiscordInteraction interaction)
+    public void Handle(DiscordInteraction interaction, IServiceProvider services)
     {
         var time = interaction.GetInt("time");
 

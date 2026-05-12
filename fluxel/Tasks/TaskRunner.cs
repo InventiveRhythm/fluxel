@@ -1,42 +1,39 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
-using Midori.Logging;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using osu.Framework.Extensions.IEnumerableExtensions;
 
 namespace fluxel.Tasks;
 
-public class TaskRunner
+public class TaskRunner : BackgroundService
 {
-    private static Logger logger { get; } = Logger.GetLogger("Tasks");
+    private readonly ILogger logger;
+    private readonly IServiceProvider services;
 
     private List<IBasicTask> tasks { get; } = new();
     private List<ICronTask> cron { get; } = new();
 
     private object @lock { get; } = new { };
 
-    private bool running { get; set; }
-
     public IReadOnlyList<IBasicTask> Queue => tasks;
 
-    public void Start()
+    public TaskRunner(ILoggerFactory loggerFactory, IServiceProvider services)
     {
-        if (running)
-            return;
-
-        logger.Add("Starting Task Runner.");
-        running = true;
-        Task.Run(loop);
+        logger = loggerFactory.CreateLogger("Tasks");
+        this.services = services;
     }
 
-    public void Stop()
+    protected override Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        logger.Add("Stopping Task Runner.");
-        running = false;
+        logger.LogInformation("Starting Task Runner.");
+        return loop(stoppingToken);
     }
 
     public void Schedule(IBulkTask task)
-        => task.GetTasks().ForEach(Schedule);
+        => task.GetTasks(services).ForEach(Schedule);
 
     public void Schedule(IBasicTask task)
     {
@@ -52,9 +49,9 @@ public class TaskRunner
         }
     }
 
-    private async void loop()
+    private async Task loop(CancellationToken stoppingToken)
     {
-        while (running)
+        while (!stoppingToken.IsCancellationRequested)
         {
             IBasicTask? task = null;
 
@@ -85,18 +82,18 @@ public class TaskRunner
                     }
                 }
 
-                task?.Run();
+                task?.Run(services);
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
                 var name = task?.Name ?? task?.GetType().Name ?? "unknown";
-                logger.Add($"An error occurred while running task '{name}'.", LogLevel.Error, e);
+                logger.LogError(ex, $"An error occurred while running task '{name}'.");
             }
             finally
             {
-                // If there are no tasks, wait 2 seconds before checking again.
+                // If there are no tasks, wait 1 second before checking again.
                 if (tasks.Count == 0)
-                    await Task.Delay(2000);
+                    await Task.Delay(1000, stoppingToken);
             }
         }
     }

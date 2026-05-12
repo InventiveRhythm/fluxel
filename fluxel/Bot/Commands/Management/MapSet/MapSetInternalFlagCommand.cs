@@ -5,9 +5,11 @@ using System.Text;
 using DSharpPlus.Entities;
 using fluxel.Bot.Components;
 using fluxel.Bot.Utils;
+using fluxel.Components;
+using fluxel.Database;
 using fluxel.Database.Extensions;
-using fluxel.Database.Helpers;
 using fluxel.Models.Maps;
+using Microsoft.Extensions.DependencyInjection;
 using osu.Framework.Extensions;
 
 namespace fluxel.Bot.Commands.Management.MapSet;
@@ -28,8 +30,10 @@ public class MapSetInternalFlagCommand : ISlashCommand
         new(OptionType.Boolean, "enabled", "read the name", true)
     };
 
-    public void Handle(DiscordInteraction interaction)
+    public void Handle(DiscordInteraction interaction, IServiceProvider services)
     {
+        var mm = services.GetRequiredService<MapManager>();
+
         var id = interaction.GetInt("id")!.Value;
         var flagStr = interaction.GetString("flag")!;
         var enabled = interaction.GetBool("enabled")!.Value;
@@ -40,7 +44,7 @@ public class MapSetInternalFlagCommand : ISlashCommand
             return;
         }
 
-        var set = MapSetHelper.Get(id);
+        var set = mm.GetSet(id);
 
         if (set is null)
         {
@@ -63,11 +67,11 @@ public class MapSetInternalFlagCommand : ISlashCommand
         }
 
         set.InternalFlags = result;
-        MapSetHelper.Update(set);
+        mm.Update(set);
 
         var sb = new StringBuilder();
         sb.AppendLine($"**{set.Title} - {set.Artist}**");
-        sb.AppendLine($"uploaded by **{set.GetCreator()?.Username}**");
+        sb.AppendLine($"uploaded by **{set.GetCreator(services.GetRequiredService<RequestCache>())?.Username}**");
         sb.AppendLine();
         sb.AppendLine($"**{flag} -> {(enabled ? "enabled" : "disabled")}**");
 

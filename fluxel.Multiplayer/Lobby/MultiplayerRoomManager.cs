@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using fluXis.Online.API.Models.Multi;
+using Microsoft.Extensions.Logging;
 using Midori.Logging;
 
 namespace fluxel.Multiplayer.Lobby;

@@ -2,8 +2,11 @@
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
-using fluxel.Database.Helpers;
+using System.Threading.Tasks;
+using fluxel.Components;
+using fluxel.Database;
 using fluxel.Utils;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace fluxel.Tasks.MapSets;
 
@@ -18,9 +21,9 @@ public class GeneratePreviewTask : IBasicTask
         this.id = id;
     }
 
-    public void Run()
+    public Task Run(IServiceProvider services)
     {
-        var set = MapSetHelper.Get(id);
+        var set = services.GetRequiredService<MapManager>().GetSet(id);
 
         if (set == null)
             throw new ArgumentException($"No set with id {id} was found!");
@@ -40,6 +43,7 @@ public class GeneratePreviewTask : IBasicTask
         entry.CopyTo(ms);
 
         var tempPath = TempUtils.CopyToTemp(ms.ToArray(), ext);
-        PreviewGenerator.GeneratePreview(tempPath, Assets.GetPathForAsset(AssetType.Preview, set.ID.ToString()), map.Metadata.PreviewTime / 1000f);
+        services.GetRequiredService<PreviewGenerator>().Generate(tempPath, Assets.GetPathForAsset(AssetType.Preview, set.ID.ToString()), map.Metadata.PreviewTime / 1000f);
+        return Task.CompletedTask;
     }
 }

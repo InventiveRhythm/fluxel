@@ -4,8 +4,9 @@ using System.Linq;
 using DSharpPlus.Entities;
 using fluxel.Bot.Components;
 using fluxel.Bot.Utils;
-using fluxel.Database.Helpers;
+using fluxel.Database;
 using fluxel.Models.Users;
+using Microsoft.Extensions.DependencyInjection;
 using osu.Framework.Extensions;
 
 namespace fluxel.Bot.Commands.Management.Users;
@@ -22,8 +23,10 @@ public class UserAddFlagCommand : ISlashCommand
             .WithChoices(getFlagChoices().ToArray())
     };
 
-    public async void Handle(DiscordInteraction interaction)
+    public async void Handle(DiscordInteraction interaction, IServiceProvider services)
     {
+        var users = services.GetRequiredService<UserManager>();
+
         var userId = interaction.GetInt("user");
         var flag = interaction.GetString("flag");
 
@@ -33,7 +36,7 @@ public class UserAddFlagCommand : ISlashCommand
             return;
         }
 
-        if (!UserHelper.TryGet(userId.Value, out var user))
+        if (!users.TryGet(userId.Value, out var user))
         {
             interaction.Reply("User not found.", true);
             return;
@@ -51,7 +54,7 @@ public class UserAddFlagCommand : ISlashCommand
             return;
         }
 
-        UserHelper.UpdateLocked(user.ID, u => u.BanFlags |= userFlag);
+        users.UpdateLocked(user.ID, u => u.BanFlags |= userFlag);
         interaction.Reply($"Flag **{userFlag.ToString()}** added to user **{user.Username}**.", true);
     }
 

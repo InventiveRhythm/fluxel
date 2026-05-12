@@ -1,10 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using fluxel.Components;
 using fluxel.Database.Extensions;
 using fluxel.Models.Maps;
-using fluxel.Utils;
 using fluXis.Online.API.Models.Maps;
+using Midori.Utils.Extensions;
 
 namespace fluxel.Search.Filters;
 
@@ -18,6 +19,13 @@ public class MapSetSearchFilter : SearchFilters<MapSet>
 
     private float? bpm;
     private SearchOperator bpmOp;
+
+    private readonly RequestCache cache;
+
+    public MapSetSearchFilter(RequestCache cache)
+    {
+        this.cache = cache;
+    }
 
     public override bool ParseKeyword(string key, string value, SearchOperator op)
     {
@@ -173,22 +181,24 @@ public class MapSetSearchFilter : SearchFilters<MapSet>
 
         if (bpm != null)
         {
+            var maps = set.GetMaps(cache);
+
             switch (bpmOp)
             {
                 case SearchOperator.Equal:
-                    return set.MapsList.Any(x => x.BPM == bpm.Value);
+                    return maps.Any(x => x.BPM == bpm.Value);
 
                 case SearchOperator.Less:
-                    return set.MapsList.Any(x => x.BPM < bpm.Value);
+                    return maps.Any(x => x.BPM < bpm.Value);
 
                 case SearchOperator.LessOrEqual:
-                    return set.MapsList.Any(x => x.BPM <= bpm.Value);
+                    return maps.Any(x => x.BPM <= bpm.Value);
 
                 case SearchOperator.Greater:
-                    return set.MapsList.Any(x => x.BPM > bpm.Value);
+                    return maps.Any(x => x.BPM > bpm.Value);
 
                 case SearchOperator.GreaterOrEqual:
-                    return set.MapsList.Any(x => x.BPM >= bpm.Value);
+                    return maps.Any(x => x.BPM >= bpm.Value);
 
                 default:
                     throw new ArgumentOutOfRangeException();
@@ -212,7 +222,7 @@ public class MapSetSearchFilter : SearchFilters<MapSet>
         if (keys is null || keys.Count == 0)
             return true;
 
-        return set.MapsList.Any(m => keys.Contains(m.Mode));
+        return set.GetMaps(cache).Any(m => keys.Contains(m.Mode));
     }
 
     private bool matchEffects(MapSet set)
@@ -222,7 +232,7 @@ public class MapSetSearchFilter : SearchFilters<MapSet>
 
         var any = false;
 
-        foreach (var map in set.MapsList)
+        foreach (var map in set.GetMaps(cache))
         {
             var match = false;
 
@@ -248,8 +258,9 @@ public class MapSetSearchFilter : SearchFilters<MapSet>
             return true;
 
         var words = SearchText.Split(' ');
-        var creator = set.GetCreator();
-        var tags = set.Tags;
+        var creator = set.GetCreator(cache);
+        var tags = set.GetTags(cache);
+        var source = set.GetSource(cache);
 
         var matches = true;
 
@@ -260,7 +271,7 @@ public class MapSetSearchFilter : SearchFilters<MapSet>
             wordMatch |= set.TitleRomanized.ContainsLower(word);
             wordMatch |= set.Artist.ContainsLower(word);
             wordMatch |= set.ArtistRomanized.ContainsLower(word);
-            wordMatch |= set.Source.ContainsLower(word);
+            wordMatch |= source.ContainsLower(word);
             wordMatch |= tags.Any(x => x.ContainsLower(word));
 
             if (creator is not null)
