@@ -62,22 +62,22 @@ public class TaskRunner : BackgroundService
                 var time = DateTime.Now;
 
                 lock (@lock)
+                {
                     task = tasks.FirstOrDefault(x => x.NextRun <= time);
+                    if (task == null)
+                        continue;
 
-                if (task == null)
-                    continue;
+                    logger.LogInformation("Running '{t}', scheduled at {s}.", task.Task.Name, task.NextRun);
 
-                logger.LogInformation("Running '{t}', scheduled at {s}.", task.Task.Name, task.NextRun);
-
-                if (task.Interval != null)
-                {
-                    task.NextRun = task.NextRun.Add(task.Interval.Value);
-                    logger.LogInformation("Next run is at {s}.", task.NextRun);
-                }
-                else
-                {
-                    lock (@lock)
+                    if (task.Interval != null)
+                    {
+                        task.NextRun = task.NextRun.Add(task.Interval.Value);
+                        logger.LogInformation("Next run is at {s}.", task.NextRun);
+                    }
+                    else
+                    {
                         tasks.Remove(task);
+                    }
                 }
 
                 await task.Task.Run(services.CreateScope().ServiceProvider);
@@ -90,7 +90,7 @@ public class TaskRunner : BackgroundService
             finally
             {
                 // If there are no tasks, wait 1 second before checking again.
-                if (tasks.Count == 0)
+                if (task == null)
                     await Task.Delay(1000, stoppingToken);
             }
         }
