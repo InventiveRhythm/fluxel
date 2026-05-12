@@ -9,7 +9,7 @@ namespace fluxel.Models.Chat;
 public class ChatMessage
 {
     [BsonId]
-    [BsonGuidRepresentation(GuidRepresentation.Standard)]
+    [BsonGuidRepresentation(GuidRepresentation.CSharpLegacy)]
     public Guid ID { get; set; } = Guid.NewGuid();
 
     [BsonElement("discord")]
