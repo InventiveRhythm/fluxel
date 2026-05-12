@@ -68,7 +68,12 @@ public class IndexController
         return new
         {
             count = tsk.Count,
-            tasks = tsk.Select(x => x.ToString())
+            tasks = tsk.Select(x => new
+            {
+                name = x.Task.Name,
+                interval = x.Interval,
+                next = x.NextRun
+            })
         };
     }
 

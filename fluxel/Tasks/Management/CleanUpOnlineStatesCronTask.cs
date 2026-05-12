@@ -6,13 +6,9 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace fluxel.Tasks.Management;
 
-public class CleanupOnlineStatesCronTask : ICronTask
+public class CleanupOnlineStatesCronTask : IBasicTask
 {
     public string Name => "CleanUpOnlineStates";
-
-    public int Hour => 00;
-    public int Minute => 00;
-    public bool Valid { get; set; }
 
     public Task Run(IServiceProvider services)
     {

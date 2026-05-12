@@ -1,7 +1,10 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using osu.Framework.Extensions.IEnumerableExtensions;
@@ -13,12 +16,8 @@ public class TaskRunner : BackgroundService
     private readonly ILogger logger;
     private readonly IServiceProvider services;
 
-    private List<IBasicTask> tasks { get; } = new();
-    private List<ICronTask> cron { get; } = new();
-
-    private object @lock { get; } = new { };
-
-    public IReadOnlyList<IBasicTask> Queue => tasks;
+    private ConcurrentBag<ScheduledTask> tasks { get; } = new();
+    public IReadOnlyList<ScheduledTask> Queue => tasks.ToList();
 
     public TaskRunner(ILoggerFactory loggerFactory, IServiceProvider services)
     {
@@ -33,68 +32,58 @@ public class TaskRunner : BackgroundService
     }
 
     public void Schedule(IBulkTask task)
-        => task.GetTasks(services).ForEach(Schedule);
+        => task.GetTasks(services).ForEach(t => Schedule(t));
 
-    public void Schedule(IBasicTask task)
-    {
-        lock (@lock)
-        {
-            if (task is ICronTask ct)
-            {
-                ct.Valid = true;
-                cron.Add(ct);
-            }
-            else
-                tasks.Add(task);
-        }
-    }
+    public void Schedule(IBasicTask task, DateTime? next = null, TimeSpan? interval = null)
+        => tasks.Add(new ScheduledTask(task, interval, next));
 
     private async Task loop(CancellationToken stoppingToken)
     {
         while (!stoppingToken.IsCancellationRequested)
         {
-            IBasicTask? task = null;
+            ScheduledTask? task = null;
 
             try
             {
-                lock (@lock)
+                var time = DateTime.Now;
+                task = tasks.FirstOrDefault(x => x.NextRun <= time);
+                if (task == null) continue;
+
+                logger.LogDebug("Running '{t}', scheduled at {s}.", task.Task.Name, task.NextRun);
+
+                if (task.Interval != null)
                 {
-                    var time = DateTimeOffset.Now;
-
-                    foreach (var ct in cron)
-                    {
-                        if (time.Hour == ct.Hour && time.Minute == ct.Minute)
-                        {
-                            if (!ct.Valid)
-                                continue;
-
-                            task = ct;
-                            ct.Valid = false;
-                        }
-                        else
-                            ct.Valid = true;
-                    }
-
-                    if (task is null && tasks.Count > 0)
-                    {
-                        task = tasks[0];
-                        tasks.RemoveAt(0);
-                    }
+                    task.NextRun = task.NextRun.Add(task.Interval.Value);
+                    logger.LogDebug("Next run is at {s}.", task.NextRun);
                 }
 
-                task?.Run(services);
+                await task.Task.Run(services.CreateScope().ServiceProvider);
             }
             catch (Exception ex)
             {
-                var name = task?.Name ?? task?.GetType().Name ?? "unknown";
+                var name = task?.Task.Name ?? task?.GetType().Name ?? "unknown";
                 logger.LogError(ex, $"An error occurred while running task '{name}'.");
             }
             finally
             {
                 // If there are no tasks, wait 1 second before checking again.
-                if (tasks.Count == 0)
+                if (tasks.IsEmpty)
                     await Task.Delay(1000, stoppingToken);
             }
+        }
+    }
+
+    public class ScheduledTask
+    {
+        public IBasicTask Task { get; }
+        public TimeSpan? Interval { get; }
+        public DateTime NextRun { get; set; }
+
+        public ScheduledTask(IBasicTask task, TimeSpan? interval = null, DateTime? next = null)
+        {
+            Task = task;
+            Interval = interval;
+            NextRun = next ?? DateTime.Now;
         }
     }
 }

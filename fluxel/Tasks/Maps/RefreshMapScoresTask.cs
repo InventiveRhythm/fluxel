@@ -8,13 +8,9 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace fluxel.Tasks.Maps;
 
-public class RefreshMapScoresTask : ICronTask
+public class RefreshMapScoresTask : IBasicTask
 {
     public string Name => "RefreshMapScores";
-
-    public int Hour => 2;
-    public int Minute => 0;
-    public bool Valid { get; set; }
 
     public Task Run(IServiceProvider services)
     {

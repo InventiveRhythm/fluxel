@@ -112,6 +112,7 @@ internal static class Program
         builder.Services.AddSingleton<GroupManager>();
         builder.Services.AddSingleton<MapManager>();
         builder.Services.AddSingleton<NotificationManager>();
+        builder.Services.AddSingleton<OAuthManager>();
         builder.Services.AddSingleton<ScoreManager>();
         builder.Services.AddSingleton<UserManager>();
 
@@ -144,9 +145,11 @@ internal static class Program
         modules.RegisterControllers(router);
 
         var tasks = host.Services.GetRequiredService<TaskRunner>();
-        tasks.Schedule(new RefreshMapScoresTask());
+        tasks.Schedule(new RefreshMapScoresTask(), DateTime.Today, TimeSpan.FromDays(1));
 
+        await tasks.StartAsync(CancellationToken.None);
         await host.RunAsync();
+        await tasks.StopAsync(CancellationToken.None);
     }
 
     #region Env

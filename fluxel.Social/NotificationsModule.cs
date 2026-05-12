@@ -38,7 +38,7 @@ public class NotificationsModule : IModule, IOnlineStateManager
 
         Sockets = router.MapModule<NotificationSocket>("/notifications", manager: true)!;
 
-        tasks.Schedule(new CleanupOnlineStatesCronTask());
+        tasks.Schedule(new CleanupOnlineStatesCronTask(), DateTime.Today, TimeSpan.FromDays(1));
         fixInvalidOnlineStates();
         createClubChannels();
     }
