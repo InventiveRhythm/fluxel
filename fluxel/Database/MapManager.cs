@@ -4,7 +4,6 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Linq.Expressions;
 using fluxel.Config;
-using fluxel.Database.Extensions;
 using fluxel.Models;
 using fluxel.Models.Maps;
 using fluxel.Models.Maps.Modding;
@@ -88,11 +87,11 @@ public class MapManager
     #region MapSets
 
     public List<MapSet> AllSets => sets.Find(_ => true).ToList();
-    public List<MapSet> AllQueueSets => sets.Find(m => m.Status >= MapStatus.Pure).ToList();
-    public List<MapSet> AllPureSets => sets.Find(x => x.AllowScores()).ToList();
+    public List<MapSet> AllQueueSets => sets.Find(m => m.Status == MapStatus.Pending).ToList();
+    public List<MapSet> AllPureSets => sets.Find(x => x.Status >= MapStatus.Pure).ToList();
 
     public long SetCount => sets.Count(_ => true);
-    public long PureSetCount => sets.Count(x => x.AllowScores());
+    public long PureSetCount => sets.Count(x => x.Status >= MapStatus.Pure);
 
     public void Add(MapSet set)
     {

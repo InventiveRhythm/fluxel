@@ -1,4 +1,5 @@
 ﻿using System;
+using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 using Newtonsoft.Json;
 
@@ -8,6 +9,7 @@ namespace fluxel.Models.Chat;
 public class ChatMessage
 {
     [BsonId]
+    [BsonGuidRepresentation(GuidRepresentation.Standard)]
     public Guid ID { get; set; } = Guid.NewGuid();
 
     [BsonElement("discord")]
