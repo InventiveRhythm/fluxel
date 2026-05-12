@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -16,8 +15,18 @@ public class TaskRunner : BackgroundService
     private readonly ILogger logger;
     private readonly IServiceProvider services;
 
-    private ConcurrentBag<ScheduledTask> tasks { get; } = new();
-    public IReadOnlyList<ScheduledTask> Queue => tasks.ToList();
+    private object @lock { get; } = new { };
+    private List<ScheduledTask> tasks { get; } = new();
+
+    public IReadOnlyList<ScheduledTask> Queue
+    {
+        get
+        {
+            List<ScheduledTask> list;
+            lock (@lock) list = tasks.ToList();
+            return list;
+        }
+    }
 
     public TaskRunner(ILoggerFactory loggerFactory, IServiceProvider services)
     {
@@ -35,7 +44,12 @@ public class TaskRunner : BackgroundService
         => task.GetTasks(services).ForEach(t => Schedule(t));
 
     public void Schedule(IBasicTask task, DateTime? next = null, TimeSpan? interval = null)
-        => tasks.Add(new ScheduledTask(task, interval, next));
+    {
+        lock (@lock)
+        {
+            tasks.Add(new ScheduledTask(task, interval, next));
+        }
+    }
 
     private async Task loop(CancellationToken stoppingToken)
     {
@@ -46,8 +60,12 @@ public class TaskRunner : BackgroundService
             try
             {
                 var time = DateTime.Now;
-                task = tasks.FirstOrDefault(x => x.NextRun <= time);
-                if (task == null) continue;
+
+                lock (@lock)
+                    task = tasks.FirstOrDefault(x => x.NextRun <= time);
+
+                if (task == null)
+                    continue;
 
                 logger.LogInformation("Running '{t}', scheduled at {s}.", task.Task.Name, task.NextRun);
 
@@ -55,6 +73,11 @@ public class TaskRunner : BackgroundService
                 {
                     task.NextRun = task.NextRun.Add(task.Interval.Value);
                     logger.LogInformation("Next run is at {s}.", task.NextRun);
+                }
+                else
+                {
+                    lock (@lock)
+                        tasks.Remove(task);
                 }
 
                 await task.Task.Run(services.CreateScope().ServiceProvider);
@@ -67,7 +90,7 @@ public class TaskRunner : BackgroundService
             finally
             {
                 // If there are no tasks, wait 1 second before checking again.
-                if (tasks.IsEmpty)
+                if (tasks.Count == 0)
                     await Task.Delay(1000, stoppingToken);
             }
         }
