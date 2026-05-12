@@ -49,12 +49,12 @@ public class TaskRunner : BackgroundService
                 task = tasks.FirstOrDefault(x => x.NextRun <= time);
                 if (task == null) continue;
 
-                logger.LogDebug("Running '{t}', scheduled at {s}.", task.Task.Name, task.NextRun);
+                logger.LogInformation("Running '{t}', scheduled at {s}.", task.Task.Name, task.NextRun);
 
                 if (task.Interval != null)
                 {
                     task.NextRun = task.NextRun.Add(task.Interval.Value);
-                    logger.LogDebug("Next run is at {s}.", task.NextRun);
+                    logger.LogInformation("Next run is at {s}.", task.NextRun);
                 }
 
                 await task.Task.Run(services.CreateScope().ServiceProvider);
