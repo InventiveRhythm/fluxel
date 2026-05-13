@@ -144,12 +144,18 @@ internal static class Program
         router.RegisterControllersFromAssembly(typeof(ServerHost).Assembly);
         modules.RegisterControllers(router);
 
+        var discord = host.Services.GetRequiredService<DiscordBot>();
         var tasks = host.Services.GetRequiredService<TaskRunner>();
+
         tasks.Schedule(new RefreshMapScoresTask(), DateTime.Today, TimeSpan.FromDays(1));
 
         await tasks.StartAsync(CancellationToken.None);
+        await discord.StartAsync(CancellationToken.None);
+
         await host.RunAsync();
+
         await tasks.StopAsync(CancellationToken.None);
+        await discord.StopAsync(CancellationToken.None);
     }
 
     #region Env
