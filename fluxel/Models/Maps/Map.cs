@@ -32,8 +32,22 @@ public class Map : IHasID
     [BsonIgnore]
     public string FullHash => MapUtils.GetHash($"{SHA256Hash}{EffectSHA256Hash}{StoryboardSHA256Hash}");
 
-    [BsonElement("mapper")]
-    public long MapperID { get; set; }
+    [BsonElement("mapper"), BsonIgnoreIfDefault, BsonDefaultValue(0L)]
+    [Obsolete($"Use {nameof(MapperIDs)} instead.")]
+    public long MapperID
+    {
+        private get => 0;
+        set
+        {
+            if (value is 0)
+                return;
+
+            MapperIDs = new List<long> { value };
+        }
+    }
+
+    [BsonElement("mappers")]
+    public List<long> MapperIDs { get; set; } = new();
 
     [BsonElement("difficulty")]
     public string DifficultyName { get; set; } = "";

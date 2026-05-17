@@ -234,13 +234,13 @@ public class ModelTranslator
 
     public APIMap ToAPI(Map map, MapIncludes include = 0, MapSet? set = null, long? userid = null)
     {
-        var mapper = Cache.Users.Get(map.MapperID);
+        var mappers = map.MapperIDs.Select(Cache.Users.Get).ToList();
 
         var m = new APIMap
         {
             ID = map.ID,
             MapSetID = map.SetID,
-            Mapper = mapper != null ? ToAPI(mapper) : APIUser.CreateUnknown(map.MapperID),
+            Mappers = mappers.Select((x, i) => x != null ? ToAPI(x) : APIUser.CreateUnknown(map.MapperIDs[i])).ToList(),
             Difficulty = map.DifficultyName,
             SHA256Hash = map.SHA256Hash,
             Mode = map.Mode,

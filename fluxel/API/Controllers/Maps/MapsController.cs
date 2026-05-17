@@ -55,7 +55,7 @@ public class MapsController
     {
         var map = maps.GetMap(m =>
             (string.IsNullOrEmpty(hash) || m.SHA256Hash == hash) &&
-            (mapper == null || m.MapperID == mapper) &&
+            (mapper == null || m.MapperIDs.Contains(mapper.Value)) &&
             (string.IsNullOrEmpty(title) || m.Title.Equals(title, StringComparison.CurrentCultureIgnoreCase)) &&
             (string.IsNullOrEmpty(artist) || m.Artist.Equals(artist, StringComparison.CurrentCultureIgnoreCase)));
 
@@ -106,7 +106,7 @@ public class MapsController
 
         if (map == null)
             return Returns.NotFound("map");
-        if (map.MapperID == auth.ID && !auth.IsDeveloper())
+        if (map.MapperIDs.Contains(auth.ID) && !auth.IsDeveloper())
             return Returns.Message(HttpStatusCode.BadRequest, ResponseStrings.CannotRateOwnMap);
         if (maps.HasRateVoted(auth.ID, id))
             return Returns.Message(HttpStatusCode.BadRequest, ResponseStrings.AlreadyVoted);

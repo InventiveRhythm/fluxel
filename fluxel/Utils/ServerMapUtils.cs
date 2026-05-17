@@ -17,7 +17,7 @@ namespace fluxel.Utils;
 
 public static class ServerMapUtils
 {
-    public static Map CreateFromJson(MapInfo json, long id, long set, string entry, string hash, long mapper, string effects, string storyboard) => new()
+    public static Map CreateFromJson(MapInfo json, long id, long set, string entry, string hash, IEnumerable<long> mappers, string effects, string storyboard) => new()
     {
         ID = id,
         SetID = set,
@@ -25,7 +25,7 @@ public static class ServerMapUtils
         SHA256Hash = hash,
         EffectSHA256Hash = string.IsNullOrEmpty(effects) ? "" : MapUtils.GetHash(effects),
         StoryboardSHA256Hash = string.IsNullOrEmpty(storyboard) ? "" : MapUtils.GetHash(storyboard),
-        MapperID = mapper,
+        MapperIDs = mappers.ToList(),
         Title = json.Metadata.Title,
         TitleRomanized = json.Metadata.TitleRomanized,
         Artist = json.Metadata.Artist,

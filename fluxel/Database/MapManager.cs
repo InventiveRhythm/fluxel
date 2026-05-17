@@ -61,7 +61,7 @@ public class MapManager
     public Map? GetMap(long id) => maps.Find(m => m.ID == id).FirstOrDefault();
     public Map? GetMap(Expression<Func<Map, bool>> filter) => maps.Find(filter).FirstOrDefault();
     public Map? GetMapByHash(string hash) => maps.Find(m => m.SHA256Hash == hash).FirstOrDefault();
-    public List<Map> GetByMapsByMapper(long id) => maps.Find(x => x.MapperID == id).ToList();
+    public List<Map> GetByMapsByMapper(long id) => maps.Find(x => x.MapperIDs.Contains(id)).ToList();
 
     public bool TryGetMap(long id, [NotNullWhen(true)] out Map? map)
     {

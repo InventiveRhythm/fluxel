@@ -120,12 +120,11 @@ public class MapSetsUploadController
             }
 
             var hash = MapUtils.GetHash(json);
-            var mapper = users.Get(mapJson.Metadata.Mapper) ?? auth;
-
             var effects = zip.ReadFile(mapJson.EffectFile, out var e) ? e : "";
             var storyboard = zip.ReadFile(mapJson.StoryboardFile, out var s) ? s : "";
 
-            var map = ServerMapUtils.CreateFromJson(mapJson, 0, 0, entry.FullName, hash, mapper.ID, effects, storyboard);
+            var mappers = parseMappers(mapJson.Metadata.Mapper, auth);
+            var map = ServerMapUtils.CreateFromJson(mapJson, 0, 0, entry.FullName, hash, mappers, effects, storyboard);
             mapList.Add(map);
         }
 
@@ -214,15 +213,14 @@ public class MapSetsUploadController
 
             fileNames.Add(entry.FullName);
 
-            var hash = MapUtils.GetHash(json);
-            var mapper = users.Get(mapJson.Metadata.Mapper) ?? auth;
-
             var existing = set.GetMaps(translator.Cache).FirstOrDefault(m => m.FileName == entry.FullName);
 
+            var hash = MapUtils.GetHash(json);
             var effects = zip.ReadFile(mapJson.EffectFile, out var e) ? e : "";
             var storyboard = zip.ReadFile(mapJson.StoryboardFile, out var s) ? s : "";
 
-            var map = ServerMapUtils.CreateFromJson(mapJson, existing?.ID ?? 0, set.ID, entry.FullName, hash, mapper.ID, effects, storyboard);
+            var mappers = parseMappers(mapJson.Metadata.Mapper, auth);
+            var map = ServerMapUtils.CreateFromJson(mapJson, existing?.ID ?? 0, set.ID, entry.FullName, hash, mappers, effects, storyboard);
 
             if (existing is null)
                 newMaps.Add(map);
@@ -320,5 +318,26 @@ public class MapSetsUploadController
         var maximum = maps.GetUploadLimit(user.ID);
 
         return current < maximum;
+    }
+
+    private IEnumerable<long> parseMappers(string json, User upload)
+    {
+        // splits by commas and then by spaces, allowing names like "mapper as something"
+        var split = json.Split(",", StringSplitOptions.RemoveEmptyEntries)
+                        .Select(x => x.Trim().Split(" ", StringSplitOptions.RemoveEmptyEntries).First().Trim());
+
+        bool found = false;
+
+        foreach (var str in split)
+        {
+            var user = users.Get(str);
+            if (user is null) continue;
+
+            found = true;
+            yield return user.ID;
+        }
+
+        if (!found)
+            yield return upload.ID;
     }
 }
