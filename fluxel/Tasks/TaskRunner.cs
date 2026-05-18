@@ -80,7 +80,14 @@ public class TaskRunner : BackgroundService
                     }
                 }
 
-                await task.Task.Run(services.CreateScope().ServiceProvider);
+                var timeout = Task.Delay(TimeSpan.FromMinutes(10), stoppingToken);
+                var result = await Task.WhenAny(
+                    task.Task.Run(services.CreateScope().ServiceProvider),
+                    timeout
+                );
+
+                if (result == timeout)
+                    throw new TimeoutException($"Task {task.Task.Name} timed out. (longer than 10 minutes)");
             }
             catch (Exception ex)
             {
