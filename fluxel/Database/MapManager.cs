@@ -7,7 +7,9 @@ using fluxel.Config;
 using fluxel.Models;
 using fluxel.Models.Maps;
 using fluxel.Models.Maps.Modding;
+using fluxel.Models.Users;
 using fluXis.Online.API.Models.Maps.Modding;
+using fluXis.Utils;
 using Midori.Database;
 using MongoDB.Bson;
 
@@ -146,13 +148,22 @@ public class MapManager
     public long CountInQueue(long id)
         => sets.Count(m => m.CreatorID == id && m.Status == MapStatus.Pending);
 
-    public long GetUploadLimit(long id)
+    public long GetUploadLimit(User user)
     {
-        var count = config.Limits.MaxMapSets;
-        var inc = config.Limits.IncreasePerPure;
+        var baseCount = config.Limits.MaxMapSets;
 
-        var pure = sets.Count(x => x.CreatorID == id && x.Status >= MapStatus.Pure);
-        return count + inc * pure;
+        var pureInc = config.Limits.IncreasePerPure;
+        var pure = sets.Count(x => x.CreatorID == user.ID && x.Status >= MapStatus.Pure);
+
+        var release = new DateTimeOffset(new DateTime(2023, 05, 13));
+        var created = TimeUtils.GetFromSeconds(user.CreatedAt);
+        if (release > created) created = release;
+
+        var yearInc = config.Limits.IncreasePerYear;
+        var delta = DateTimeOffset.Now - created;
+        var years = delta.TotalDays / 365f;
+
+        return baseCount + pureInc * pure + (int)Math.Floor(yearInc * years);
     }
 
     #endregion

@@ -315,7 +315,7 @@ public class MapSetsUploadController
     private bool checkLimit(User user)
     {
         var current = maps.CountUploaded(user.ID, maps.UploadLimitStartDate);
-        var maximum = maps.GetUploadLimit(user.ID);
+        var maximum = maps.GetUploadLimit(user);
 
         return current < maximum;
     }

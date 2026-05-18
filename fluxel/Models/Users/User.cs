@@ -248,7 +248,7 @@ public class User : IHasID
                 return;
 
             LimitUploadedCount = mm.CountUploaded(user.ID, mm.UploadLimitStartDate);
-            LimitMaximumCount = mm.GetUploadLimit(user.ID);
+            LimitMaximumCount = mm.GetUploadLimit(user);
         }
     }
 }
