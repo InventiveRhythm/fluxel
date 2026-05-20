@@ -182,7 +182,7 @@ public class UserManager
 
     public UserSession? GetSessionFromIP(long id, string ip, bool update = true)
     {
-        var session = sessions.Find(x => x.UserID == id && x.IDString == ip && !x.UserAgent.StartsWith("game")).FirstOrDefault();
+        var session = sessions.Find(x => x.UserID == id && x.IP == ip && !x.UserAgent.StartsWith("game")).FirstOrDefault();
 
         if (update)
             session = updateSession(session);
