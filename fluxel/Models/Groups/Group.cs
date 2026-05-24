@@ -26,4 +26,10 @@ public class Group
     /// </summary>
     [BsonElement("color")]
     public string Color { get; set; } = "#ffffff";
+
+    /// <summary>
+    /// Hides the role from the /users routes.
+    /// </summary>
+    [BsonElement("hidden")]
+    public bool Hidden { get; set; }
 }

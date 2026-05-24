@@ -22,6 +22,7 @@ public class FluxelAPIAuthenticator : IAPIAuthenticator
         data = new Dictionary<string, object>();
 
         var token = ctx.Request.Headers["Authorization"];
+        token ??= ctx.Request.Cookies["token"];
 
         if (string.IsNullOrEmpty(token))
             return false;

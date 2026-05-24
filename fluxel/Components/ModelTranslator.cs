@@ -115,7 +115,7 @@ public class ModelTranslator
             AboutMe = user.AboutMe,
             Pronouns = user.Pronouns,
             CountryCode = user.CountryCode,
-            Groups = user.GroupIDs.Select(x => groups.Get(x)).OfType<Group>().Select(x => ToAPI(x)).ToList(),
+            Groups = user.GroupIDs.Select(x => groups.Get(x)).OfType<Group>().Where(x => !x.Hidden).Select(x => ToAPI(x)).ToList(),
             IsOnline = onlineStates?.IsOnline(user.ID) ?? false,
             IsSupporter = user.IsSupporter
         };
