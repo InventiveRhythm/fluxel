@@ -11,6 +11,7 @@ using fluxel.Models.Users;
 using fluxel.Tasks;
 using fluxel.Tasks.Maps;
 using fluxel.Tasks.MapSets;
+using fluxel.Tasks.Other;
 using fluxel.Utils;
 using fluXis.Map;
 using fluXis.Online.API.Models.Maps;
@@ -307,7 +308,10 @@ public class MapSetsUploadController
         set.Maps.ForEach(m => tasks.Schedule(new RecalculateMapTask(m)));
 
         if (maps.HasActions(set.ID) && set.Status == MapStatus.Pending)
-            maps.CreateModAction(set.ID, auth.ID, APIModdingActionType.Update);
+        {
+            var act = maps.CreateModAction(set.ID, auth.ID, APIModdingActionType.Update);
+            tasks.Schedule(new MethodTask(() => events.QueueActionCreate(act.ID)));
+        }
 
         return translator.ToAPI(set, mapInclude: MapIncludes.FileName);
     }

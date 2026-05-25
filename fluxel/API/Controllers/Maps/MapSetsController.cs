@@ -247,7 +247,7 @@ public class MapSetsController
             return Returns.Message(HttpStatusCode.Forbidden, error);
 
         var action = maps.CreateModAction(set.ID, auth.ID, payload.Type.Value, payload.Content);
-        tasks.Schedule(new MethodTask(() => events.QueueActionCreate(action.ID)));
+        notifyAction(action);
 
         if (set.Status == MapStatus.Pure)
             events.MapPure(set.ID);
@@ -318,7 +318,7 @@ public class MapSetsController
         set.Status = MapStatus.Pending;
         maps.Update(set);
 
-        maps.CreateModAction(set.ID, auth.ID, APIModdingActionType.Submitted);
+        notifyAction(maps.CreateModAction(set.ID, auth.ID, APIModdingActionType.Submitted));
         return Returns.Okay();
     }
 
@@ -351,4 +351,6 @@ public class MapSetsController
     }
 
     #endregion
+
+    private void notifyAction(ModdingAction action) => tasks.Schedule(new MethodTask(() => events.QueueActionCreate(action.ID)));
 }
