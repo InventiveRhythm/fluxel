@@ -9,13 +9,25 @@ namespace fluxel.Database;
 
 public class OAuthManager
 {
+    private readonly IDatabaseTable<OAuthApplication> applications;
     private readonly IDatabaseTable<OAuthToken> tokens;
+
     public IEnumerable<OAuthToken> AllExpired => tokens.Find(x => x.ExpireTime < DateTimeOffset.UtcNow.ToUnixTimeSeconds()).ToList();
 
     public OAuthManager(IDatabaseProvider db)
     {
+        applications = db.GetTable<OAuthApplication>("oauth-apps");
         tokens = db.GetTable<OAuthToken>("oauth");
     }
+
+    #region Applications
+
+    public OAuthApplication? FindApplication(string id)
+        => applications.Find(x => x.ClientID == id).FirstOrDefault();
+
+    #endregion
+
+    #region Tokens
 
     public OAuthToken? GetToken(string accessToken)
     {
@@ -55,4 +67,6 @@ public class OAuthManager
         tokens.Add(token);
         return token;
     }
+
+    #endregion
 }
