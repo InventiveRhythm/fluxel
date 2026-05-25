@@ -14,6 +14,8 @@ using fluxel.Modules;
 using fluxel.Modules.Messages;
 using fluxel.Search;
 using fluxel.Search.Filters;
+using fluxel.Tasks;
+using fluxel.Tasks.Other;
 using fluXis.Online.API.Models.Maps;
 using fluXis.Online.API.Models.Maps.Modding;
 using fluXis.Online.Collections;
@@ -34,8 +36,9 @@ public class MapSetsController
     private readonly ServerConfig config;
     private readonly ServerEvents events;
     private readonly ModuleManager modules;
+    private readonly TaskRunner tasks;
 
-    public MapSetsController(MapManager maps, ModelTranslator translator, ServerConfig config, ModuleManager modules, ScoreManager scores, ServerEvents events)
+    public MapSetsController(MapManager maps, ModelTranslator translator, ServerConfig config, ModuleManager modules, ScoreManager scores, ServerEvents events, TaskRunner tasks)
     {
         this.maps = maps;
         this.translator = translator;
@@ -43,6 +46,7 @@ public class MapSetsController
         this.modules = modules;
         this.scores = scores;
         this.events = events;
+        this.tasks = tasks;
     }
 
     [HttpRoute("/")]
@@ -243,6 +247,7 @@ public class MapSetsController
             return Returns.Message(HttpStatusCode.Forbidden, error);
 
         var action = maps.CreateModAction(set.ID, auth.ID, payload.Type.Value, payload.Content);
+        tasks.Schedule(new MethodTask(() => events.QueueActionCreate(action.ID)));
 
         if (set.Status == MapStatus.Pure)
             events.MapPure(set.ID);
