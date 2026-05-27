@@ -33,6 +33,9 @@ public class MapSet : IHasID
     [BsonElement("artist-rm")]
     public string ArtistRomanized { get; set; } = "";
 
+    [BsonElement("description")]
+    public string Description { get; set; } = "";
+
     [BsonElement("status")]
     public MapStatus Status { get; set; }
 

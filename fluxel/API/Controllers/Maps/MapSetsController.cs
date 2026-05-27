@@ -102,6 +102,36 @@ public class MapSetsController
         return translator.ToAPI(set, userid: auth?.ID, mapInclude: MapIncludes.Claims);
     }
 
+    [HttpRoute("/:id/description")]
+    public APIReturn<string> GetDescription(long id)
+    {
+        var set = maps.GetSet(id);
+        if (set is null) return Returns.NotFound("mapset");
+
+        return set.Description;
+    }
+
+    [Authenticated]
+    [HttpRoute("/:id/description", APIMethod.Patch)]
+    public APIReturn<object> EditDescription(User auth, long id, [Source(ParameterSource.Body)] string payload)
+    {
+        var set = maps.GetSet(id);
+        if (set is null) return Returns.NotFound("mapset");
+
+        if (set.CreatorID != auth.ID && !auth.IsModerator())
+            return Returns.Message(HttpStatusCode.Forbidden, "You are not the creator of this mapset.");
+
+        int descLimit = config.Limits.MaxDescChar;
+
+        if (payload.Length > descLimit)
+            return Returns.Message(HttpStatusCode.Forbidden, $"Description cannot exceed {descLimit} characters.");
+
+        set.Description = payload;
+        maps.Update(set);
+
+        return Returns.Okay();
+    }
+
     [Authenticated]
     [HttpRoute("/:id", APIMethod.Delete)]
     public APIReturn<object> DeleteMap(User auth, long id)
