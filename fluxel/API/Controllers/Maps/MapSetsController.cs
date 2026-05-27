@@ -16,6 +16,7 @@ using fluxel.Search;
 using fluxel.Search.Filters;
 using fluxel.Tasks;
 using fluxel.Tasks.Other;
+using fluxel.Utils;
 using fluXis.Online.API.Models.Maps;
 using fluXis.Online.API.Models.Maps.Modding;
 using fluXis.Online.Collections;
@@ -113,7 +114,7 @@ public class MapSetsController
 
     [Authenticated]
     [HttpRoute("/:id/description", APIMethod.Patch)]
-    public APIReturn<object> EditDescription(User auth, long id, [Source(ParameterSource.Body)] string payload)
+    public APIReturn<object> EditDescription(User auth, long id, [Source(ParameterSource.Form)] string content)
     {
         var set = maps.GetSet(id);
         if (set is null) return Returns.NotFound("mapset");
@@ -123,10 +124,10 @@ public class MapSetsController
 
         int descLimit = config.Limits.MaxDescChar;
 
-        if (payload.Length > descLimit)
+        if (content.Length > descLimit)
             return Returns.Message(HttpStatusCode.Forbidden, $"Description cannot exceed {descLimit} characters.");
 
-        set.Description = payload;
+        set.Description = HtmlUtils.SanitizeHtml(content);
         maps.Update(set);
 
         return Returns.Okay();
