@@ -197,6 +197,10 @@ public class MapManager
         return mods;
     }
 
+    public ModdingAction? GetRecentModAction(long id)
+        => actions.Find(x => x.MapSetID == id)
+                  .OrderBy(x => x.Time).LastOrDefault();
+
     #endregion
 
     #region Favorite

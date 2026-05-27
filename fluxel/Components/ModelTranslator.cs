@@ -224,7 +224,13 @@ public class ModelTranslator
         };
 
         if (include.HasFlagFast(MapSetInclude.QueueInfo))
-            api.QueueVotes = set.QueueVotes.Select(x => x.Approve).ToList();
+        {
+            api.QueueInfo = new APIQueueInfo
+            {
+                Votes = set.QueueVotes.Select(x => x.Approve).ToList(),
+                LastAction = maps.GetRecentModAction(set.ID)?.ToAPI(this)
+            };
+        }
 
         if (userid > 0)
             api.Favorite = maps.HasFavorite(userid.Value, set.ID);
