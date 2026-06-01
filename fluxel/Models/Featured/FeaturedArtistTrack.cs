@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using fluXis.Online.API.Models.Featured;
 using MongoDB.Bson.Serialization.Attributes;
 using Newtonsoft.Json;
 
@@ -11,24 +12,16 @@ public class FeaturedArtistTrack
     [BsonId]
     public string InternalID { get; set; } = null!;
 
-    [BsonIgnore]
-    [JsonProperty("id")]
-    public string SongID => InternalID.Split("/").Last();
-
     [BsonElement("name")]
-    [JsonProperty("name")]
     public string Name { get; set; } = null!;
 
     [BsonElement("length")]
-    [JsonProperty("length")]
     public string Length { get; set; } = null!;
 
     [BsonElement("bpm")]
-    [JsonProperty("bpm")]
     public string BPM { get; set; } = null!;
 
     [BsonElement("genre")]
-    [JsonProperty("genre")]
     public string Genre { get; set; } = null!;
 
     public FeaturedArtistTrack(string artist, string album, string id)
@@ -41,4 +34,13 @@ public class FeaturedArtistTrack
     public FeaturedArtistTrack()
     {
     }
+
+    public APIFeaturedTrack ToAPI() => new()
+    {
+        ID = InternalID.Split("/").Last(),
+        Name = Name,
+        Length = Length,
+        BPM = BPM,
+        Genre = Genre
+    };
 }
