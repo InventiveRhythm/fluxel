@@ -30,6 +30,7 @@
 
     <ProjectReference Include="..\fluxel.Multiplayer\fluxel.Multiplayer.csproj"/>
     <ProjectReference Include="..\fluxel.Social\fluxel.Social.csproj"/>
+    <ProjectReference Include="..\fluxel.Spectator\fluxel.Spectator.csproj" />
   </ItemGroup>
 
   <ItemGroup>
