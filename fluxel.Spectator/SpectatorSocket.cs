@@ -19,10 +19,17 @@ public class SpectatorSocket : AuthenticatedSocket<ISpectatorServer, ISpectatorC
         this.module = module;
     }
 
+    protected override void OnClose()
+    {
+        base.OnClose();
+
+        EndSession();
+        CurrentlyWatching.Clear();
+    }
+
     #region Player
 
     public long? CurrentlyPlaying { get; private set; }
-    public List<string>? CurrentMods { get; private set; }
 
     public Task StartSession(SpectatorState state)
     {
