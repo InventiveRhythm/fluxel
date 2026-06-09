@@ -62,7 +62,7 @@ public abstract class AuthenticatedSocket<S, C> : TypedWebSocketSession<S, C>
 
         if (string.IsNullOrEmpty(version))
         {
-            message = "Outdated game client.";
+            message = "OUTDATED_CLIENT";
             return false;
         }
 
@@ -73,13 +73,13 @@ public abstract class AuthenticatedSocket<S, C> : TypedWebSocketSession<S, C>
 
         if (!Version.TryParse(version, out var ver))
         {
-            message = "Invalid game version.";
+            message = "INVALID_CLIENT";
             return false;
         }
 
         if (ver < SupportedVersion)
         {
-            message = "Outdated version. Please update your game client.";
+            message = "OUTDATED_CLIENT";
             return false;
         }
 
