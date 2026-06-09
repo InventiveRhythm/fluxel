@@ -3,7 +3,6 @@ using fluxel.WebSocket;
 using fluXis.Online.Exceptions;
 using fluXis.Online.Spectator;
 using fluXis.Online.Spectator.Models;
-using Midori.Logging;
 
 namespace fluxel.Spectator;
 
@@ -35,8 +34,6 @@ public class SpectatorSocket : AuthenticatedSocket<ISpectatorServer, ISpectatorC
     {
         CurrentlyPlaying = state.MapID ?? throw new InvalidRequestException("Missing MapID, can't start spectate session.");
 
-        Logger.Log($"{CurrentUser.Username} started playing {CurrentlyPlaying}.");
-
         foreach (var viewer in viewers)
         {
             _ = viewer.Client.StartedPlaying(UserID, state);
@@ -49,8 +46,6 @@ public class SpectatorSocket : AuthenticatedSocket<ISpectatorServer, ISpectatorC
     {
         if (CurrentlyPlaying is null)
             return Task.CompletedTask;
-
-        Logger.Log($"{CurrentUser.Username} sent frame bundle with {bundle.Frames.Count} frame(s).");
 
         foreach (var viewer in viewers)
         {
@@ -65,7 +60,6 @@ public class SpectatorSocket : AuthenticatedSocket<ISpectatorServer, ISpectatorC
         if (CurrentlyPlaying is null)
             return Task.CompletedTask;
 
-        Logger.Log($"{CurrentUser.Username} stopped playing.");
         CurrentlyPlaying = null;
 
         foreach (var viewer in viewers)
