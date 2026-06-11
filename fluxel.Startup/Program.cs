@@ -9,6 +9,7 @@ using fluxel.Database;
 using fluxel.Modules;
 using fluxel.Tasks;
 using fluxel.Tasks.Maps;
+using fluxel.Tasks.MapSets;
 using fluXis.Map;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -148,6 +149,7 @@ internal static class Program
         var tasks = host.Services.GetRequiredService<TaskRunner>();
 
         tasks.Schedule(new RefreshMapScoresTask(), DateTime.Today, TimeSpan.FromDays(1));
+        tasks.Schedule(new CheckForMissingPreviewsTask(), DateTime.Today, TimeSpan.FromDays(7));
 
         await tasks.StartAsync(CancellationToken.None);
         await discord.StartAsync(CancellationToken.None);
