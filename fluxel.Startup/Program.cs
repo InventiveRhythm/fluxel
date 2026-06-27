@@ -59,6 +59,8 @@ internal static class Program
             Discord = new ServerConfig.DiscordConfig
             {
                 Token = Env.GetString("DISCORD_TOKEN"),
+                ClientID = Env.GetString("DISCORD_CLIENT_ID"),
+                ClientSecret = Env.GetString("DISCORD_CLIENT_SECRET"),
                 Logging = envULong("DISCORD_LOGGING"),
                 Registrations = envULong("DISCORD_REGISTER"),
                 MapSubmissions = envULong("DISCORD_SUBMISSIONS"),

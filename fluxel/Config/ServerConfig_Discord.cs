@@ -6,6 +6,9 @@ public partial class ServerConfig
     {
         public string Token { get; init; } = string.Empty;
 
+        public string ClientID { get; init; } = string.Empty;
+        public string ClientSecret { get; init; } = string.Empty;
+
         /// <summary>
         /// Used for logging stuff like role changes, etc.
         /// </summary>

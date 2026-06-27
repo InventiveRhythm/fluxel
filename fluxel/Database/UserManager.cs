@@ -26,6 +26,7 @@ public class UserManager
     private readonly IDatabaseTable<NamePaint> paints;
     private readonly IDatabaseTable<UserSession> sessions;
     private readonly IDatabaseTable<User> users;
+    private readonly IDatabaseTable<UserDiscordConnection> discord;
 
     private readonly CounterManager counters;
 
@@ -41,6 +42,7 @@ public class UserManager
         paints = db.GetTable<NamePaint>("paints");
         sessions = db.GetTable<UserSession>("sessions");
         users = db.GetTable<User>(TABLE_NAME);
+        discord = db.GetTable<UserDiscordConnection>($"{TABLE_NAME}-discord");
         this.counters = counters;
     }
 
@@ -274,6 +276,29 @@ public class UserManager
 
     public List<long> GetFollowers(long followee) => follows.Find(x => x.FolloweeID == followee).ToList().Select(x => x.FollowerID).ToList();
     public List<long> GetFollowing(long follower) => follows.Find(x => x.FollowerID == follower).ToList().Select(x => x.FolloweeID).ToList();
+
+    #endregion
+
+    #region Discord
+
+    public UserDiscordConnection? GetDiscord(long id)
+        => discord.Find(x => x.ID == id).FirstOrDefault();
+
+    public List<UserDiscordConnection> GetDiscordExpiring()
+    {
+        var all = discord.Find(x => true).ToList();
+        return all.Where(x => x.Expire < DateTimeOffset.Now + TimeSpan.FromDays(1)).ToList();
+    }
+
+    public void AddOrUpdate(UserDiscordConnection conn)
+    {
+        var exists = GetDiscord(conn.ID) != null;
+
+        if (exists)
+            discord.Replace(c => c.ID == conn.ID, conn);
+        else
+            discord.Add(conn);
+    }
 
     #endregion
 }
