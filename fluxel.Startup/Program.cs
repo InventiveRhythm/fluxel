@@ -10,6 +10,7 @@ using fluxel.Modules;
 using fluxel.Tasks;
 using fluxel.Tasks.Maps;
 using fluxel.Tasks.MapSets;
+using fluxel.Tasks.Users.Connections;
 using fluXis.Map;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -152,6 +153,7 @@ internal static class Program
 
         tasks.Schedule(new RefreshMapScoresTask(), DateTime.Today, TimeSpan.FromDays(1));
         tasks.Schedule(new CheckForMissingPreviewsTask(), DateTime.Today, TimeSpan.FromDays(7));
+        tasks.Schedule(new CheckForDiscordRefreshesTask(), DateTime.Today, TimeSpan.FromHours(8));
 
         await tasks.StartAsync(CancellationToken.None);
         await discord.StartAsync(CancellationToken.None);
