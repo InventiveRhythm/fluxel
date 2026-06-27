@@ -1,4 +1,5 @@
 using System;
+using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using fluxel.API.Controllers.Users;
@@ -8,7 +9,7 @@ using fluxel.Models.Users;
 using Microsoft.Extensions.DependencyInjection;
 using Midori.Logging;
 using Midori.Utils;
-using osu.Framework.IO.Network;
+using WebRequest = osu.Framework.IO.Network.WebRequest;
 
 namespace fluxel.Tasks.Users.Connections;
 
@@ -56,6 +57,13 @@ public class RefreshDiscordTask : IBasicTask
         }
         catch (Exception ex)
         {
+            // https://docs.discord.com/developers/discord-social-sdk/development-guides/account-linking-with-discord#when-refresh-fails
+            if (req.ResponseStatusCode == HttpStatusCode.BadRequest)
+            {
+                users.RemoveDiscord(id);
+                return Task.CompletedTask;
+            }
+
             var res = req.GetResponseString();
             if (res != null) Logger.Error(ex, $"Failed to refresh discord token for {id}: {res}");
         }

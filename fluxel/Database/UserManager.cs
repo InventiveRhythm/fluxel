@@ -300,5 +300,7 @@ public class UserManager
             discord.Add(conn);
     }
 
+    public void RemoveDiscord(long id) => discord.Delete(x => x.ID == id);
+
     #endregion
 }
