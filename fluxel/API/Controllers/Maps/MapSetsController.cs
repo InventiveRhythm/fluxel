@@ -37,8 +37,9 @@ public class MapSetsController
     private readonly ServerEvents events;
     private readonly ModuleManager modules;
     private readonly TaskRunner tasks;
+    private readonly RequestCache cache;
 
-    public MapSetsController(MapManager maps, ModelTranslator translator, ServerConfig config, ModuleManager modules, ScoreManager scores, ServerEvents events, TaskRunner tasks)
+    public MapSetsController(MapManager maps, ModelTranslator translator, ServerConfig config, ModuleManager modules, ScoreManager scores, ServerEvents events, TaskRunner tasks, RequestCache cache)
     {
         this.maps = maps;
         this.translator = translator;
@@ -47,6 +48,7 @@ public class MapSetsController
         this.scores = scores;
         this.events = events;
         this.tasks = tasks;
+        this.cache = cache;
     }
 
     [HttpRoute("/")]
@@ -250,7 +252,14 @@ public class MapSetsController
         notifyAction(action);
 
         if (set.Status == MapStatus.Pure)
+        {
             events.MapPure(set.ID);
+            set.GetMaps(cache).ForEach(x =>
+            {
+                var rating = x.RecalculateRating(maps);
+                maps.QuickUpdate(x.ID, m => m.Rating = rating);
+            });
+        }
 
         return action.ToAPI(translator);
     }
