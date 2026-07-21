@@ -16,6 +16,7 @@ using fluxel.Search;
 using fluxel.Search.Filters;
 using fluxel.Tasks;
 using fluxel.Tasks.Other;
+using fluxel.Utils;
 using fluXis.Online.API.Models.Maps;
 using fluXis.Online.API.Models.Maps.Modding;
 using fluXis.Online.Collections;
@@ -102,6 +103,36 @@ public class MapSetsController
         if (set is null) return Returns.NotFound("mapset");
 
         return translator.ToAPI(set, userid: auth?.ID, mapInclude: MapIncludes.Claims);
+    }
+
+    [HttpRoute("/:id/description")]
+    public APIReturn<string> GetDescription(long id)
+    {
+        var set = maps.GetSet(id);
+        if (set is null) return Returns.NotFound("mapset");
+
+        return set.Description;
+    }
+
+    [Authenticated]
+    [HttpRoute("/:id/description", APIMethod.Patch)]
+    public APIReturn<object> EditDescription(User auth, long id, [Source(ParameterSource.Form)] string content)
+    {
+        var set = maps.GetSet(id);
+        if (set is null) return Returns.NotFound("mapset");
+
+        if (set.CreatorID != auth.ID && !auth.IsModerator())
+            return Returns.Message(HttpStatusCode.Forbidden, "You are not the creator of this mapset.");
+
+        int descLimit = config.Limits.MaxDescChar;
+
+        if (content.Length > descLimit)
+            return Returns.Message(HttpStatusCode.Forbidden, $"Description cannot exceed {descLimit} characters.");
+
+        set.Description = HtmlUtils.SanitizeHtml(content);
+        maps.Update(set);
+
+        return Returns.Okay();
     }
 
     [Authenticated]

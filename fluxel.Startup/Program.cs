@@ -40,7 +40,9 @@ internal static class Program
             Limits = new ServerConfig.LimitsConfig
             {
                 MaxMapSets = Env.GetInt("LIMITS_MAX_MAPSETS"),
-                IncreasePerPure = Env.GetInt("LIMITS_INCREASE_PER_PURE")
+                IncreasePerPure = Env.GetInt("LIMITS_INCREASE_PER_PURE"),
+                IncreasePerYear = Env.GetInt("LIMITS_INCREASE_PER_YEAR"),
+                MaxDescChar = Env.GetInt("LIMITS_MAX_DESC_CHAR"),
             },
             Mongo = new ServerConfig.MongoConfig
             {
