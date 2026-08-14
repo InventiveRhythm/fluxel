@@ -6,6 +6,7 @@ using fluxel.Database;
 using fluxel.Models.Payment;
 using Midori.Database;
 using Midori.Utils;
+using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 
 namespace fluxel.Components;
@@ -16,12 +17,14 @@ public class Donations
     private readonly IDatabaseTable<LinkID> links;
 
     private readonly UserManager users;
+    private readonly RedemptionManager redemptions;
     private readonly MailDelivery mail;
 
-    public Donations(IDatabaseProvider db, UserManager users, MailDelivery mail)
+    public Donations(IDatabaseProvider db, UserManager users, MailDelivery mail, RedemptionManager redemptions)
     {
         this.users = users;
         this.mail = mail;
+        this.redemptions = redemptions;
         collection = db.GetTable<KoFiPayment>("payments");
         links = db.GetTable<LinkID>("payment-links");
     }
@@ -30,12 +33,52 @@ public class Donations
     {
         collection.Add(payment);
 
-        var user = users.GetByKoFiEmail(payment.Email);
+        var rc = redemptions.Create(new BsonDocument().Add(RedemptionCode.DONATE_AMOUNT, payment.Amount));
+        sendCodeLink(payment.Email, payment.Amount, rc.Code);
+    }
 
-        if (user is null)
-            SendLink(payment.Email);
+    private void sendCodeLink(string email, double amount, string code)
+    {
+        var span = TimeSpan.FromDays(amount / 2d * 31);
+        var months = span.Days / 31;
+        var str = "";
+
+        if (months >= 1f)
+        {
+            str += $"{months} month{(months > 1 ? "s" : "")}";
+
+            var rest = span.Days - months * 31;
+            if (rest > 0) str += $" and {rest} day{(rest > 1 ? "s" : "")}";
+        }
         else
-            Update(user.ID);
+            str = $"{span.Days} days";
+
+        var body = new StringBuilder();
+        body.AppendLine("Hi!");
+        body.AppendLine();
+        body.AppendLine("Thank you for supporting fluXis!");
+        body.AppendLine("The game runs without ads or forced payments because of people like you.");
+        body.AppendLine();
+        body.AppendLine($"You now have access to supporter benefits for {str}.");
+        body.AppendLine();
+
+        body.AppendLine("Use the following code in-game to redeem your benefits:");
+        body.AppendLine(code);
+        body.AppendLine();
+        body.AppendLine("If you don't know how to redeem it: https://fluxis.flux.moe/wiki/donating#redeeming-your-code");
+        body.AppendLine();
+
+        const int per_month = 17;
+        var runtime = TimeSpan.FromDays(amount / per_month * 31);
+        body.AppendLine($"As a small fun fact, your donation keeps the servers running for about {runtime.Days} days, {runtime.Hours} hours and {runtime.Minutes} minutes.");
+
+        body.AppendLine();
+        body.AppendLine("If you have any questions, you can reply to this email. I will try to answer as soon as possible!");
+        body.AppendLine();
+        body.AppendLine("Have a great day!");
+        body.AppendLine("- flustix");
+
+        mail.SendMail(email, "Thank you for supporting fluXis!", body.ToString(), -1, true);
     }
 
     public bool Connect(string code, long user, [NotNullWhen(false)] out string? error)

@@ -117,6 +117,7 @@ internal static class Program
         builder.Services.AddSingleton<MapManager>();
         builder.Services.AddSingleton<NotificationManager>();
         builder.Services.AddSingleton<OAuthManager>();
+        builder.Services.AddSingleton<RedemptionManager>();
         builder.Services.AddSingleton<ScoreManager>();
         builder.Services.AddSingleton<UserManager>();
 
