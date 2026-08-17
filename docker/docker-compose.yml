@@ -22,7 +22,6 @@ services:
       - ../.docker.env
     environment:
       - VALKEY=valkey:6379
-      - MONGO_CONN=mongodb://host.docker.internal:27017
     extra_hosts:
       - "host.docker.internal:host-gateway"
     networks:
