@@ -2,7 +2,6 @@
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
-    <LangVersion>11</LangVersion>
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
@@ -11,6 +10,8 @@
     <PackageReference Include="DSharpPlus" Version="4.4.9" />
     <PackageReference Include="Fido2" Version="3.0.1" />
     <PackageReference Include="Otp.NET" Version="1.4.0" />
+    <PackageReference Include="DotNetEnv" Version="3.1.1"/>
+    <PackageReference Include="StackExchange.Redis" Version="3.1.13" />
   </ItemGroup>
 
   <ItemGroup>
@@ -18,7 +19,6 @@
   </ItemGroup>
 
   <ItemGroup Label="Code Analysis">
-    <PackageReference Include="Microsoft.CodeAnalysis.BannedApiAnalyzers" Version="3.3.4" PrivateAssets="All" />
     <AdditionalFiles Include="..\CodeAnalysis\BannedSymbols.txt" />
   </ItemGroup>
 

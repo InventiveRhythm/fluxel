@@ -5,7 +5,8 @@ namespace fluxel.Config;
 public partial class ServerConfig
 {
     public int Port { get; init; } = 2434;
-    public string FfmpegPath { get; init; } = "ffmpeg";
+    public string ValkeyConnection { get; init; } = string.Empty;
+    public string FfmpegPath { get; init; } = string.Empty;
     public string KoFiSecret { get; init; } = string.Empty;
     public long[] BundledSets { get; init; } = Array.Empty<long>();
 

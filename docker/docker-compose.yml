@@ -1,0 +1,41 @@
+services:
+  valkey:
+    container_name: fluxel-valkey
+    image: valkey/valkey:latest
+    ports:
+      - 127.0.0.1:6379:6379
+    networks:
+      - fluxel
+  
+  previews:
+    container_name: fluxel-previews
+    image: fluxel-previews
+    build:
+      context: ../..
+      dockerfile: ./fluxel/docker/Previews
+    volumes:
+      - fluxel:/app/Assets:rw
+    ports:
+      - 127.0.0.1:2435:3000
+    env_file:
+      - ../.env
+      - ../.docker.env
+    environment:
+      - VALKEY=valkey:6379
+      - MONGO_CONN=mongodb://host.docker.internal:27017
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - fluxel
+
+volumes:
+  fluxel:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /home/flux/repo/InventiveRhythm/fluxel/Assets
+
+networks:
+  fluxel:
+    name: fluxel-network

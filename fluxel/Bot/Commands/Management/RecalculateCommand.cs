@@ -7,7 +7,6 @@ using fluxel.Database;
 using fluxel.Tasks;
 using fluxel.Tasks.Clubs;
 using fluxel.Tasks.Maps;
-using fluxel.Tasks.MapSets;
 using fluxel.Tasks.Scores;
 using fluxel.Tasks.Users;
 using Microsoft.Extensions.DependencyInjection;
@@ -59,10 +58,6 @@ public class RecalculateCommand : ISlashCommand
 
             case "maps":
                 services.GetRequiredService<MapManager>().AllMaps.ForEach(m => tasks.Schedule(new RecalculateMapTask(m.ID)));
-                break;
-
-            case "previews":
-                tasks.Schedule(new RegeneratePreviewsBulkTask());
                 break;
 
             case "scores":

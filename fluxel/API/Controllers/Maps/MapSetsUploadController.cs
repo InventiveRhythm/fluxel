@@ -6,11 +6,11 @@ using System.Linq;
 using fluxel.Components;
 using fluxel.Database;
 using fluxel.Database.Extensions;
+using fluxel.IPC;
 using fluxel.Models.Maps;
 using fluxel.Models.Users;
 using fluxel.Tasks;
 using fluxel.Tasks.Maps;
-using fluxel.Tasks.MapSets;
 using fluxel.Tasks.Other;
 using fluxel.Utils;
 using fluXis.Map;
@@ -20,8 +20,8 @@ using fluXis.Utils;
 using Midori.API.Attributes;
 using Midori.API.Components;
 using Midori.Networking;
+using Midori.Utils;
 using osu.Framework.Extensions.IEnumerableExtensions;
-using JsonUtils = Midori.Utils.JsonUtils;
 
 namespace fluxel.API.Controllers.Maps;
 
@@ -33,14 +33,16 @@ public class MapSetsUploadController
     private readonly TaskRunner tasks;
     private readonly ModelTranslator translator;
     private readonly ServerEvents events;
+    private readonly Valkey valkey;
 
-    public MapSetsUploadController(MapManager maps, UserManager users, TaskRunner tasks, ModelTranslator translator, ServerEvents events)
+    public MapSetsUploadController(MapManager maps, UserManager users, TaskRunner tasks, ModelTranslator translator, ServerEvents events, Valkey valkey)
     {
         this.maps = maps;
         this.users = users;
         this.tasks = tasks;
         this.translator = translator;
         this.events = events;
+        this.valkey = valkey;
     }
 
     [Authenticated]
@@ -77,7 +79,7 @@ public class MapSetsUploadController
         foreach (var entry in zip.Entries.Where(e => e.FullName.EndsWith(".fsc")))
         {
             var json = new StreamReader(entry.Open()).ReadToEnd();
-            var mapJson = JsonUtils.Deserialize<MapInfo>(json);
+            var mapJson = json.Deserialize<MapInfo>();
 
             var issue = "";
 
@@ -167,7 +169,7 @@ public class MapSetsUploadController
 
         events.UploadMap(set.ID);
         mapList.ForEach(m => tasks.Schedule(new RecalculateMapTask(m.ID)));
-        tasks.Schedule(new GeneratePreviewTask(set.ID));
+        _ = valkey.Publish(Valkey.MapSetCreate, new MapSetIDEvent(set.ID));
 
         return translator.ToAPI(set, mapInclude: MapIncludes.FileName);
     }
@@ -207,7 +209,7 @@ public class MapSetsUploadController
         foreach (var entry in zip.Entries.Where(e => e.FullName.EndsWith(".fsc")))
         {
             var json = new StreamReader(entry.Open()).ReadToEnd();
-            var mapJson = JsonUtils.Deserialize<MapInfo>(json);
+            var mapJson = json.Deserialize<MapInfo>();
 
             if (mapJson == null || !mapJson.Validate(out _))
                 return Returns.Message(HttpStatusCode.BadRequest, "The file " + entry.Name + " is not a valid map file.");
@@ -313,6 +315,7 @@ public class MapSetsUploadController
             tasks.Schedule(new MethodTask(() => events.QueueActionCreate(act.ID)));
         }
 
+        _ = valkey.Publish(Valkey.MapSetUpdate, new MapSetIDEvent(set.ID));
         return translator.ToAPI(set, mapInclude: MapIncludes.FileName);
     }
 

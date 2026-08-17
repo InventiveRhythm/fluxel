@@ -3,12 +3,12 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Threading.Tasks;
-using fluxel.Components;
 using fluxel.Database;
+using fluxel.Tasks;
 using fluxel.Utils;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace fluxel.Tasks.MapSets;
+namespace fluxel.Workers.Previews.Tasks;
 
 public class GeneratePreviewTask : IBasicTask
 {
@@ -42,8 +42,18 @@ public class GeneratePreviewTask : IBasicTask
         using var entry = zip.GetEntry(audio)!.Open();
         entry.CopyTo(ms);
 
+        float time = map.Metadata.PreviewTime;
+        var len = 0f;
+
+        while (len < 15000)
+        {
+            var beat = Math.Clamp(map.GetTimingPoint(time).MsPerBeat * 4, 10, 15000);
+            len += beat;
+            time += beat;
+        }
+
         var tempPath = TempUtils.CopyToTemp(ms.ToArray(), ext);
-        services.GetRequiredService<PreviewGenerator>().Generate(tempPath, Assets.GetPathForAsset(AssetType.Preview, set.ID.ToString()), map.Metadata.PreviewTime / 1000f);
+        services.GetRequiredService<PreviewGenerator>().Generate(tempPath, Assets.GetPathForAsset(AssetType.Preview, set.ID.ToString()), map.Metadata.PreviewTime / 1000f, len / 1000f);
         return Task.CompletedTask;
     }
 }
