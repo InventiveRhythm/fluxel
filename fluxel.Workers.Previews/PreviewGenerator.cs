@@ -39,7 +39,7 @@ public class PreviewGenerator
                 Arguments = $"-y -i \"{path}\" -ss {start.ToString(CultureInfo.InvariantCulture)} -t {length} -map 0:a \"{temp}\"",
                 CreateNoWindow = true,
                 RedirectStandardOutput = true,
-                RedirectStandardError = true,
+                RedirectStandardError = false,
                 UseShellExecute = false,
                 WindowStyle = ProcessWindowStyle.Hidden
             }
@@ -56,7 +56,7 @@ public class PreviewGenerator
                 Arguments = $"-y -i \"{temp}\" -af \"afade=t=in:st=0:d={fade_time},afade=t=out:st={length - fade_time}:d={fade_time}\" \"{output}\"",
                 CreateNoWindow = true,
                 RedirectStandardOutput = true,
-                RedirectStandardError = true,
+                RedirectStandardError = false,
                 UseShellExecute = false,
                 WindowStyle = ProcessWindowStyle.Hidden
             }
