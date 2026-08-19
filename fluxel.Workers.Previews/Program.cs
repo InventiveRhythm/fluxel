@@ -2,7 +2,6 @@
 using System.Threading;
 using System.Threading.Tasks;
 using fluxel.Components;
-using fluxel.Config;
 using fluxel.IPC;
 using fluxel.Tasks;
 using fluxel.Workers.Previews.API;
@@ -19,7 +18,7 @@ internal static class Program
     private static async Task Main(string[] args)
     {
         var (builder, config) = SharedStartup.CreateDefault();
-        builder.SetupAPI(new ServerConfig { Port = 3000 });
+        builder.SetupAPI(config);
 
         builder.Services.AddMongoDatabase(config.Mongo.Connection, config.Mongo.Database);
         builder.Services.AddSingleton<PreviewGenerator>();
