@@ -234,15 +234,15 @@ public class User : IHasID
             var byUser = mm.GetSetsByCreator(user.ID);
             byUser.Reverse();
 
-            Ranked = byUser.Where(s => s.Status >= MapStatus.Pure).Select(x => translator.ToAPI(x));
-            Unranked = byUser.Where(s => s.Status < MapStatus.Pure).Select(x => translator.ToAPI(x));
+            Ranked = byUser.Where(s => s.Status >= MapStatus.Pure).Select(x => translator.ToAPI(x, userid: requestedBy?.ID));
+            Unranked = byUser.Where(s => s.Status < MapStatus.Pure).Select(x => translator.ToAPI(x, userid: requestedBy?.ID));
 
             var maps = mm.GetByMapsByMapper(user.ID);
             maps.Reverse();
             maps.RemoveAll(map => byUser.Any(s => s.ID == map.SetID));
 
             var ids = maps.Select(m => m.SetID).Distinct();
-            GuestDiffs = ids.Select(mm.GetSet).OfType<MapSet>().Select(x => translator.ToAPI(x));
+            GuestDiffs = ids.Select(mm.GetSet).OfType<MapSet>().Select(x => translator.ToAPI(x, userid: requestedBy?.ID));
 
             if (user.ID != requestedBy?.ID)
                 return;

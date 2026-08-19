@@ -51,8 +51,10 @@ public class MapSetsController
         this.cache = cache;
     }
 
+    [Authenticated(Required = false)]
     [HttpRoute("/")]
     public APIReturn<List<APIMapSet>> Search(
+        User? auth,
         [Source(ParameterSource.Query)] int limit = 50,
         [Source(ParameterSource.Query)] int offset = 0,
         [Source(ParameterSource.Query, "q")] string query = "",
@@ -87,7 +89,7 @@ public class MapSetsController
         }
 
         var sets = all.Where(s => filter.Match(s) && !s.InternalFlags.HasFlagFast(InternalSetFlags.ShadowBan))
-                      .OrderByDescending(x => filter.Status == StatusFlags.Pure ? x.DateRanked : x.Submitted).Skip(offset).Take(limit).Select(x => translator.ToAPI(x)).ToList();
+                      .OrderByDescending(x => filter.Status == StatusFlags.Pure ? x.DateRanked : x.Submitted).Skip(offset).Take(limit).Select(x => translator.ToAPI(x, userid: auth?.ID)).ToList();
 
         // TODO: pagination
         // interaction.SetPaginationInfo(limit, offset, all.Count, sets.Count);
