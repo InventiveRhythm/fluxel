@@ -44,6 +44,7 @@ internal static class Program
         var discord = host.Services.GetRequiredService<DiscordBot>();
         var tasks = host.Services.GetRequiredService<TaskRunner>();
 
+        tasks.Schedule(new CheckMissingMapColorTask(), DateTime.Today, TimeSpan.FromDays(1));
         tasks.Schedule(new RefreshMapScoresTask(), DateTime.Today, TimeSpan.FromDays(1));
         tasks.Schedule(new CheckForDiscordRefreshesTask(), DateTime.Today, TimeSpan.FromHours(8));
 

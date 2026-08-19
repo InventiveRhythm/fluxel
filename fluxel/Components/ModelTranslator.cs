@@ -266,7 +266,8 @@ public class ModelTranslator
             NotesPerSecond = map.NotesPerSecond,
             AccuracyDifficulty = map.AccuracyDifficulty,
             HealthDifficulty = map.HealthDifficulty,
-            Effects = map.Effects
+            Effects = map.Effects,
+            Color = map.Color
         };
 
         if (userid > 0)
