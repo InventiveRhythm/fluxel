@@ -5,7 +5,6 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
-using fluxel.Authentication;
 using fluxel.Models;
 using fluxel.Models.Relations;
 using fluxel.Models.Users;
@@ -46,14 +45,13 @@ public class UserManager
         this.counters = counters;
     }
 
-    public User Add(string username, string email, string password, string? country)
+    public User Add(string username, ulong steam, string? country)
     {
         var user = new User
         {
             ID = counters.GetNext(CounterType.User),
+            SteamID = steam,
             Username = username,
-            Email = email,
-            Password = PasswordAuth.HashPassword(password),
             CountryCode = country
         };
 
@@ -83,19 +81,11 @@ public class UserManager
 
     public IEnumerable<User> GetMany(IEnumerable<long> ids) => users.Find(u => ids.Contains(u.ID)).ToList();
     public User? GetByDiscordID(ulong id) => users.Find(x => x.DiscordID == id).FirstOrDefault();
+    public User? GetBySteamID(ulong id) => users.Find(x => x.SteamID == id).FirstOrDefault();
 
     #endregion
 
     #region Query (E-Mail)
-
-    public User? GetByEmail(string email)
-        => users.Find(u => string.Equals(u.Email, email, StringComparison.CurrentCultureIgnoreCase)).FirstOrDefault();
-
-    public bool TryGetByEmail(string email, [NotNullWhen(true)] out User? user)
-    {
-        user = GetByEmail(email);
-        return user != null;
-    }
 
     public User? GetByKoFiEmail(string email)
         => users.Find(u => string.Equals(u.KoFiEmail, email, StringComparison.CurrentCultureIgnoreCase)).FirstOrDefault();

@@ -18,20 +18,11 @@ public class User : IHasID
     [BsonId]
     public long ID { get; init; }
 
-    [BsonElement("password")]
-    public string Password { get; set; } = "";
-
-    [BsonElement("totp-enabled")]
-    public bool HasTOTP { get; set; }
-
     [BsonElement("discord-id")]
     public ulong? DiscordID { get; set; }
 
     [BsonElement("steam-id")]
     public ulong? SteamID { get; set; }
-
-    [BsonIgnore]
-    public bool HasMfa => HasTOTP;
 
     [BsonElement("name")]
     public string Username { get; set; } = "";
@@ -59,9 +50,6 @@ public class User : IHasID
 
     [BsonElement("banner_animated")]
     public bool HasAnimatedBanner { get; set; }
-
-    [BsonElement("email")]
-    public string Email { get; init; } = "";
 
     [BsonElement("kofi-email")]
     public string? KoFiEmail { get; set; }
@@ -261,8 +249,7 @@ public enum UserIncludes
     Socials = 1 << 2,
     Statistics = 1 << 3,
     Following = 1 << 4,
-    Email = 1 << 5,
-    Flags = 1 << 6
+    Flags = 1 << 5
 }
 
 [Flags]

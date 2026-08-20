@@ -1,6 +1,7 @@
 ﻿using fluxel.API.Components;
 using fluxel.Bot;
 using fluxel.Components;
+using fluxel.Database.Migrations;
 using fluxel.Modules;
 using fluxel.Tasks;
 using fluxel.Tasks.Maps;
@@ -24,6 +25,7 @@ internal static class Program
 
         var (builder, config) = SharedStartup.CreateDefault();
         builder.Services.AddMongoDatabase(config.Mongo.Connection, config.Mongo.Database);
+        builder.Services.AddSingleton<DatabaseMigrationRunner>();
         builder.SetupAPI(config);
 
         var modules = new ModuleManager();
@@ -47,6 +49,8 @@ internal static class Program
         tasks.Schedule(new CheckMissingMapColorTask(), DateTime.Today, TimeSpan.FromDays(1));
         tasks.Schedule(new RefreshMapScoresTask(), DateTime.Today, TimeSpan.FromDays(1));
         tasks.Schedule(new CheckForDiscordRefreshesTask(), DateTime.Today, TimeSpan.FromHours(8));
+
+        await host.Services.GetRequiredService<DatabaseMigrationRunner>().ExecuteUpgrades();
 
         await tasks.StartAsync(CancellationToken.None);
         await discord.StartAsync(CancellationToken.None);

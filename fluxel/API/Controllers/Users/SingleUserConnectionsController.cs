@@ -1,19 +1,19 @@
 using System;
-using System.IO;
+using System.Net;
 using System.Net.Http;
 using fluxel.Components;
 using fluxel.Config;
 using fluxel.Database;
 using fluxel.Models.Users;
+using fluxel.Utils.Steam;
 using fluXis.Online.API.Models.Users.Connections;
 using Midori.API.Attributes;
 using Midori.API.Components;
 using Midori.Logging;
-using Midori.Networking;
 using Midori.Utils;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using osu.Framework.IO.Network;
+using HttpStatusCode = Midori.Networking.HttpStatusCode;
+using WebRequest = osu.Framework.IO.Network.WebRequest;
 
 namespace fluxel.API.Controllers.Users;
 
@@ -94,39 +94,17 @@ public class SingleUserConnectionsController
         if (auth.ID != id)
             return Returns.Message(HttpStatusCode.Forbidden, "You cannot connect accounts for other users.");
 
-        var req = new WebRequest("https://partner.steam-api.com/ISteamUserAuth/AuthenticateUserTicket/v1/");
-        req.AddParameter("key", config.Steam.WebKey);
-        req.AddParameter("appid", config.Steam.AppID.ToString());
-        req.AddParameter("ticket", token);
-        // req.AddParameter("identity", "");
-
-        req.Perform();
-
-        var result = new StreamReader(req.ResponseStream).ReadToEnd();
-
-        var json = result.Deserialize<JObject>()!;
-        var response = json["response"]?.ToObject<JObject>() ?? throw new InvalidOperationException();
-        var param = response["params"]?.ToObject<JObject>() ?? throw new InvalidOperationException();
-        var steamid = param["steamid"]?.ToObject<ulong>() ?? throw new InvalidOperationException();
-
-        users.UpdateLocked(id, u => u.SteamID = steamid);
-        return steamid;
-    }
-
-    [Authenticated]
-    [HttpRoute("/kofi", APIMethod.Put)]
-    public APIReturn<object> KoFi(User auth, long id, [Source(ParameterSource.Form)] string token)
-    {
-        if (auth.ID != id)
-            return Returns.Message(HttpStatusCode.Forbidden, "You cannot connect accounts for other users.");
-        if (!string.IsNullOrWhiteSpace(auth.KoFiEmail))
-            return Returns.Message(HttpStatusCode.BadRequest, "You have already linked a Ko-Fi email.");
-
-        if (!donations.Connect(token, id, out var error))
-            return Returns.Message(HttpStatusCode.BadRequest, error);
-
-        donations.Update(auth.ID);
-        return Returns.Okay();
+        try
+        {
+            var sid = SteamHelper.FetchUserIDFromTicket(config.Steam, token).Result;
+            users.UpdateLocked(id, u => u.SteamID = sid);
+            return sid;
+        }
+        catch (WebException wex)
+        {
+            Logger.Error(wex, $"Failed to pull SteamID for user {id}!");
+            return Returns.Message(HttpStatusCode.BadRequest, "Failed to get SteamID from ticket.");
+        }
     }
 
     public class DiscordCodeResponse

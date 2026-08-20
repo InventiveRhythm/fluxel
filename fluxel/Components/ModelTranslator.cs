@@ -139,8 +139,6 @@ public class ModelTranslator
             u.CreatedAt = user.CreatedAt;
         if (include.HasFlagFast(UserIncludes.LastLogin))
             u.LastLogin = user.LastLogin;
-        if (include.HasFlagFast(UserIncludes.Email))
-            u.Email = user.Email;
         if (include.HasFlagFast(UserIncludes.Flags))
             u.Flags = (long)user.BanFlags;
 
