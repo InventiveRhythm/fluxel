@@ -56,8 +56,6 @@ public class SingleUserController
 
         if (auth != null)
             includes |= UserIncludes.Following;
-        if (auth?.ID == id)
-            includes |= UserIncludes.Email;
 
         return translator.ToAPI(user, auth?.ID ?? -1, mode, includes);
     }

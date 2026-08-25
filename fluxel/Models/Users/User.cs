@@ -18,20 +18,11 @@ public class User : IHasID
     [BsonId]
     public long ID { get; init; }
 
-    [BsonElement("password")]
-    public string Password { get; set; } = "";
-
-    [BsonElement("totp-enabled")]
-    public bool HasTOTP { get; set; }
-
     [BsonElement("discord-id")]
     public ulong? DiscordID { get; set; }
 
     [BsonElement("steam-id")]
     public ulong? SteamID { get; set; }
-
-    [BsonIgnore]
-    public bool HasMfa => HasTOTP;
 
     [BsonElement("name")]
     public string Username { get; set; } = "";
@@ -59,9 +50,6 @@ public class User : IHasID
 
     [BsonElement("banner_animated")]
     public bool HasAnimatedBanner { get; set; }
-
-    [BsonElement("email")]
-    public string Email { get; init; } = "";
 
     [BsonElement("kofi-email")]
     public string? KoFiEmail { get; set; }
@@ -234,15 +222,15 @@ public class User : IHasID
             var byUser = mm.GetSetsByCreator(user.ID);
             byUser.Reverse();
 
-            Ranked = byUser.Where(s => s.Status >= MapStatus.Pure).Select(x => translator.ToAPI(x));
-            Unranked = byUser.Where(s => s.Status < MapStatus.Pure).Select(x => translator.ToAPI(x));
+            Ranked = byUser.Where(s => s.Status >= MapStatus.Pure).Select(x => translator.ToAPI(x, userid: requestedBy?.ID));
+            Unranked = byUser.Where(s => s.Status < MapStatus.Pure).Select(x => translator.ToAPI(x, userid: requestedBy?.ID));
 
             var maps = mm.GetByMapsByMapper(user.ID);
             maps.Reverse();
             maps.RemoveAll(map => byUser.Any(s => s.ID == map.SetID));
 
             var ids = maps.Select(m => m.SetID).Distinct();
-            GuestDiffs = ids.Select(mm.GetSet).OfType<MapSet>().Select(x => translator.ToAPI(x));
+            GuestDiffs = ids.Select(mm.GetSet).OfType<MapSet>().Select(x => translator.ToAPI(x, userid: requestedBy?.ID));
 
             if (user.ID != requestedBy?.ID)
                 return;
@@ -261,8 +249,7 @@ public enum UserIncludes
     Socials = 1 << 2,
     Statistics = 1 << 3,
     Following = 1 << 4,
-    Email = 1 << 5,
-    Flags = 1 << 6
+    Flags = 1 << 5
 }
 
 [Flags]

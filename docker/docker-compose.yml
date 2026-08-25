@@ -1,0 +1,30 @@
+services:
+  valkey:
+    container_name: fluxel-valkey
+    image: valkey/valkey:latest
+    ports:
+      - 127.0.0.1:6379:6379
+
+  previews:
+    container_name: fluxel-previews
+    image: fluxel-previews
+    build:
+      context: ../..
+      dockerfile: ./fluxel/docker/Previews
+    volumes:
+      - fluxel:/app/Assets:rw
+    env_file:
+      - ../.env
+      - ../.docker.env
+    environment:
+      - PORT=2435
+      - VALKEY=localhost:6379
+    network_mode: "host"
+
+volumes:
+  fluxel:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /home/flux/repo/InventiveRhythm/fluxel/Assets

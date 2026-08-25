@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using fluxel.Database;
 using fluXis.Online.API.Models.Maps;
 using fluXis.Utils;
+using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 using Newtonsoft.Json;
 
@@ -111,6 +112,10 @@ public class Map : IHasID
 
     [BsonElement("needs-score-refresh")]
     public bool NeedsScoreRefresh { get; set; } = true;
+
+    [BsonElement("color")]
+    [BsonRepresentation(BsonType.Int64)]
+    public uint Color { get; set; }
 
     [BsonIgnore]
     public int MaxCombo => Hits + LongNotes * 2 + TickNotes + Landmines;

@@ -221,7 +221,7 @@ public class ClubController
     }
 
     [Authenticated]
-    [HttpRoute("/:id/invites")]
+    [HttpRoute("/:id/invites", APIMethod.Post)]
     public APIReturn<APIClubInvite> CreateInvite(User auth, long id, [Source(ParameterSource.Body)] CreateClubInvitePayload payload)
     {
         if (payload.UserID == null)

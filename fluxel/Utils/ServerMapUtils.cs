@@ -40,7 +40,8 @@ public static class ServerMapUtils
         LongNotes = json.HitObjects.Count(h => h.Type == HitObjectType.Normal && h.LongNote),
         TickNotes = json.HitObjects.Count(h => h.Type == HitObjectType.Tick),
         Landmines = json.HitObjects.Count(h => h.Landmine),
-        NotesPerSecond = MapUtils.GetNps(json.HitObjects)
+        NotesPerSecond = MapUtils.GetNps(json.HitObjects),
+        Color = json.Colors.Accent.ToRGBA()
     };
 
     public static bool ReadFile(this ZipArchive archive, string? name, [NotNullWhen(true)] out string? content)

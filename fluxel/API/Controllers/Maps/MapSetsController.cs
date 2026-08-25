@@ -38,8 +38,9 @@ public class MapSetsController
     private readonly ServerEvents events;
     private readonly ModuleManager modules;
     private readonly TaskRunner tasks;
+    private readonly RequestCache cache;
 
-    public MapSetsController(MapManager maps, ModelTranslator translator, ServerConfig config, ModuleManager modules, ScoreManager scores, ServerEvents events, TaskRunner tasks)
+    public MapSetsController(MapManager maps, ModelTranslator translator, ServerConfig config, ModuleManager modules, ScoreManager scores, ServerEvents events, TaskRunner tasks, RequestCache cache)
     {
         this.maps = maps;
         this.translator = translator;
@@ -48,10 +49,13 @@ public class MapSetsController
         this.scores = scores;
         this.events = events;
         this.tasks = tasks;
+        this.cache = cache;
     }
 
+    [Authenticated(Required = false)]
     [HttpRoute("/")]
     public APIReturn<List<APIMapSet>> Search(
+        User? auth,
         [Source(ParameterSource.Query)] int limit = 50,
         [Source(ParameterSource.Query)] int offset = 0,
         [Source(ParameterSource.Query, "q")] string query = "",
@@ -86,7 +90,7 @@ public class MapSetsController
         }
 
         var sets = all.Where(s => filter.Match(s) && !s.InternalFlags.HasFlagFast(InternalSetFlags.ShadowBan))
-                      .OrderByDescending(x => filter.Status == StatusFlags.Pure ? x.DateRanked : x.Submitted).Skip(offset).Take(limit).Select(x => translator.ToAPI(x)).ToList();
+                      .OrderByDescending(x => filter.Status == StatusFlags.Pure ? x.DateRanked : x.Submitted).Skip(offset).Take(limit).Select(x => translator.ToAPI(x, userid: auth?.ID)).ToList();
 
         // TODO: pagination
         // interaction.SetPaginationInfo(limit, offset, all.Count, sets.Count);
@@ -281,7 +285,14 @@ public class MapSetsController
         notifyAction(action);
 
         if (set.Status == MapStatus.Pure)
+        {
             events.MapPure(set.ID);
+            set.GetMaps(cache).ForEach(x =>
+            {
+                var rating = x.RecalculateRating(maps);
+                maps.QuickUpdate(x.ID, m => m.Rating = rating);
+            });
+        }
 
         return action.ToAPI(translator);
     }

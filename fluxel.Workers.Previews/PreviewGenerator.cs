@@ -3,12 +3,12 @@ using System.Globalization;
 using System.IO;
 using fluxel.Config;
 
-namespace fluxel.Components;
+namespace fluxel.Workers.Previews;
 
 public class PreviewGenerator
 {
     private const int preview_length = 15;
-    private const int fade_time = 1;
+    private const float fade_time = 0.4f;
 
     private readonly ServerConfig config;
 
@@ -17,7 +17,7 @@ public class PreviewGenerator
         this.config = config;
     }
 
-    public void Generate(string path, string output, float start = 0)
+    public void Generate(string path, string output, float start = 0, float length = preview_length)
     {
         if (File.Exists(output))
             File.Delete(output);
@@ -36,10 +36,10 @@ public class PreviewGenerator
             StartInfo = new ProcessStartInfo
             {
                 FileName = config.FfmpegPath,
-                Arguments = $"-y -i \"{path}\" -ss {start.ToString(CultureInfo.InvariantCulture)} -t {preview_length} -map 0:a \"{temp}\"",
+                Arguments = $"-y -i \"{path}\" -ss {start.ToString(CultureInfo.InvariantCulture)} -t {length} -map 0:a \"{temp}\"",
                 CreateNoWindow = true,
                 RedirectStandardOutput = true,
-                RedirectStandardError = true,
+                RedirectStandardError = false,
                 UseShellExecute = false,
                 WindowStyle = ProcessWindowStyle.Hidden
             }
@@ -53,10 +53,10 @@ public class PreviewGenerator
             StartInfo = new ProcessStartInfo
             {
                 FileName = config.FfmpegPath,
-                Arguments = $"-y -i \"{temp}\" -af \"afade=t=in:st=0:d={fade_time},afade=t=out:st={preview_length - fade_time}:d={fade_time}\" \"{output}\"",
+                Arguments = $"-y -i \"{temp}\" -af \"afade=t=in:st=0:d={fade_time},afade=t=out:st={length - fade_time}:d={fade_time}\" \"{output}\"",
                 CreateNoWindow = true,
                 RedirectStandardOutput = true,
-                RedirectStandardError = true,
+                RedirectStandardError = false,
                 UseShellExecute = false,
                 WindowStyle = ProcessWindowStyle.Hidden
             }

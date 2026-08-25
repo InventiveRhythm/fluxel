@@ -2,20 +2,46 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using System.Linq.Expressions;
 using fluxel.Models.Auth;
 using Midori.Database;
 using Midori.Utils;
+using MongoDB.Bson;
 
 namespace fluxel.Database;
 
 public class AuthManager
 {
     private readonly IDatabaseTable<TimedCodeInfo> totpInfos;
+    private readonly IDatabaseTable<AuthMethod> methods;
 
     public AuthManager(IDatabaseProvider db)
     {
         totpInfos = db.GetTable<TimedCodeInfo>("totp");
+        methods = db.GetTable<AuthMethod>("auth");
     }
+
+    #region Methods
+
+    public void RegisterAuthMethod(long id, string method, BsonDocument data)
+    {
+        if (GetAuthMethod(id, method) != null)
+            throw new InvalidOperationException($"User {id} already has auth method {method}!");
+
+        var m = new AuthMethod { UserID = id, Method = method, Data = data };
+        methods.Add(m);
+    }
+
+    public AuthMethod? GetAuthMethod(long id, string method)
+    {
+        var m = methods.Find(x => x.UserID == id && x.Method == method);
+        return m.FirstOrDefault();
+    }
+
+    public AuthMethod? GetAuthMethod(Expression<Func<AuthMethod, bool>> match)
+        => methods.Find(match).FirstOrDefault();
+
+    #endregion
 
     #region Tokens
 

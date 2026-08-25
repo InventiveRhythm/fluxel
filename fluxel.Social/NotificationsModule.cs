@@ -164,14 +164,5 @@ public class NotificationsModule : IModule, IOnlineStateManager
     bool IOnlineStateManager.IsOnline(long user) => Sockets.Any(x => x.UserID == user);
 
     APIActivity? IOnlineStateManager.GetActivity(long user)
-    {
-        var conn = Sockets.FirstOrDefault(x => x.UserID == user);
-        if (conn?.Activity is null) return null;
-
-        return new APIActivity
-        {
-            Name = conn.Activity.Value.name,
-            Data = conn.Activity.Value.data
-        };
-    }
+        => Sockets.FirstOrDefault(x => x.UserID == user)?.Activity;
 }
