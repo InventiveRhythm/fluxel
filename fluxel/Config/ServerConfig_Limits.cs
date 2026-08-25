@@ -7,5 +7,6 @@ public partial class ServerConfig
         public int MaxMapSets { get; set; } = 9;
         public int IncreasePerPure { get; set; } = 3;
         public int IncreasePerYear { get; set; } = 4;
+        public int MaxDescChar { get; set; } = 2500;
     }
 }
