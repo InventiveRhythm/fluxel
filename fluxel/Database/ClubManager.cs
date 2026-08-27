@@ -11,19 +11,18 @@ using Midori.Utils;
 
 namespace fluxel.Database;
 
-public class ClubManager
+public class ClubManager : DatabaseManager
 {
     public const string TABLE_NAME = "clubs";
 
-    private readonly IDatabaseTable<Club> clubs;
     private readonly IDatabaseTable<ClubScore> scores;
     private readonly IDatabaseTable<ClubClaim> claims;
     private readonly IDatabaseTable<ClubInvite> invites;
     private readonly CounterManager counters;
 
-    public ClubManager(IDatabaseProvider db, CounterManager counters)
+    public ClubManager(IDatabaseProvider db, CounterManager counters, DatabaseContext db1)
+        : base(db1)
     {
-        clubs = db.GetTable<Club>(TABLE_NAME);
         scores = db.GetTable<ClubScore>("club-scores");
         claims = db.GetTable<ClubClaim>("club-claims");
         invites = db.GetTable<ClubInvite>("club-invites");
@@ -32,23 +31,21 @@ public class ClubManager
 
     #region Clubs themselves
 
-    public List<Club> All => clubs.Find(m => true).ToList();
+    public List<Club> All => [.. Database.Clubs];
 
-    public Club? Get(long id) => clubs.Find(m => m.ID == id).FirstOrDefault();
+    public Club? Get(long id) => Database.Clubs.Find(id);
 
-    public Club? ByTag(string tag) => clubs.Find(m => m.Tag == tag).FirstOrDefault();
-    public Club? ByName(string name) => clubs.Find(m => m.Name.Equals(name, StringComparison.CurrentCultureIgnoreCase)).FirstOrDefault();
+    public Club? ByTag(string tag) => Database.Clubs.FirstOrDefault(x => x.Tag == tag);
+    public Club? ByName(string name) => Database.Clubs.FirstOrDefault(m => m.Name.Equals(name, StringComparison.CurrentCultureIgnoreCase));
 
     public void Add(Club club)
     {
         club.ID = counters.GetNext(CounterType.Club);
-        clubs.Add(club);
+        Database.Clubs.Add(club);
     }
 
-    public void Update(Club club) => clubs.Replace(m => m.ID == club.ID, club);
-
     public Club? GetWhereUserIsMember(User user) => GetWhereUserIsMember(user.ID);
-    public Club? GetWhereUserIsMember(long userId) => clubs.Find(m => m.Members.Contains(userId)).FirstOrDefault();
+    public Club? GetWhereUserIsMember(long userId) => Database.Clubs.FirstOrDefault(m => m.Members.Contains(userId));
 
     public bool TryGetWhereUserIsMember(User user, [NotNullWhen(true)] out Club? club)
         => TryGetWhereUserIsMember(user.ID, out club);

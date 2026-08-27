@@ -1,62 +1,54 @@
 using System;
 using System.Linq;
 using fluxel.Models;
-using fluxel.Models.Clubs;
-using fluxel.Models.Maps;
-using fluxel.Models.Scores;
-using fluxel.Models.Users;
-using Midori.Database;
+using Microsoft.EntityFrameworkCore;
 
 namespace fluxel.Database;
 
-public class CounterManager
+public class CounterManager : DatabaseManager
 {
-    private readonly IDatabaseTable<Counter> counters;
     private readonly object threadLock = new();
 
-    public CounterManager(IDatabaseProvider db)
+    public CounterManager(DatabaseContext ctx)
+        : base(ctx)
     {
-        counters = db.GetTable<Counter>("counters");
-        add(CounterType.Club, db.GetTable<Club>(ClubManager.TABLE_NAME));
-        add(CounterType.Map, db.GetTable<Map>(MapManager.MAP_TABLE_NAME));
-        add(CounterType.MapSet, db.GetTable<MapSet>(MapManager.MAPSET_TABLE_NAME));
-        add(CounterType.Score, db.GetTable<Score>(ScoreManager.TABLE_NAME));
-        add(CounterType.User, db.GetTable<User>(UserManager.TABLE_NAME));
+        add(CounterType.Club, Database.Clubs);
+        // TODO: add back
+        // add(CounterType.Map, db.GetTable<Map>(MapManager.MAP_TABLE_NAME));
+        // add(CounterType.MapSet, db.GetTable<MapSet>(MapManager.MAPSET_TABLE_NAME));
+        // add(CounterType.Score, db.GetTable<Score>(ScoreManager.TABLE_NAME));
+        // add(CounterType.User, db.GetTable<User>(UserManager.TABLE_NAME));
     }
 
-    private void add<T>(CounterType type, IDatabaseTable<T> table)
-        where T : IHasID
+    private void add<T>(CounterType type, DbSet<T> table)
+        where T : class, IHasID
     {
         lock (threadLock)
         {
-            var counter = counters.Find(c => c.Type == type).FirstOrDefault();
+            var counter = Database.Counters.Find(type);
 
             if (counter is not null)
                 return;
 
-            var results = table.Find(x => true).ToList();
+            var max = table.Max(x => x.ID);
 
             counter = new Counter
             {
                 Type = type,
-                Value = results.Count != 0 ? results.Max(x => x.ID) + 1 : 1
+                Value = max + 1
             };
 
-            counters.Add(counter);
+            Database.Counters.Add(counter);
+            Database.SaveChanges();
         }
     }
 
     public long GetNext(CounterType type)
     {
-        lock (threadLock)
+        using (EditAndSave())
         {
-            var counter = counters.Find(c => c.Type == type).FirstOrDefault();
-
-            if (counter is null)
-                throw new ArgumentException($"Counter {type} has not been initialized!");
-
+            var counter = Database.Counters.Find(type) ?? throw new ArgumentException($"Counter {type} has not been initialized!");
             var num = counter.GetAndIncrease();
-            counters.Replace(x => x.Type == type, counter);
             return num;
         }
     }

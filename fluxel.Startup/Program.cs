@@ -1,14 +1,17 @@
 ﻿using fluxel.API.Components;
 using fluxel.Bot;
 using fluxel.Components;
+using fluxel.Database;
 using fluxel.Database.Migrations;
 using fluxel.Modules;
 using fluxel.Tasks;
 using fluxel.Tasks.Maps;
 using fluxel.Tasks.Users.Connections;
 using fluXis.Map;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging.Abstractions;
 using Midori.Database.MongoDB;
 using Midori.Networking;
 
@@ -24,6 +27,19 @@ internal static class Program
         MapInfo.MaxKeymode = 10;
 
         var (builder, config) = SharedStartup.CreateDefault();
+        builder.Services.AddDbContext<DatabaseContext>(c =>
+        {
+            c.UseMongoDB(config.Mongo.Connection, config.Mongo.Database);
+
+            if (!builder.Environment.IsDevelopment())
+            {
+                c.UseLoggerFactory(new NullLoggerFactory());
+                return;
+            }
+
+            c.EnableSensitiveDataLogging();
+            c.EnableDetailedErrors();
+        });
         builder.Services.AddMongoDatabase(config.Mongo.Connection, config.Mongo.Database);
         builder.Services.AddSingleton<DatabaseMigrationRunner>();
         builder.SetupAPI(config);
@@ -32,11 +48,14 @@ internal static class Program
         builder.Services.AddSingleton(_ => modules);
         modules.RegisterServices(builder);
 
-        builder.Services.AddSingleton<ServerEvents>();
+        builder.Services.AddScoped<ServerEvents>();
         builder.Services.AddSingleton<DiscordBot>();
 
         var host = builder.Build();
         modules.BuildModules(host.Services);
+
+        using (var scope = host.Services.CreateScope())
+            await scope.ServiceProvider.GetRequiredService<DatabaseContext>().Database.EnsureCreatedAsync();
 
         var router = host.Services.GetRequiredService<HttpRouter>();
         router.AddMiddleware<FluxelAtMeMiddleware>();

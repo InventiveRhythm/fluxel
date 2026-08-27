@@ -20,31 +20,30 @@ public class NotificationsModule : IModule, IOnlineStateManager
 {
     public HttpConnectionManager<NotificationSocket> Sockets { get; }
 
-    private readonly UserManager users;
-    private readonly ClubManager clubs;
-    private readonly ChatManager chat;
     private readonly DiscordBot discord;
     private readonly UrlFormatter urls;
-    private readonly IServiceProvider services;
 
-    public NotificationsModule(UserManager users, DiscordBot discord, ClubManager clubs, ChatManager chat, UrlFormatter urls, HttpRouter router, TaskRunner tasks, IServiceProvider services)
+    public NotificationsModule(DiscordBot discord, UrlFormatter urls, HttpRouter router, TaskRunner tasks, IServiceProvider services)
     {
-        this.users = users;
         this.discord = discord;
-        this.clubs = clubs;
-        this.chat = chat;
         this.urls = urls;
-        this.services = services;
 
         Sockets = router.MapModule<NotificationSocket>("/notifications", manager: true)!;
 
         tasks.Schedule(new CleanupOnlineStatesCronTask(), DateTime.Today, TimeSpan.FromDays(1));
-        fixInvalidOnlineStates();
-        createClubChannels();
+
+        using (var scope = services.CreateScope())
+        {
+            fixInvalidOnlineStates(scope.ServiceProvider);
+            createClubChannels(scope.ServiceProvider);
+        }
     }
 
-    private void createClubChannels()
+    private void createClubChannels(IServiceProvider services)
     {
+        var clubs = services.GetRequiredService<ClubManager>();
+        var chat = services.GetRequiredService<ChatManager>();
+
         var c = clubs.All;
 
         foreach (var club in c)
@@ -59,9 +58,11 @@ public class NotificationsModule : IModule, IOnlineStateManager
         }
     }
 
-    public void OnMessage(object data)
+    public void OnMessage(IServiceProvider services, object data)
     {
-        var translator = services.CreateScope().ServiceProvider.GetRequiredService<ModelTranslator>();
+        var translator = services.GetRequiredService<ModelTranslator>();
+        var chat = services.GetRequiredService<ChatManager>();
+        var users = services.GetRequiredService<UserManager>();
 
         switch (data)
         {
@@ -153,8 +154,9 @@ public class NotificationsModule : IModule, IOnlineStateManager
 
     public NotificationSocket? SocketByID(long id) => Sockets.FirstOrDefault(x => x.UserID == id);
 
-    private void fixInvalidOnlineStates()
+    private void fixInvalidOnlineStates(IServiceProvider services)
     {
+        var users = services.GetRequiredService<UserManager>();
         var online = users.LastOnlineLogs();
         online.ForEach(x => users.LogOnline(x, false));
     }
@@ -163,6 +165,7 @@ public class NotificationsModule : IModule, IOnlineStateManager
 
     bool IOnlineStateManager.IsOnline(long user) => Sockets.Any(x => x.UserID == user);
 
-    APIActivity? IOnlineStateManager.GetActivity(long user)
+    APIActivity
+        ? IOnlineStateManager.GetActivity(long user)
         => Sockets.FirstOrDefault(x => x.UserID == user)?.Activity;
 }

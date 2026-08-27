@@ -1,13 +1,16 @@
-﻿using MongoDB.Bson.Serialization.Attributes;
+﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace fluxel.Models;
 
+[Table("counters")]
 public class Counter
 {
-    [BsonId]
+    [Key]
+    [Column("_id")]
     public CounterType Type { get; set; }
 
-    [BsonElement("value")]
+    [Column("value")]
     public long Value { get; set; }
 
     public long GetAndIncrease() => Value++;

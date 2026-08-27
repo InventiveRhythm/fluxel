@@ -16,6 +16,7 @@ using fluxel.Config;
 using fluxel.Database;
 using fluxel.Modules;
 using fluxel.Modules.Messages.Chat;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Midori.Logging;
 
@@ -24,18 +25,14 @@ namespace fluxel.Bot;
 public class DiscordBot : BackgroundService
 {
     private readonly ServerConfig.DiscordConfig config;
-    private readonly ChatManager chat;
     private readonly ModuleManager modules;
-    private readonly UserManager users;
     private readonly IServiceProvider services;
 
     public DiscordClient? Bot { get; private set; }
     private static List<ISlashCommand>? commands { get; set; }
 
-    public DiscordBot(ServerConfig config, UserManager users, ChatManager chat, ModuleManager modules, IServiceProvider services)
+    public DiscordBot(ServerConfig config, ModuleManager modules, IServiceProvider services)
     {
-        this.users = users;
-        this.chat = chat;
         this.modules = modules;
         this.services = services;
         this.config = config.Discord;
@@ -120,6 +117,10 @@ public class DiscordBot : BackgroundService
             return Task.CompletedTask;
         }
 
+        var svc = services.CreateScope();
+        var users = svc.ServiceProvider.GetRequiredService<UserManager>();
+        var chat = svc.ServiceProvider.GetRequiredService<ChatManager>();
+
         var user = users.GetByDiscordID(args.Author.Id);
 
         if (user is null)
@@ -151,6 +152,9 @@ public class DiscordBot : BackgroundService
     {
         if (args.Channel.Id != config.ChatLink)
             return Task.CompletedTask;
+
+        var svc = services.CreateScope();
+        var chat = svc.ServiceProvider.GetRequiredService<ChatManager>();
 
         var message = chat.GetByDiscordID(args.Message.Id);
         if (message is null) return Task.CompletedTask;

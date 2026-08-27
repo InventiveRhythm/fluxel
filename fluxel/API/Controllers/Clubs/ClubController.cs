@@ -106,7 +106,9 @@ public class ClubController
         if (bannerBytes.Length != 0)
             club.BannerHash = Assets.WriteHashedImage(AssetType.ClubBanner, bannerBytes);
 
-        clubs.Add(club);
+        using (clubs.EditAndSave())
+            clubs.Add(club);
+
         return translator.ToAPI(club);
     }
 
@@ -135,63 +137,65 @@ public class ClubController
         if (club.OwnerID != auth.ID && !auth.IsModerator())
             return Returns.Message(HttpStatusCode.Forbidden, ResponseStrings.NoPermission);
 
-        if (!string.IsNullOrWhiteSpace(payload.Name))
+        using (clubs.EditAndSave())
         {
-            if (payload.Name.Length is < 3 or > 24)
-                return Returns.Message(HttpStatusCode.BadRequest, "Name has to be between 3 and 24 characters");
+            if (!string.IsNullOrWhiteSpace(payload.Name))
+            {
+                if (payload.Name.Length is < 3 or > 24)
+                    return Returns.Message(HttpStatusCode.BadRequest, "Name has to be between 3 and 24 characters");
 
-            club.Name = payload.Name;
+                club.Name = payload.Name;
+            }
+
+            if (payload.JoinType != null)
+            {
+                if (!Enum.IsDefined(typeof(ClubJoinType), payload.JoinType))
+                    return Returns.Message(HttpStatusCode.BadRequest, "Invalid join type.");
+
+                club.JoinType = payload.JoinType.Value;
+            }
+
+            if (!string.IsNullOrWhiteSpace(payload.ColorStart))
+            {
+                if (!payload.ColorStart.Matches(Validate.REGEX_HEX_COLOR))
+                    return Returns.Message(HttpStatusCode.BadRequest, "Invalid hex color code for 'color-start'.");
+
+                club.Colors.First().Color = payload.ColorStart;
+            }
+
+            if (!string.IsNullOrWhiteSpace(payload.ColorEnd))
+            {
+                if (!payload.ColorEnd.Matches(Validate.REGEX_HEX_COLOR))
+                    return Returns.Message(HttpStatusCode.BadRequest, "Invalid hex color code for 'color-end'.");
+
+                club.Colors.Last().Color = payload.ColorEnd;
+            }
+
+            if (!string.IsNullOrEmpty(payload.Icon))
+            {
+                var bytes = Convert.FromBase64String(payload.Icon);
+
+                if (bytes.Length > Assets.MAX_IMAGE_SIZE)
+                    return Returns.Message(HttpStatusCode.BadRequest, "Icon is bigger than 3MB.");
+                if (!bytes.IsImage())
+                    return Returns.Message(HttpStatusCode.BadRequest, "Icon is not a valid image.");
+
+                club.IconHash = Assets.WriteHashedImage(AssetType.ClubIcon, bytes);
+            }
+
+            if (!string.IsNullOrEmpty(payload.Banner))
+            {
+                var bytes = Convert.FromBase64String(payload.Banner);
+
+                if (bytes.Length > Assets.MAX_IMAGE_SIZE)
+                    return Returns.Message(HttpStatusCode.BadRequest, "Banner is bigger than 3MB.");
+                if (!bytes.IsImage())
+                    return Returns.Message(HttpStatusCode.BadRequest, "Banner is not a valid image.");
+
+                club.BannerHash = Assets.WriteHashedImage(AssetType.ClubBanner, bytes);
+            }
         }
 
-        if (payload.JoinType != null)
-        {
-            if (!Enum.IsDefined(typeof(ClubJoinType), payload.JoinType))
-                return Returns.Message(HttpStatusCode.BadRequest, "Invalid join type.");
-
-            club.JoinType = payload.JoinType.Value;
-        }
-
-        if (!string.IsNullOrWhiteSpace(payload.ColorStart))
-        {
-            if (!payload.ColorStart.Matches(Validate.REGEX_HEX_COLOR))
-                return Returns.Message(HttpStatusCode.BadRequest, "Invalid hex color code for 'color-start'.");
-
-            club.Colors.First().Color = payload.ColorStart;
-        }
-
-        if (!string.IsNullOrWhiteSpace(payload.ColorEnd))
-        {
-            if (!payload.ColorEnd.Matches(Validate.REGEX_HEX_COLOR))
-                return Returns.Message(HttpStatusCode.BadRequest, "Invalid hex color code for 'color-end'.");
-
-            club.Colors.Last().Color = payload.ColorEnd;
-        }
-
-        if (!string.IsNullOrEmpty(payload.Icon))
-        {
-            var bytes = Convert.FromBase64String(payload.Icon);
-
-            if (bytes.Length > Assets.MAX_IMAGE_SIZE)
-                return Returns.Message(HttpStatusCode.BadRequest, "Icon is bigger than 3MB.");
-            if (!bytes.IsImage())
-                return Returns.Message(HttpStatusCode.BadRequest, "Icon is not a valid image.");
-
-            club.IconHash = Assets.WriteHashedImage(AssetType.ClubIcon, bytes);
-        }
-
-        if (!string.IsNullOrEmpty(payload.Banner))
-        {
-            var bytes = Convert.FromBase64String(payload.Banner);
-
-            if (bytes.Length > Assets.MAX_IMAGE_SIZE)
-                return Returns.Message(HttpStatusCode.BadRequest, "Banner is bigger than 3MB.");
-            if (!bytes.IsImage())
-                return Returns.Message(HttpStatusCode.BadRequest, "Banner is not a valid image.");
-
-            club.BannerHash = Assets.WriteHashedImage(AssetType.ClubBanner, bytes);
-        }
-
-        clubs.Update(club);
         return translator.ToAPI(club, ClubIncludes.JoinType);
     }
 

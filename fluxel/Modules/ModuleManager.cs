@@ -14,6 +14,7 @@ public class ModuleManager
 {
     private readonly List<Type> modules;
     private readonly List<IModule> built;
+    private IServiceProvider services = null!;
 
     public ModuleManager()
     {
@@ -42,23 +43,32 @@ public class ModuleManager
     }
 
     // kind of a hack? we can't build during api requests because it deadlocks
-    public void BuildModules(IServiceProvider services)
-        => modules.ForEach(x => built.Add((IModule)services.GetService(x)!));
+    public void BuildModules(IServiceProvider svc)
+    {
+        services = svc;
+        modules.ForEach(x => built.Add((IModule)services.GetService(x)!));
+    }
 
     public void RegisterControllers(HttpRouter router)
         => modules.ForEach(x => router.RegisterControllersFromAssembly(x.Assembly));
 
-    public void SendMessage(object data) => built.ForEach(x =>
+    public void SendMessage(object data)
     {
-        try
+        using (var scope = services.CreateScope())
         {
-            x.OnMessage(data);
+            built.ForEach(x =>
+            {
+                try
+                {
+                    x.OnMessage(scope.ServiceProvider, data);
+                }
+                catch (Exception ex)
+                {
+                    Logger.Error(ex, $"Module '{x.GetType().Name}' failed to handle '{data.GetType().Name}'.");
+                }
+            });
         }
-        catch (Exception ex)
-        {
-            Logger.Error(ex, $"Module '{x.GetType().Name}' failed to handle '{data.GetType().Name}'.");
-        }
-    });
+    }
 
     private IEnumerable<Type> getTypes()
     {

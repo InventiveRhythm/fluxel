@@ -29,24 +29,24 @@ public static class SharedStartup
         builder.Logging.ClearProviders();
         builder.Logging.AddProvider(new MidoriLoggerProvider());
 
-        builder.Services.AddSingleton<AchievementManager>();
-        builder.Services.AddSingleton<ArtistManager>();
-        builder.Services.AddSingleton<AuthManager>();
-        builder.Services.AddSingleton<ChatManager>();
-        builder.Services.AddSingleton<ClubManager>();
-        builder.Services.AddSingleton<CollectionManager>();
-        builder.Services.AddSingleton<CounterManager>();
-        builder.Services.AddSingleton<EventManager>();
-        builder.Services.AddSingleton<GroupManager>();
-        builder.Services.AddSingleton<MapManager>();
-        builder.Services.AddSingleton<NotificationManager>();
-        builder.Services.AddSingleton<OAuthManager>();
-        builder.Services.AddSingleton<RedemptionManager>();
-        builder.Services.AddSingleton<ScoreManager>();
-        builder.Services.AddSingleton<UserManager>();
+        builder.Services.AddScoped<AchievementManager>();
+        builder.Services.AddScoped<ArtistManager>();
+        builder.Services.AddScoped<AuthManager>();
+        builder.Services.AddScoped<ChatManager>();
+        builder.Services.AddScoped<ClubManager>();
+        builder.Services.AddScoped<CollectionManager>();
+        builder.Services.AddScoped<CounterManager>();
+        builder.Services.AddScoped<EventManager>();
+        builder.Services.AddScoped<GroupManager>();
+        builder.Services.AddScoped<MapManager>();
+        builder.Services.AddScoped<NotificationManager>();
+        builder.Services.AddScoped<OAuthManager>();
+        builder.Services.AddScoped<RedemptionManager>();
+        builder.Services.AddScoped<ScoreManager>();
+        builder.Services.AddScoped<UserManager>();
 
-        builder.Services.AddSingleton<Donations>();
-        builder.Services.AddSingleton<MailDelivery>();
+        builder.Services.AddScoped<Donations>();
+        builder.Services.AddScoped<MailDelivery>();
         builder.Services.AddScoped<ModelTranslator>();
         builder.Services.AddScoped<RequestCache>();
         builder.Services.AddSingleton<Statistics>();
@@ -62,7 +62,7 @@ public static class SharedStartup
     public static void SetupAPI(this HostApplicationBuilder builder, ServerConfig config)
     {
         builder.Services.AddSingleton<IHttpReplyHandler, DefaultAPIReplyHandler>();
-        builder.Services.AddSingleton<IAPIAuthenticator, FluxelAPIAuthenticator>();
+        builder.Services.AddScoped<IAPIAuthenticator, FluxelAPIAuthenticator>();
 
         builder.Services.AddHttpServer(c =>
         {

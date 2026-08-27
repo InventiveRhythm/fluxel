@@ -21,7 +21,7 @@ public class MultiplayerModule : IModule, IMultiRoomManager
         MultiplayerRoomManager.StartThread();
     }
 
-    public void OnMessage(object data)
+    public void OnMessage(IServiceProvider _, object data)
     {
         switch (data)
         {

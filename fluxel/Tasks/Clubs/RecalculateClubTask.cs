@@ -30,9 +30,12 @@ public class RecalculateClubTask : IBasicTask
         var members = club.GetMemberList(services.GetRequiredService<UserManager>());
         var scores = clubs.GetScores(club.ID);
 
-        club.OverallRating = overall(members);
-        club.TotalScore = scores.Sum(s => s.TotalScore);
-        clubs.Update(club);
+        using (clubs.EditAndSave())
+        {
+            club.OverallRating = overall(members);
+            club.TotalScore = scores.Sum(s => s.TotalScore);
+        }
+
         return Task.CompletedTask;
     }
 

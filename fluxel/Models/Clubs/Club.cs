@@ -1,53 +1,60 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using fluxel.Components;
 using fluxel.Database;
 using fluxel.Models.Other;
 using fluxel.Models.Users;
 using fluXis.Online.API.Models.Clubs;
-using MongoDB.Bson.Serialization.Attributes;
-using Newtonsoft.Json;
+using Microsoft.EntityFrameworkCore;
 
 namespace fluxel.Models.Clubs;
 
-[JsonObject(MemberSerialization.OptIn)]
+[Index(nameof(Tag), IsUnique = true)]
+[Table(ClubManager.TABLE_NAME)]
 public class Club : IHasID
 {
-    [BsonId]
+    [Key]
+    [Column("_id")]
     public long ID { get; set; }
 
-    [BsonElement("name")]
+    [Column("name")]
+    [MaxLength(24)]
     public string Name { get; set; } = "";
 
-    [BsonElement("tag")]
+    [Column("tag")]
+    [MinLength(3), MaxLength(5)]
     public string Tag { get; set; } = "";
 
-    [BsonElement("icon")]
+    [Column("icon")]
+    [MaxLength(64)]
     public string IconHash { get; set; } = "";
 
-    [BsonElement("banner")]
+    [Column("banner")]
+    [MaxLength(64)]
     public string BannerHash { get; set; } = "";
 
-    [BsonElement("join-type")]
+    [Column("join-type")]
     public ClubJoinType JoinType { get; set; }
 
-    [BsonElement("color")]
+    [Column("color")]
     public List<GradientColor> Colors { get; set; } = new();
 
-    [BsonElement("owner")]
+    [Column("owner")]
     public long OwnerID { get; set; }
 
-    [BsonElement("members")]
+    [Column("members")]
     public List<long> Members { get; set; } = new();
 
-    [BsonElement("ovr")]
+    [Column("ovr")]
     public double OverallRating { get; set; }
 
-    [BsonElement("score")]
+    [Column("score")]
     public long TotalScore { get; set; }
 
-    [BsonIgnore]
+    [NotMapped]
     public string ChatChannel => $"club_{ID}";
 
     public bool IsInClub(User user) => IsInClub(user.ID);
@@ -55,15 +62,17 @@ public class Club : IHasID
 
     public void AddMember(long user, ClubManager clubs, ChatManager chats)
     {
-        Members.Add(user);
-        clubs.Update(this);
+        using (clubs.EditAndSave())
+            Members.Add(user);
+
         chats.AddToChannel(ChatChannel, user);
     }
 
     public void RemoveMember(long user, ClubManager clubs, ChatManager chats)
     {
-        Members.Remove(user);
-        clubs.Update(this);
+        using (clubs.EditAndSave())
+            Members.Remove(user);
+
         chats.RemoveFromChannel(ChatChannel, user);
     }
 
