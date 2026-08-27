@@ -29,13 +29,15 @@ public class ClubController
     private readonly ClubManager clubs;
     private readonly ModelTranslator translator;
     private readonly NotificationManager notifications;
+    private readonly UserManager users;
 
-    public ClubController(RequestCache cache, ModelTranslator translator, ClubManager clubs, NotificationManager notifications)
+    public ClubController(RequestCache cache, ModelTranslator translator, ClubManager clubs, NotificationManager notifications, UserManager users)
     {
         this.cache = cache;
         this.translator = translator;
         this.clubs = clubs;
         this.notifications = notifications;
+        this.users = users;
     }
 
     #region All Clubs
@@ -47,7 +49,7 @@ public class ClubController
     [HttpRoute("/", APIMethod.Post)]
     public APIReturn<APIClub> Create(User auth, [Source(ParameterSource.Body)] CreateClubPayload payload)
     {
-        if (clubs.GetWhereUserIsMember(auth.ID) != null)
+        if (auth.GetClub(clubs) != null)
             return Returns.Message(HttpStatusCode.BadRequest, "You are already in a club.");
 
         if (clubs.ByName(payload.Name) != null)
@@ -97,8 +99,7 @@ public class ClubController
             {
                 new() { Color = payload.ColorStart, Position = 0 },
                 new() { Color = payload.ColorEnd, Position = 1 }
-            },
-            Members = new List<long> { auth.ID }
+            }
         };
 
         if (iconBytes.Length != 0)
@@ -109,6 +110,7 @@ public class ClubController
         using (clubs.EditAndSave())
             clubs.Add(club);
 
+        users.UpdateLocked(auth.ID, x => x.ClubID = club.ID);
         return translator.ToAPI(club);
     }
 

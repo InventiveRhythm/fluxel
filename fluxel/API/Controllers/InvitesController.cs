@@ -13,13 +13,15 @@ public class InvitesController
 {
     private readonly ClubManager clubs;
     private readonly ChatManager chats;
+    private readonly UserManager users;
     private readonly ModelTranslator translator;
 
-    public InvitesController(ClubManager clubs, ModelTranslator translator, ChatManager chats)
+    public InvitesController(ClubManager clubs, ModelTranslator translator, ChatManager chats, UserManager users)
     {
         this.clubs = clubs;
         this.translator = translator;
         this.chats = chats;
+        this.users = users;
     }
 
     [HttpRoute("/:code")]
@@ -56,10 +58,11 @@ public class InvitesController
 
         if (club == null)
             return Returns.Message(HttpStatusCode.BadRequest, "The club this invite goes to doesn't exist.");
-        if (club.IsInClub(auth.ID))
+        if (auth.ClubID == club.ID)
             return Returns.Message(HttpStatusCode.BadRequest, "You are already in this club.");
 
-        club.AddMember(auth.ID, clubs, chats);
+        users.UpdateLocked(auth.ID, x => x.ClubID = club.ID);
+        chats.AddToChannel(club.ChatChannel, auth.ID);
         clubs.RemoveForUser(auth.ID);
         return Returns.Okay();
     }

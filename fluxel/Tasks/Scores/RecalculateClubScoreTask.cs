@@ -33,7 +33,7 @@ public class RecalculateClubScoreTask : IBasicTask
         var scores = services.GetRequiredService<ScoreManager>().FromMap(map, map.SHA256Hash);
         var cache = services.GetRequiredService<RequestCache>();
 
-        scores = scores.Where(s => cache.Users.TryGet(s.UserID, out var u) && clubs.GetWhereUserIsMember(u.ID)?.ID == clubID).ToList();
+        scores = scores.Where(s => cache.Users.TryGet(s.UserID, out var u) && u.GetClub(clubs)?.ID == clubID).ToList();
         scores = scores.OrderByDescending(s => s.TotalScore).ToList();
 
         // only take one score per user

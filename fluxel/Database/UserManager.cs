@@ -83,6 +83,9 @@ public class UserManager
     public User? GetByDiscordID(ulong id) => users.Find(x => x.DiscordID == id).FirstOrDefault();
     public User? GetBySteamID(ulong id) => users.Find(x => x.SteamID == id).FirstOrDefault();
 
+    public List<User> GetInClub(long club) => [.. users.Find(x => x.ClubID == club)];
+    public long GetCountInClub(long club) => users.Count(x => x.ClubID == club);
+
     #endregion
 
     #region Query (E-Mail)

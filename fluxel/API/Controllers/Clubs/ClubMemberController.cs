@@ -39,10 +39,11 @@ public class ClubMemberController
 
         if (user == null)
             return Returns.NotFound("user");
-        if (club.IsInClub(user.ID))
+        if (user.ClubID == club.ID)
             return Returns.Message(HttpStatusCode.BadRequest, "You already are in this club!");
 
-        club.AddMember(user.ID, clubs, chats);
+        users.UpdateLocked(auth.ID, x => x.ClubID = club.ID);
+        chats.AddToChannel(club.ChatChannel, user.ID);
         return Returns.Created();
     }
 
@@ -51,9 +52,10 @@ public class ClubMemberController
     public APIReturn<object> RemoveMember(User auth, long id, long member)
     {
         var club = clubs.Get(id);
+        if (club == null) return Returns.NotFound("club");
 
-        if (club == null)
-            return Returns.NotFound("club");
+        var target = users.Get(member);
+        if (target == null) return Returns.NotFound("user");
 
         var isClubOwner = auth.ID == club.OwnerID;
         var removingSelf = auth.ID == member;
@@ -63,10 +65,11 @@ public class ClubMemberController
             return Returns.Message(HttpStatusCode.BadRequest, "You can't remove yourself from the club you own.");
         if (!isClubOwner && !removingSelf && !isDeveloper)
             return Returns.Message(HttpStatusCode.Forbidden, "Only the club owner can remove other members.");
-        if (!club.IsInClub(member))
+        if (target.ClubID != club.ID)
             return Returns.Message(HttpStatusCode.BadRequest, "This user is not a member of this club.");
 
-        club.RemoveMember(member, clubs, chats);
+        users.UpdateLocked(member, x => x.ClubID = null);
+        chats.RemoveFromChannel(club.ChatChannel, member);
         return Returns.NoContent();
     }
 }

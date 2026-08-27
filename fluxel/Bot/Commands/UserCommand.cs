@@ -56,7 +56,7 @@ public class UserCommand : ISlashCommand
         if (!string.IsNullOrEmpty(user.DisplayName))
             embed.AddField("Display Name", user.DisplayName, true);
 
-        var club = clubs.GetWhereUserIsMember(user.ID);
+        var club = user.GetClub(clubs);
 
         if (club != null)
             embed.AddField("Club", club.Name, true);

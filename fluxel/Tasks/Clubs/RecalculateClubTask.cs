@@ -22,12 +22,13 @@ public class RecalculateClubTask : IBasicTask
     public Task Run(IServiceProvider services)
     {
         var clubs = services.GetRequiredService<ClubManager>();
+        var users = services.GetRequiredService<UserManager>();
         var club = clubs.Get(id);
 
         if (club == null)
             throw new ArgumentException($"No club with id {id} was found!");
 
-        var members = club.GetMemberList(services.GetRequiredService<UserManager>());
+        var members = users.GetInClub(club.ID);
         var scores = clubs.GetScores(club.ID);
 
         using (clubs.EditAndSave())

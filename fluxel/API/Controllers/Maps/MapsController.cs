@@ -187,7 +187,8 @@ public class MapsController
                 return replyLeaderboard(auth, set, map, getLeaderboardCountry(map, version, auth.CountryCode));
 
             case "club":
-                if (!clubs.TryGetWhereUserIsMember(auth, out var club))
+                var club = auth.GetClub(clubs);
+                if (club == null)
                     return Returns.Message(HttpStatusCode.BadRequest, "You are not in a club.");
 
                 return replyLeaderboard(auth, set, map, getLeaderboardClub(map, version, club.ID));
@@ -244,7 +245,7 @@ public class MapsController
     private List<Score> getLeaderboardClub(Map map, string? version, long id)
     {
         return filterLeaderboardList(scores.FromMap(map, version)
-                                           .Where(s => users.TryGet(s.UserID, out var u) && clubs.GetWhereUserIsMember(u)?.ID == id)
+                                           .Where(s => users.TryGet(s.UserID, out var u) && u.GetClub(clubs)?.ID == id)
                                            .OrderByDescending(s => s.PerformanceRating)
                                            .ToList());
     }

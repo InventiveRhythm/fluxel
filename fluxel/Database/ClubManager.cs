@@ -1,11 +1,9 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using fluxel.Models;
 using fluxel.Models.Clubs;
 using fluxel.Models.Scores;
-using fluxel.Models.Users;
 using Midori.Database;
 using Midori.Utils;
 
@@ -42,18 +40,6 @@ public class ClubManager : DatabaseManager
     {
         club.ID = counters.GetNext(CounterType.Club);
         Database.Clubs.Add(club);
-    }
-
-    public Club? GetWhereUserIsMember(User user) => GetWhereUserIsMember(user.ID);
-    public Club? GetWhereUserIsMember(long userId) => Database.Clubs.FirstOrDefault(m => m.Members.Contains(userId));
-
-    public bool TryGetWhereUserIsMember(User user, [NotNullWhen(true)] out Club? club)
-        => TryGetWhereUserIsMember(user.ID, out club);
-
-    public bool TryGetWhereUserIsMember(long uid, [NotNullWhen(true)] out Club? club)
-    {
-        club = GetWhereUserIsMember(uid);
-        return club != null;
     }
 
     #endregion

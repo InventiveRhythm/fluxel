@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using fluxel.Database;
@@ -125,7 +124,7 @@ public class ModelTranslator
 
         if (!exclude.HasFlagFast(UserExclude.Club))
         {
-            var club = clubs.GetWhereUserIsMember(user.ID);
+            var club = user.GetClub(clubs);
             u.Club = club != null ? ToAPI(club) : null;
         }
 
@@ -295,9 +294,9 @@ public class ModelTranslator
                 Score = ToAPI(ownedScore)
             };
 
-            if (userid is null or <= 0) return;
+            if (userid is null or <= 0 || !users.TryGet(userid.Value, out var user)) return;
 
-            var userClub = clubs.GetWhereUserIsMember(userid.Value);
+            var userClub = user.GetClub(clubs);
             if (userClub is null) return;
 
             var clubScore = clubs.GetScore(userClub.ID, map.ID);
@@ -334,7 +333,7 @@ public class ModelTranslator
             Tag = club.Tag,
             IconHash = club.IconHash,
             BannerHash = club.BannerHash,
-            MemberCount = club.Members.Count,
+            MemberCount = users.GetCountInClub(club.ID),
             Colors = club.Colors.Select(c => new APIGradientColor
             {
                 Color = c.Color,
@@ -357,10 +356,7 @@ public class ModelTranslator
 
         if (include.HasFlagFast(ClubIncludes.Members))
         {
-            c.Members = club.GetMemberList(users ?? throw new InvalidOperationException($"{nameof(UserManager)} not provided."))
-                            .Select(m => ToAPI(m, include: UserIncludes.LastLogin, exclude: UserExclude.Club))
-                            .ToList();
-
+            c.Members = [.. users.GetInClub(club.ID).Select(m => ToAPI(m, include: UserIncludes.LastLogin, exclude: UserExclude.Club))];
             c.Members.RemoveAll(m => m.ID == -1);
         }
 

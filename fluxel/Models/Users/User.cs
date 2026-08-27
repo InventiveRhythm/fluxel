@@ -69,6 +69,9 @@ public class User : IHasID
     [BsonElement("groups")]
     public List<string> GroupIDs { get; set; } = new();
 
+    [BsonElement("club")]
+    public long? ClubID { get; set; }
+
     [BsonElement("role")]
     public int RoleInt { get; set; }
 
@@ -111,7 +114,7 @@ public class User : IHasID
     public List<Group> GetGroups(GroupManager gm)
         => GroupIDs.Select(gm.Get).OfType<Group>().ToList();
 
-    public Club? GetClub(ClubManager cm) => cm.GetWhereUserIsMember(this);
+    public Club? GetClub(ClubManager cm) => ClubID == null ? null : cm.Get(ClubID.Value);
 
     public int GetGlobalRank(RequestCache cache, int mode = 0) => getRank(mode, cache);
     public int GetCountryRank(RequestCache cache, int mode = 0) => getRank(mode, cache, e => e.Where(u => u.CountryCode == CountryCode));

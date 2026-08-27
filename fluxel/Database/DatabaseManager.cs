@@ -6,7 +6,7 @@ public class DatabaseManager
 {
     protected DatabaseContext Database { get; }
 
-    public DatabaseManager(DatabaseContext database)
+    protected DatabaseManager(DatabaseContext database)
     {
         Database = database;
     }

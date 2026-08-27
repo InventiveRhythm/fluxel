@@ -42,6 +42,7 @@ public class NotificationsModule : IModule, IOnlineStateManager
     private void createClubChannels(IServiceProvider services)
     {
         var clubs = services.GetRequiredService<ClubManager>();
+        var users = services.GetRequiredService<UserManager>();
         var chat = services.GetRequiredService<ChatManager>();
 
         var c = clubs.All;
@@ -52,7 +53,7 @@ public class NotificationsModule : IModule, IOnlineStateManager
             var channel = chat.GetChannel(name) ?? chat.CreateClubChannel(name, club.ID);
 
             channel.Users.Clear();
-            channel.Users.AddRange(club.Members);
+            channel.Users.AddRange(users.GetInClub(club.ID).Select(x => x.ID));
 
             chat.Update(channel);
         }

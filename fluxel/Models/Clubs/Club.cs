@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Linq;
 using fluxel.Components;
 using fluxel.Database;
 using fluxel.Models.Other;
@@ -45,9 +44,6 @@ public class Club : IHasID
     [Column("owner")]
     public long OwnerID { get; set; }
 
-    [Column("members")]
-    public List<long> Members { get; set; } = new();
-
     [Column("ovr")]
     public double OverallRating { get; set; }
 
@@ -57,30 +53,8 @@ public class Club : IHasID
     [NotMapped]
     public string ChatChannel => $"club_{ID}";
 
-    public bool IsInClub(User user) => IsInClub(user.ID);
-    public bool IsInClub(long user) => Members.Contains(user);
-
-    public void AddMember(long user, ClubManager clubs, ChatManager chats)
-    {
-        using (clubs.EditAndSave())
-            Members.Add(user);
-
-        chats.AddToChannel(ChatChannel, user);
-    }
-
-    public void RemoveMember(long user, ClubManager clubs, ChatManager chats)
-    {
-        using (clubs.EditAndSave())
-            Members.Remove(user);
-
-        chats.RemoveFromChannel(ChatChannel, user);
-    }
-
     public User? GetOwner(UserManager users, RequestCache? cache = null)
         => cache?.Users.Get(OwnerID) ?? users.Get(OwnerID);
-
-    public List<User> GetMemberList(UserManager users, RequestCache? cache = null)
-        => Members.Select(x => cache?.Users.Get(x) ?? users.Get(x)).OfType<User>().ToList();
 }
 
 [Flags]
