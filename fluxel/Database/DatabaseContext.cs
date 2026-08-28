@@ -20,6 +20,8 @@ public sealed class DatabaseContext : DbContext
     public DatabaseContext(DbContextOptions<DatabaseContext> opt)
         : base(opt)
     {
+        Database.AutoTransactionBehavior = AutoTransactionBehavior.Never;
+
         Achievements = Set<RewardedAchievement>();
         Counters = Set<Counter>();
         Clubs = Set<Club>();
