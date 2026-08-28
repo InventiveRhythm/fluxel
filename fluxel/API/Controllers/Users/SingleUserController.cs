@@ -70,8 +70,8 @@ public class SingleUserController
 
         #region Validations
 
-        (string? hash, bool animated) avatar = (user.AvatarHash, user.HasAnimatedAvatar);
-        (string? hash, bool animated) banner = (user.BannerHash, user.HasAnimatedBanner);
+        (string? hash, bool animated) avatar = (user.AvatarHash, user.HasAnimatedAvatar ?? false);
+        (string? hash, bool animated) banner = (user.BannerHash, user.HasAnimatedBanner ?? false);
 
         if (!string.IsNullOrEmpty(payload.Avatar))
         {

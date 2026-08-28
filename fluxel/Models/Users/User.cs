@@ -45,13 +45,13 @@ public class User : IHasID
     public string? AvatarHash { get; set; } = "";
 
     [Column("avatar_animated")]
-    public bool HasAnimatedAvatar { get; set; }
+    public bool? HasAnimatedAvatar { get; set; }
 
     [Column("banner"), MaxLength(64)]
     public string? BannerHash { get; set; } = "";
 
     [Column("banner_animated")]
-    public bool HasAnimatedBanner { get; set; }
+    public bool? HasAnimatedBanner { get; set; }
 
     [Column("kofi-email"), MaxLength(64)]
     public string? KoFiEmail { get; set; }
