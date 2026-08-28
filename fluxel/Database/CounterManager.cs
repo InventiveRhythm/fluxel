@@ -12,7 +12,10 @@ public class CounterManager : DatabaseManager
     public CounterManager(DatabaseContext ctx)
         : base(ctx)
     {
+        // we are calling this check every time the manager is initialized.
+        // potentially move this down to the increase method
         add(CounterType.Club, Database.Clubs);
+
         // TODO: add back
         // add(CounterType.Map, db.GetTable<Map>(MapManager.MAP_TABLE_NAME));
         // add(CounterType.MapSet, db.GetTable<MapSet>(MapManager.MAPSET_TABLE_NAME));

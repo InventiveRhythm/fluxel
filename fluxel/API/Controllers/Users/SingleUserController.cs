@@ -51,7 +51,6 @@ public class SingleUserController
 
         var includes = UserIncludes.CreatedAt
                        | UserIncludes.LastLogin
-                       | UserIncludes.Socials
                        | UserIncludes.Statistics;
 
         if (auth != null)
@@ -130,13 +129,9 @@ public class SingleUserController
             u.DisplayName = (payload.DisplayName ?? u.DisplayName)?.Trim();
             u.AboutMe = payload.AboutMe ?? u.AboutMe;
             u.Pronouns = payload.Pronouns ?? u.Pronouns;
-            u.Socials.Discord = payload.Discord ?? u.Socials.Discord;
-            u.Socials.Twitch = payload.Twitch ?? u.Socials.Twitch;
-            u.Socials.Twitter = payload.Twitter ?? u.Socials.Twitter;
-            u.Socials.YouTube = payload.YouTube ?? u.Socials.YouTube;
         });
 
-        return translator.ToAPI(user, include: UserIncludes.Socials);
+        return translator.ToAPI(user);
     }
 
     [HttpRoute("/followers")]

@@ -16,7 +16,7 @@ using Midori.Utils;
 
 namespace fluxel.Database;
 
-public class UserManager
+public class UserManager : DatabaseManager
 {
     public const string TABLE_NAME = "users";
 
@@ -24,23 +24,22 @@ public class UserManager
     private readonly IDatabaseTable<UserLogin> logins;
     private readonly IDatabaseTable<NamePaint> paints;
     private readonly IDatabaseTable<UserSession> sessions;
-    private readonly IDatabaseTable<User> users;
     private readonly IDatabaseTable<UserDiscordConnection> discord;
 
     private readonly CounterManager counters;
 
-    public List<UserLogin> AllLogins => logins.Find(x => true).ToList();
-    public List<User> AllUsers => users.Find(x => true).ToList();
+    public List<UserLogin> AllLogins => [.. logins.Find(x => true)];
+    public List<User> AllUsers => [.. Database.Users];
 
-    public long UserCount => users.Count(_ => true);
+    public long UserCount => Database.Users.Count();
 
-    public UserManager(IDatabaseProvider db, CounterManager counters)
+    public UserManager(IDatabaseProvider db, CounterManager counters, DatabaseContext ctx)
+        : base(ctx)
     {
         follows = db.GetTable<FollowRelation>("follows");
         logins = db.GetTable<UserLogin>("user-logins");
         paints = db.GetTable<NamePaint>("paints");
         sessions = db.GetTable<UserSession>("sessions");
-        users = db.GetTable<User>(TABLE_NAME);
         discord = db.GetTable<UserDiscordConnection>($"{TABLE_NAME}-discord");
         this.counters = counters;
     }
@@ -55,17 +54,19 @@ public class UserManager
             CountryCode = country
         };
 
-        users.Add(user);
+        using (Database.EditAndSave())
+            Database.Users.Add(user);
+
         return user;
     }
 
-    public List<User> InGroup(string group) => users.Find(u => u.GroupIDs.Contains(group)).ToList();
-    public bool UsernameExists(string username) => users.Find(u => string.Equals(u.Username, username, StringComparison.CurrentCultureIgnoreCase)).Any();
+    public List<User> InGroup(string group) => [.. Database.Users.Where(u => u.GroupIDs.Contains(group))];
+    public bool UsernameExists(string username) => Database.Users.FirstOrDefault(u => string.Equals(u.Username, username, StringComparison.CurrentCultureIgnoreCase)) != null;
 
     #region Query
 
-    public User? Get(long id) => users.Find(u => u.ID == id).FirstOrDefault();
-    public User? Get(string name) => users.Find(u => string.Equals(u.Username, name, StringComparison.CurrentCultureIgnoreCase)).FirstOrDefault();
+    public User? Get(long id) => Database.Users.Find(id);
+    public User? Get(string name) => Database.Users.FirstOrDefault(u => string.Equals(u.Username, name, StringComparison.CurrentCultureIgnoreCase));
 
     public bool TryGet(long id, [NotNullWhen(true)] out User? user)
     {
@@ -79,19 +80,19 @@ public class UserManager
         return user != null;
     }
 
-    public IEnumerable<User> GetMany(IEnumerable<long> ids) => users.Find(u => ids.Contains(u.ID)).ToList();
-    public User? GetByDiscordID(ulong id) => users.Find(x => x.DiscordID == id).FirstOrDefault();
-    public User? GetBySteamID(ulong id) => users.Find(x => x.SteamID == id).FirstOrDefault();
+    public IEnumerable<User> GetMany(IEnumerable<long> ids) => [.. Database.Users.Where(u => ids.Contains(u.ID))];
+    public User? GetByDiscordID(ulong id) => Database.Users.FirstOrDefault(x => x.DiscordID == id);
+    public User? GetBySteamID(ulong id) => Database.Users.FirstOrDefault(x => x.SteamID == id);
 
-    public List<User> GetInClub(long club) => [.. users.Find(x => x.ClubID == club)];
-    public long GetCountInClub(long club) => users.Count(x => x.ClubID == club);
+    public List<User> GetInClub(long club) => [.. Database.Users.Where(x => x.ClubID == club)];
+    public long GetCountInClub(long club) => Database.Users.Count(x => x.ClubID == club);
 
     #endregion
 
     #region Query (E-Mail)
 
     public User? GetByKoFiEmail(string email)
-        => users.Find(u => string.Equals(u.KoFiEmail, email, StringComparison.CurrentCultureIgnoreCase)).FirstOrDefault();
+        => Database.Users.FirstOrDefault(u => string.Equals(u.KoFiEmail, email, StringComparison.CurrentCultureIgnoreCase));
 
     #endregion
 
@@ -110,8 +111,9 @@ public class UserManager
             if (user is null)
                 throw new ArgumentNullException(nameof(id), "No user with the provided ID found.");
 
-            action?.Invoke(user);
-            users.Replace(x => x.ID == user.ID, user);
+            using (Database.EditAndSave())
+                action?.Invoke(user);
+
             return user;
         }
     }

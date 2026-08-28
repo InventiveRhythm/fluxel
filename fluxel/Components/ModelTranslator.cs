@@ -144,17 +144,6 @@ public class ModelTranslator
         if (include.HasFlagFast(UserIncludes.Following) && reqID >= 0)
             u.Following = users.GetFollowState(reqID, user.ID);
 
-        if (include.HasFlagFast(UserIncludes.Socials))
-        {
-            u.Socials = new APIUserSocials
-            {
-                Twitter = user.Socials.Twitter,
-                Twitch = user.Socials.Twitch,
-                YouTube = user.Socials.YouTube,
-                Discord = user.Socials.Discord
-            };
-        }
-
         if (include.HasFlagFast(UserIncludes.Statistics))
         {
             var stats = new APIUserStatistics

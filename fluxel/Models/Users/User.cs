@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using fluxel.Components;
 using fluxel.Database;
@@ -8,111 +10,107 @@ using fluxel.Models.Clubs;
 using fluxel.Models.Groups;
 using fluxel.Models.Maps;
 using fluXis.Online.API.Models.Maps;
-using MongoDB.Bson.Serialization.Attributes;
 using Newtonsoft.Json;
 
 namespace fluxel.Models.Users;
 
+[Table(UserManager.TABLE_NAME)]
 public class User : IHasID
 {
-    [BsonId]
+    [Key, Column("_id")]
     public long ID { get; init; }
 
-    [BsonElement("discord-id")]
+    [Column("discord-id")]
     public ulong? DiscordID { get; set; }
 
-    [BsonElement("steam-id")]
+    [Column("steam-id")]
     public ulong? SteamID { get; set; }
 
-    [BsonElement("name")]
+    [Column("name"), MaxLength(16)]
     public string Username { get; set; } = "";
 
-    [BsonElement("last-name-change")]
+    [Column("last-name-change")]
     public long LastNameChange { get; set; }
 
-    [BsonElement("force-name-change")]
+    [Column("force-name-change")]
     public bool ForceNameChange { get; set; }
 
-    [BsonElement("last-notification-read")]
+    [Column("last-notification-read")]
     public long LastNotificationRead { get; set; }
 
-    [BsonElement("nick")]
+    [Column("nick"), MaxLength(24)]
     public string? DisplayName { get; set; } = "";
 
-    [BsonElement("avatar")]
+    [Column("avatar"), MaxLength(64)]
     public string? AvatarHash { get; set; } = "";
 
-    [BsonElement("avatar_animated")]
+    [Column("avatar_animated")]
     public bool HasAnimatedAvatar { get; set; }
 
-    [BsonElement("banner")]
+    [Column("banner"), MaxLength(64)]
     public string? BannerHash { get; set; } = "";
 
-    [BsonElement("banner_animated")]
+    [Column("banner_animated")]
     public bool HasAnimatedBanner { get; set; }
 
-    [BsonElement("kofi-email")]
+    [Column("kofi-email"), MaxLength(64)]
     public string? KoFiEmail { get; set; }
 
-    [BsonElement("support-end")]
+    [Column("support-end")]
     public DateTime? SupportEndTime { get; set; }
 
-    [BsonElement("aboutme")]
+    [Column("aboutme"), MaxLength(256)]
     public string AboutMe { get; set; } = "";
 
-    [BsonElement("pronouns")]
+    [Column("pronouns"), MaxLength(16)]
     public string Pronouns { get; set; } = "";
 
-    [BsonElement("paint")]
+    [Column("paint"), MaxLength(32)]
     public string Paint { get; set; } = "";
 
-    [BsonElement("groups")]
+    [Column("groups")]
     public List<string> GroupIDs { get; set; } = new();
 
-    [BsonElement("club")]
+    [Column("club")]
     public long? ClubID { get; set; }
 
-    [BsonElement("role")]
+    [Column("role")]
     public int RoleInt { get; set; }
 
-    [BsonElement("ban-flags")]
+    [Column("ban-flags")]
     public UserBanFlag BanFlags { get; set; }
 
-    [BsonElement("country")]
+    [Column("country"), MaxLength(2)]
     public string? CountryCode { get; set; } = string.Empty;
 
-    [BsonElement("social")]
-    public UserSocials Socials { get; init; } = new();
-
-    [BsonElement("created")]
+    [Column("created")]
     public long CreatedAt { get; init; } = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 
-    [BsonElement("lastlogin")]
+    [Column("lastlogin")]
     public long LastLogin { get; set; } = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 
-    [BsonElement("modes")]
-    public Dictionary<string, UserStatistics> ModeStatistics { get; set; } = new();
-
-    [BsonElement("ovr")]
+    [Column("ovr")]
     public double OverallRating { get; set; }
 
-    [BsonElement("ptr")]
+    [Column("ptr")]
     public double PotentialRating { get; set; }
 
-    [BsonElement("combo")]
+    [Column("combo")]
     public int MaxCombo { get; set; }
 
-    [BsonElement("score")]
+    [Column("score")]
     public long RankedScore { get; set; }
 
-    [BsonElement("ova")]
+    [Column("ova")]
     public double OverallAccuracy { get; set; }
 
-    [BsonIgnore]
+    public List<UserStatistics> ModeStatistics { get; set; } = new();
+
+    [NotMapped]
     public bool IsSupporter => SupportEndTime > DateTime.UtcNow || this.IsPurifier() || this.IsModerator();
 
     public List<Group> GetGroups(GroupManager gm)
-        => GroupIDs.Select(gm.Get).OfType<Group>().ToList();
+        => [.. GroupIDs.Select(gm.Get).OfType<Group>()];
 
     public Club? GetClub(ClubManager cm) => ClubID == null ? null : cm.Get(ClubID.Value);
 
@@ -170,9 +168,12 @@ public class User : IHasID
             best = this.GetBestScores(cache, scores, mode);
             recent = this.GetRecentScores(cache, scores, mode);
 
-            var stat = GetModeStatistics(mode);
+            var stat = ModeStatistics.FirstOrDefault(x => x.Mode == mode.ToString());
+            var wasNull = stat is null;
+            stat ??= new UserStatistics { UserID = ID, Mode = mode.ToString() };
             stat.OverallRating = UserExtensions.CalculateOverallRating(best);
             stat.PotentialRating = UserExtensions.CalculatePotentialRating(best, recent);
+            if (wasNull) ModeStatistics.Add(stat);
         }
     }
 
@@ -182,20 +183,8 @@ public class User : IHasID
             throw new ArgumentOutOfRangeException(nameof(mode));
 
         var str = $"{mode}";
-
-        if (!ModeStatistics.ContainsKey(str))
-            ModeStatistics.Add(str, new UserStatistics());
-
-        return ModeStatistics[str];
-    }
-
-    public class UserStatistics
-    {
-        [BsonElement("ovr")]
-        public double OverallRating { get; set; }
-
-        [BsonElement("ptr")]
-        public double PotentialRating { get; set; }
+        var m = ModeStatistics.FirstOrDefault(x => x.Mode == str);
+        return m ?? new UserStatistics();
     }
 
     [JsonObject(MemberSerialization.OptIn)]
@@ -249,10 +238,9 @@ public enum UserIncludes
 {
     CreatedAt = 1 << 0,
     LastLogin = 1 << 1,
-    Socials = 1 << 2,
-    Statistics = 1 << 3,
-    Following = 1 << 4,
-    Flags = 1 << 5
+    Statistics = 1 << 2,
+    Following = 1 << 3,
+    Flags = 1 << 4
 }
 
 [Flags]

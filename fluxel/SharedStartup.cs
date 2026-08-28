@@ -29,7 +29,6 @@ public static class SharedStartup
         builder.Logging.ClearProviders();
         builder.Logging.AddProvider(new MidoriLoggerProvider());
 
-        builder.Services.AddScoped<AchievementManager>();
         builder.Services.AddScoped<ArtistManager>();
         builder.Services.AddScoped<AuthManager>();
         builder.Services.AddScoped<ChatManager>();

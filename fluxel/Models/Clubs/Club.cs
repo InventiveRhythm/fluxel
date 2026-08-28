@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace fluxel.Models.Clubs;
 
-[Index(nameof(Tag), IsUnique = true)]
+[Index(nameof(Tag), Name = "tag", IsUnique = true)]
 [Table(ClubManager.TABLE_NAME)]
 public class Club : IHasID
 {

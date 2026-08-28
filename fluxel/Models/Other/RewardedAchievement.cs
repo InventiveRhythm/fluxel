@@ -1,22 +1,27 @@
 ﻿using System;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using JetBrains.Annotations;
+using Microsoft.EntityFrameworkCore;
 using MongoDB.Bson;
-using MongoDB.Bson.Serialization.Attributes;
 
 namespace fluxel.Models.Other;
 
+[Index(nameof(AchievementID), nameof(UserID), IsUnique = true)]
+[Table("achievements")]
 public class RewardedAchievement
 {
-    [BsonId]
-    public ObjectId ID { get; set; } = ObjectId.GenerateNewId();
+    [Key, Column("_id")]
+    public ObjectId ID { get; init; } = ObjectId.GenerateNewId();
 
-    [BsonElement("achievement")]
-    public string AchievementID { get; set; } = null!;
+    [Column("achievement"), MaxLength(64)]
+    public string AchievementID { get; init; } = null!;
 
-    [BsonElement("user")]
-    public long UserID { get; set; }
+    [Column("user")]
+    public long UserID { get; init; }
 
-    [BsonElement("timestamp")]
-    public long Timestamp { get; set; }
+    [Column("timestamp")]
+    public long Timestamp { get; init; }
 
     public RewardedAchievement(string achievementID, long userID)
     {
@@ -25,8 +30,8 @@ public class RewardedAchievement
         Timestamp = DateTimeOffset.Now.ToUnixTimeSeconds();
     }
 
-    [BsonConstructor]
-    public RewardedAchievement()
+    [UsedImplicitly]
+    private RewardedAchievement()
     {
     }
 }
