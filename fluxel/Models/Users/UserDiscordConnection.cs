@@ -1,19 +1,24 @@
 using System;
-using MongoDB.Bson.Serialization.Attributes;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace fluxel.Models.Users;
 
+[Table("users-discord")]
 public class UserDiscordConnection
 {
-    [BsonId]
+    [Key, Column("_id"), Required]
     public long ID { get; init; }
 
-    [BsonElement("token")]
-    public string AccessToken { get; set; } = string.Empty;
+    [Column("token"), Required, MaxLength(64)]
+    public string AccessToken { get; init; } = string.Empty;
 
-    [BsonElement("refresh")]
-    public string RefreshToken { get; set; } = string.Empty;
+    [Column("refresh"), Required, MaxLength(32)]
+    public string RefreshToken { get; init; } = string.Empty;
 
-    [BsonElement("expire")]
-    public DateTimeOffset Expire { get; set; }
+    [Column("expire"), Required]
+    public DateTimeOffset Expire { get; init; }
+
+    [ForeignKey(nameof(ID))]
+    public User User { get; init; } = null!;
 }

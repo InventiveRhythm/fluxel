@@ -15,6 +15,7 @@ public sealed class DatabaseContext : DbContext
     public DbSet<Counter> Counters { get; }
     public DbSet<Club> Clubs { get; }
     public DbSet<User> Users { get; }
+    public DbSet<UserDiscordConnection> UserDiscordConnections { get; }
     public DbSet<UserStatistics> UserStatistics { get; }
 
     public DatabaseContext(DbContextOptions<DatabaseContext> opt)
@@ -26,6 +27,7 @@ public sealed class DatabaseContext : DbContext
         Counters = Set<Counter>();
         Clubs = Set<Club>();
         Users = Set<User>();
+        UserDiscordConnections = Set<UserDiscordConnection>();
         UserStatistics = Set<UserStatistics>();
     }
 

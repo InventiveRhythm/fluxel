@@ -15,7 +15,7 @@ namespace fluxel.Tasks.Users.Connections;
 
 public class RefreshDiscordTask : IBasicTask
 {
-    public string Name => $"{nameof(RefreshDiscordTask)}()";
+    public string Name => $"{nameof(RefreshDiscordTask)}({id})";
 
     private long id { get; }
 
@@ -27,8 +27,9 @@ public class RefreshDiscordTask : IBasicTask
     public Task Run(IServiceProvider services)
     {
         var config = services.GetRequiredService<ServerConfig>();
-        var users = services.GetRequiredService<UserManager>();
-        var match = users.GetDiscord(id);
+        var database = services.GetRequiredService<DatabaseContext>();
+
+        var match = database.UserDiscordConnections.Find(id);
         if (match is null) throw new InvalidOperationException();
 
         var req = new WebRequest("https://discord.com/api/v10/oauth2/token");
@@ -45,22 +46,28 @@ public class RefreshDiscordTask : IBasicTask
             var data = req.GetResponseString().Deserialize<SingleUserConnectionsController.DiscordCodeResponse>()!;
 
             if (string.IsNullOrWhiteSpace(data.AccessToken) || string.IsNullOrWhiteSpace(data.RefreshToken))
-                return Task.CompletedTask; // TODO: check error type
+                return Task.CompletedTask;
 
-            users.AddOrUpdate(new UserDiscordConnection
+            using (database.EditAndSave())
             {
-                ID = id,
-                AccessToken = data.AccessToken,
-                RefreshToken = data.RefreshToken,
-                Expire = DateTimeOffset.Now.AddSeconds(data.ExpiresIn)
-            });
+                database.UserDiscordConnections.Remove(match);
+                database.UserDiscordConnections.Add(match = new UserDiscordConnection
+                {
+                    ID = id,
+                    AccessToken = data.AccessToken,
+                    RefreshToken = data.RefreshToken,
+                    Expire = DateTimeOffset.Now.AddSeconds(data.ExpiresIn)
+                });
+            }
         }
         catch (Exception ex)
         {
             // https://docs.discord.com/developers/discord-social-sdk/development-guides/account-linking-with-discord#when-refresh-fails
             if (req.ResponseStatusCode == HttpStatusCode.BadRequest)
             {
-                users.RemoveDiscord(id);
+                using (database.EditAndSave())
+                    database.UserDiscordConnections.Remove(match);
+
                 return Task.CompletedTask;
             }
 

@@ -1,10 +1,11 @@
 using System;
 using System.Net;
 using System.Net.Http;
-using fluxel.Components;
 using fluxel.Config;
 using fluxel.Database;
 using fluxel.Models.Users;
+using fluxel.Tasks;
+using fluxel.Tasks.Users.Connections;
 using fluxel.Utils.Steam;
 using fluXis.Online.API.Models.Users.Connections;
 using Midori.API.Attributes;
@@ -21,14 +22,16 @@ namespace fluxel.API.Controllers.Users;
 public class SingleUserConnectionsController
 {
     private readonly UserManager users;
-    private readonly Donations donations;
+    private readonly DatabaseContext database;
     private readonly ServerConfig config;
+    private readonly TaskRunner tasks;
 
-    public SingleUserConnectionsController(UserManager users, ServerConfig config, Donations donations)
+    public SingleUserConnectionsController(UserManager users, ServerConfig config, DatabaseContext database, TaskRunner tasks)
     {
         this.users = users;
         this.config = config;
-        this.donations = donations;
+        this.database = database;
+        this.tasks = tasks;
     }
 
     [Authenticated]
@@ -38,7 +41,7 @@ public class SingleUserConnectionsController
         if (auth.ID != id)
             return Returns.Message(HttpStatusCode.Forbidden, "You cannot do this with another user.");
 
-        var conn = users.GetDiscord(id);
+        var conn = database.UserDiscordConnections.Find(id);
         if (conn is null || conn.Expire < DateTimeOffset.Now) return Returns.NotFound();
 
         return conn.AccessToken;
@@ -69,13 +72,21 @@ public class SingleUserConnectionsController
             if (string.IsNullOrWhiteSpace(data.AccessToken) || string.IsNullOrWhiteSpace(data.RefreshToken))
                 return Returns.Message(HttpStatusCode.BadRequest, "Failed to authorize.");
 
-            users.AddOrUpdate(new UserDiscordConnection
+            using (database.EditAndSave())
             {
-                ID = id,
-                AccessToken = data.AccessToken,
-                RefreshToken = data.RefreshToken,
-                Expire = DateTimeOffset.Now.AddSeconds(data.ExpiresIn)
-            });
+                var existing = database.UserDiscordConnections.Find(id);
+                if (existing != null) database.UserDiscordConnections.Remove(existing);
+
+                database.UserDiscordConnections.Add(new UserDiscordConnection
+                {
+                    ID = id,
+                    AccessToken = data.AccessToken,
+                    RefreshToken = data.RefreshToken,
+                    Expire = DateTimeOffset.Now.AddSeconds(data.ExpiresIn)
+                });
+            }
+
+            tasks.Schedule(new LookupDiscordIDTask(id));
             return data.AccessToken;
         }
         catch (Exception ex)

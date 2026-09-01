@@ -273,29 +273,4 @@ public class UserManager : DatabaseManager
     public List<long> GetFollowing(long follower) => follows.Find(x => x.FollowerID == follower).ToList().Select(x => x.FolloweeID).ToList();
 
     #endregion
-
-    #region Discord
-
-    public UserDiscordConnection? GetDiscord(long id)
-        => discord.Find(x => x.ID == id).FirstOrDefault();
-
-    public List<UserDiscordConnection> GetDiscordExpiring()
-    {
-        var all = discord.Find(x => true).ToList();
-        return all.Where(x => x.Expire < DateTimeOffset.Now + TimeSpan.FromDays(1)).ToList();
-    }
-
-    public void AddOrUpdate(UserDiscordConnection conn)
-    {
-        var exists = GetDiscord(conn.ID) != null;
-
-        if (exists)
-            discord.Replace(c => c.ID == conn.ID, conn);
-        else
-            discord.Add(conn);
-    }
-
-    public void RemoveDiscord(long id) => discord.Delete(x => x.ID == id);
-
-    #endregion
 }

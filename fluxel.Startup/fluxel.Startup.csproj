@@ -35,6 +35,7 @@
 
   <ItemGroup>
     <PackageReference Include="flustix.Midori.Database.MongoDB" Version="2026.505.0" />
+    <PackageReference Include="MongoDB.EntityFrameworkCore" Version="9.1.3" />
   </ItemGroup>
 
 </Project>
