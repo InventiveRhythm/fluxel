@@ -134,7 +134,7 @@ public class DiscordBot : BackgroundService
 
                 var sb = new StringBuilder();
                 sb.AppendLine("Your message has not been sent because your discord account is not linked to any fluXis account.");
-                sb.AppendLine("Head to https://auth.flux.moe/link/discord to link your account."); // should probably be set through envvars but i cba
+                sb.AppendLine("Launch the game while having discord open and link your account using the popup in discord.");
                 channel.SendMessageAsync(new DiscordMessageBuilder().WithContent(sb.ToString()));
             }
             catch { }
