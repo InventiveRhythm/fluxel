@@ -32,10 +32,7 @@ public class LookupDiscordIDTask : IBasicTask
                                   .Include(x => x.User)
                                   .FirstOrDefaultAsync(x => x.ID == id);
 
-        if (match is null)
-            throw new InvalidOperationException();
-
-        if (match.User.DiscordID != null)
+        if (match is null || match.User.DiscordID != null)
             return;
 
         var req = new WebRequest("https://discord.com/api/v10/oauth2/@me");

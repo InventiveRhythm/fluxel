@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 using fluxel.API.Controllers.Users;
 using fluxel.Config;
 using fluxel.Database;
-using fluxel.Models.Users;
 using Microsoft.Extensions.DependencyInjection;
 using Midori.Logging;
 using Midori.Utils;
@@ -50,14 +49,9 @@ public class RefreshDiscordTask : IBasicTask
 
             using (database.EditAndSave())
             {
-                database.UserDiscordConnections.Remove(match);
-                database.UserDiscordConnections.Add(match = new UserDiscordConnection
-                {
-                    ID = id,
-                    AccessToken = data.AccessToken,
-                    RefreshToken = data.RefreshToken,
-                    Expire = DateTimeOffset.Now.AddSeconds(data.ExpiresIn)
-                });
+                match.AccessToken = data.AccessToken;
+                match.RefreshToken = data.RefreshToken;
+                match.Expire = DateTimeOffset.Now.AddSeconds(data.ExpiresIn);
             }
         }
         catch (Exception ex)

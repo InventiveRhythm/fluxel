@@ -11,13 +11,13 @@ public class UserDiscordConnection
     public long ID { get; init; }
 
     [Column("token"), Required, MaxLength(64)]
-    public string AccessToken { get; init; } = string.Empty;
+    public string AccessToken { get; set; } = string.Empty;
 
     [Column("refresh"), Required, MaxLength(32)]
-    public string RefreshToken { get; init; } = string.Empty;
+    public string RefreshToken { get; set; } = string.Empty;
 
     [Column("expire"), Required]
-    public DateTimeOffset Expire { get; init; }
+    public DateTimeOffset Expire { get; set; }
 
     [ForeignKey(nameof(ID))]
     public User User { get; init; } = null!;
