@@ -29,6 +29,14 @@ public sealed class DatabaseContext : DbContext
         UserStatistics = Set<UserStatistics>();
     }
 
+    protected override void OnModelCreating(ModelBuilder build)
+    {
+        base.OnModelCreating(build);
+
+        // TODO: make consumers only request when needed
+        build.Entity<User>(e => e.Navigation(x => x.Statistics).AutoInclude());
+    }
+
     public IDisposable EditAndSave() => new InvokeOnDisposal(() => SaveChanges());
 }
 

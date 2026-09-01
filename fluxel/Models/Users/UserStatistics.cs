@@ -25,5 +25,5 @@ public class UserStatistics
     public double PotentialRating { get; set; }
 
     [ForeignKey(nameof(UserID))]
-    public User? User { get; set; }
+    public User User { get; init; } = null!;
 }

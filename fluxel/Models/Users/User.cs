@@ -104,7 +104,8 @@ public class User : IHasID
     [Column("ova")]
     public double OverallAccuracy { get; set; }
 
-    public List<UserStatistics> ModeStatistics { get; set; } = new();
+    [InverseProperty(nameof(UserStatistics.User))]
+    public List<UserStatistics> Statistics { get; init; } = [];
 
     [NotMapped]
     public bool IsSupporter => SupportEndTime > DateTime.UtcNow || this.IsPurifier() || this.IsModerator();
@@ -168,12 +169,12 @@ public class User : IHasID
             best = this.GetBestScores(cache, scores, mode);
             recent = this.GetRecentScores(cache, scores, mode);
 
-            var stat = ModeStatistics.FirstOrDefault(x => x.Mode == mode.ToString());
+            var stat = Statistics.FirstOrDefault(x => x.Mode == mode.ToString());
             var wasNull = stat is null;
             stat ??= new UserStatistics { UserID = ID, Mode = mode.ToString() };
             stat.OverallRating = UserExtensions.CalculateOverallRating(best);
             stat.PotentialRating = UserExtensions.CalculatePotentialRating(best, recent);
-            if (wasNull) ModeStatistics.Add(stat);
+            if (wasNull) Statistics.Add(stat);
         }
     }
 
@@ -183,7 +184,7 @@ public class User : IHasID
             throw new ArgumentOutOfRangeException(nameof(mode));
 
         var str = $"{mode}";
-        var m = ModeStatistics.FirstOrDefault(x => x.Mode == str);
+        var m = Statistics.FirstOrDefault(x => x.Mode == str);
         return m ?? new UserStatistics();
     }
 
