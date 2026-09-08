@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using fluxel.Models;
 using fluxel.Models.Clubs;
+using fluxel.Models.Notifications;
 using fluxel.Models.Other;
 using fluxel.Models.Users;
 using Microsoft.EntityFrameworkCore;
@@ -14,6 +15,7 @@ public sealed class DatabaseContext : DbContext
     public DbSet<RewardedAchievement> Achievements { get; }
     public DbSet<Counter> Counters { get; }
     public DbSet<Club> Clubs { get; }
+    public DbSet<Notification> Notifications { get; }
     public DbSet<User> Users { get; }
     public DbSet<UserDiscordConnection> UserDiscordConnections { get; }
     public DbSet<UserStatistics> UserStatistics { get; }
@@ -26,6 +28,7 @@ public sealed class DatabaseContext : DbContext
         Achievements = Set<RewardedAchievement>();
         Counters = Set<Counter>();
         Clubs = Set<Club>();
+        Notifications = Set<Notification>();
         Users = Set<User>();
         UserDiscordConnections = Set<UserDiscordConnection>();
         UserStatistics = Set<UserStatistics>();

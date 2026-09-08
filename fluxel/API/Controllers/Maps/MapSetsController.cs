@@ -9,6 +9,7 @@ using fluxel.Database;
 using fluxel.Database.Extensions;
 using fluxel.Models.Maps;
 using fluxel.Models.Maps.Modding;
+using fluxel.Models.Notifications;
 using fluxel.Models.Users;
 using fluxel.Modules;
 using fluxel.Modules.Messages;
@@ -18,6 +19,7 @@ using fluxel.Tasks;
 using fluxel.Tasks.Other;
 using fluXis.Online.API.Models.Maps;
 using fluXis.Online.API.Models.Maps.Modding;
+using fluXis.Online.API.Models.Notifications;
 using fluXis.Online.Collections;
 using Midori.API.Attributes;
 using Midori.API.Components;
@@ -38,8 +40,10 @@ public class MapSetsController
     private readonly ModuleManager modules;
     private readonly TaskRunner tasks;
     private readonly RequestCache cache;
+    private readonly NotificationManager notifications;
 
-    public MapSetsController(MapManager maps, ModelTranslator translator, ServerConfig config, ModuleManager modules, ScoreManager scores, ServerEvents events, TaskRunner tasks, RequestCache cache)
+    public MapSetsController(MapManager maps, ModelTranslator translator, ServerConfig config, ModuleManager modules, ScoreManager scores, ServerEvents events, TaskRunner tasks, RequestCache cache,
+                             NotificationManager notifications)
     {
         this.maps = maps;
         this.translator = translator;
@@ -49,6 +53,7 @@ public class MapSetsController
         this.events = events;
         this.tasks = tasks;
         this.cache = cache;
+        this.notifications = notifications;
     }
 
     [Authenticated(Required = false)]
@@ -251,7 +256,7 @@ public class MapSetsController
             return Returns.Message(HttpStatusCode.Forbidden, error);
 
         var action = maps.CreateModAction(set.ID, auth.ID, payload.Type.Value, payload.Content);
-        notifyAction(action);
+        notifyAction(action, set.CreatorID);
 
         if (set.Status == MapStatus.Pure)
         {
@@ -329,7 +334,7 @@ public class MapSetsController
         set.Status = MapStatus.Pending;
         maps.Update(set);
 
-        notifyAction(maps.CreateModAction(set.ID, auth.ID, APIModdingActionType.Submitted));
+        notifyAction(maps.CreateModAction(set.ID, auth.ID, APIModdingActionType.Submitted), set.CreatorID);
         return Returns.Okay();
     }
 
@@ -363,5 +368,17 @@ public class MapSetsController
 
     #endregion
 
-    private void notifyAction(ModdingAction action) => tasks.Schedule(new MethodTask(() => events.QueueActionCreate(action.ID)));
+    private void notifyAction(ModdingAction action, long owner)
+    {
+        if (action.Type is APIModdingActionType.Approve or APIModdingActionType.Deny or APIModdingActionType.Note or APIModdingActionType.RequestChanges)
+        {
+            notifications.Create(new Notification(owner, NotificationType.QueueStatus)
+            {
+                MapSet = action.MapSetID,
+                QueueAction = action.Type
+            });
+        }
+
+        tasks.Schedule(new MethodTask(() => events.QueueActionCreate(action.ID)));
+    }
 }

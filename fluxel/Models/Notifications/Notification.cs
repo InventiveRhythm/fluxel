@@ -1,28 +1,37 @@
 ﻿using System;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using fluXis.Online.API.Models.Maps.Modding;
 using fluXis.Online.API.Models.Notifications;
-using MongoDB.Bson;
-using MongoDB.Bson.Serialization.Attributes;
+using JetBrains.Annotations;
 
 namespace fluxel.Models.Notifications;
 
+[Table("notifications")]
 public class Notification
 {
-    [BsonId]
-    public ObjectId ID { get; set; } = ObjectId.GenerateNewId();
+    [Key, Column("_id"), Required, MaxLength(36)]
+    public string ID { get; init; } = Guid.NewGuid().ToString();
 
-    [BsonElement("user")]
+    [Column("user"), Required]
     public long UserID { get; set; }
 
-    [BsonElement("type")]
+    [Column("type"), Required]
     public NotificationType Type { get; set; }
 
-    [BsonElement("time")]
+    [Column("time"), Required]
     public DateTime Time { get; set; } = DateTime.UtcNow;
 
     #region Extra Data
 
-    [BsonElement("club-invite-code")]
-    public string? ClubInviteCode { get; set; }
+    [Column("club-invite-code"), MaxLength(7)]
+    public string? ClubInviteCode { get; init; }
+
+    [Column("mapset")]
+    public long? MapSet { get; init; }
+
+    [Column("queue-action")]
+    public APIModdingActionType? QueueAction { get; init; }
 
     #endregion
 
@@ -32,8 +41,8 @@ public class Notification
         Type = type;
     }
 
-    [BsonConstructor]
-    public Notification()
+    [UsedImplicitly]
+    private Notification()
     {
     }
 }

@@ -16,6 +16,7 @@ using fluXis.Online.API.Models.Chat;
 using fluXis.Online.API.Models.Clubs;
 using fluXis.Online.API.Models.Groups;
 using fluXis.Online.API.Models.Maps;
+using fluXis.Online.API.Models.Maps.Modding;
 using fluXis.Online.API.Models.Notifications;
 using fluXis.Online.API.Models.Notifications.Data;
 using fluXis.Online.API.Models.Other;
@@ -426,6 +427,19 @@ public class ModelTranslator
                 {
                     Club = club != null ? ToAPI(club) : APIClub.CreateUnknown(invite.ClubID),
                     InviteCode = invite.InviteCode
+                });
+
+                break;
+            }
+
+            case NotificationType.QueueStatus:
+            {
+                var set = maps.GetSet(notification.MapSet ?? 0);
+
+                notif.Data = JObject.FromObject(new QueueUpdateNotification
+                {
+                    MapSet = set != null ? ToAPI(set) : APIMapSet.CreateUnknown(notification.MapSet ?? 0),
+                    Type = notification.QueueAction ?? APIModdingActionType.Note
                 });
 
                 break;
