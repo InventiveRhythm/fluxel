@@ -2,12 +2,15 @@
 using System.Threading;
 using System.Threading.Tasks;
 using fluxel.Components;
+using fluxel.Database;
 using fluxel.IPC;
 using fluxel.Tasks;
 using fluxel.Workers.Previews.API;
 using fluxel.Workers.Previews.Tasks;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging.Abstractions;
 using Midori.Database.MongoDB;
 using Midori.Networking;
 
@@ -19,6 +22,20 @@ internal static class Program
     {
         var (builder, config) = SharedStartup.CreateDefault();
         builder.SetupAPI(config);
+
+        builder.Services.AddDbContext<DatabaseContext>(c =>
+        {
+            c.UseMongoDB(config.Mongo.Connection, config.Mongo.Database);
+
+            if (!builder.Environment.IsDevelopment())
+            {
+                c.UseLoggerFactory(new NullLoggerFactory());
+                return;
+            }
+
+            c.EnableSensitiveDataLogging();
+            c.EnableDetailedErrors();
+        });
 
         builder.Services.AddMongoDatabase(config.Mongo.Connection, config.Mongo.Database);
         builder.Services.AddSingleton<PreviewGenerator>();
