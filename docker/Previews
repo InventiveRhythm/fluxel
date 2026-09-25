@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/dotnet/sdk:8.0-alpine AS restore
+FROM mcr.microsoft.com/dotnet/sdk:10.0-alpine AS restore
 RUN dotnet tool install --global dotnet-subset
 ENV PATH="${PATH}:/root/.dotnet/tools"
 
@@ -8,7 +8,7 @@ COPY fluxel fluxel
 
 RUN dotnet subset restore fluxel/fluxel.Workers.Previews/fluxel.Workers.Previews.csproj --root-directory /src --output /restore
 
-FROM mcr.microsoft.com/dotnet/sdk:8.0-alpine AS build
+FROM mcr.microsoft.com/dotnet/sdk:10.0-alpine AS build
 WORKDIR /src
 
 COPY --from=restore /restore .
@@ -22,7 +22,7 @@ COPY fluxel fluxel
 RUN --mount=type=cache,target=/root/.nuget/packages \
 	dotnet publish fluxel/fluxel.Workers.Previews/fluxel.Workers.Previews.csproj -c Release -o /app/publish /p:UseAppHost=false --no-restore
 	
-FROM mcr.microsoft.com/dotnet/runtime:8.0-alpine AS final
+FROM mcr.microsoft.com/dotnet/runtime:10.0-alpine AS final
 RUN apk add --no-cache ffmpeg
 WORKDIR /app
 COPY --from=build /app/publish .
