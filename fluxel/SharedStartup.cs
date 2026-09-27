@@ -24,7 +24,7 @@ public static class SharedStartup
     public static (HostApplicationBuilder builder, ServerConfig config) CreateDefault()
     {
         var builder = new HostApplicationBuilder();
-        var config = builder.setupConfig();
+        var config = Assets.Config = builder.setupConfig();
 
         builder.Logging.ClearProviders();
         builder.Logging.AddProvider(new MidoriLoggerProvider());
@@ -77,6 +77,7 @@ public static class SharedStartup
         var config = new ServerConfig
         {
             Port = Env.GetInt("PORT", 2434),
+            AssetsPath = Env.GetString("ASSETS_PATH", "/srv/assets"),
             ValkeyConnection = Env.GetString("VALKEY", "localhost:6379"),
             FfmpegPath = Env.GetString("FFMPEG_PATH", "ffmpeg"),
             KoFiSecret = Env.GetString("KOFI_SECRET"),

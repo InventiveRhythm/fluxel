@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
+using fluxel.Config;
 using Microsoft.Extensions.Logging;
 using Midori.Logging;
 
@@ -10,9 +11,8 @@ public static partial class Assets
 {
     private static Logger logger => Logger.GetLogger("Assets");
 
-    private static char separator => Path.DirectorySeparatorChar;
-
     public const int MAX_IMAGE_SIZE = 3 * 1024 * 1024;
+    public static ServerConfig Config = null!;
 
     public static byte[] GetAsset(AssetType type, string id)
     {
@@ -81,7 +81,7 @@ public static partial class Assets
 
     public static string GetPathForAsset(AssetType type, string name, string suffix = "")
     {
-        var prefix = getType(type);
+        var group = getType(type);
         string extension;
 
         if (name.EndsWith("_a"))
@@ -91,19 +91,24 @@ public static partial class Assets
         else
             extension = getExtension(type);
 
-        var dir = $"{Directory.GetCurrentDirectory()}{separator}Assets{separator}{prefix}";
+        var dir = Path.Combine(Config.AssetsPath, group);
+
+        if (!Path.IsPathRooted(dir))
+            dir = Path.Combine(Directory.GetCurrentDirectory(), dir);
 
         if (!Directory.Exists(dir))
             Directory.CreateDirectory(dir);
 
-        return $"{dir}{separator}{name}{suffix}.{extension}";
+        return Path.Combine(dir, $"{name}{suffix}.{extension}");
     }
 
     private static string getDefaultPath(AssetType type)
     {
         var prefix = getType(type);
         var extension = getExtension(type);
-        return $"{Directory.GetCurrentDirectory()}{separator}Assets{separator}{prefix}{separator}default.{extension}";
+        var path = Path.Combine(Config.AssetsPath, prefix, $"default.{extension}");
+        if (!Path.IsPathRooted(path)) path = Path.Combine(Directory.GetCurrentDirectory(), path);
+        return path;
     }
 
     private static string getType(AssetType type) => type switch
