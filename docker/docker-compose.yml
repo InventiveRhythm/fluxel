@@ -1,28 +1,54 @@
+name: fluxel
+
 services:
+  caddy:
+    image: caddy:2.11-alpine
+    restart: unless-stopped
+    ports:
+      - 127.0.0.1:2400:80
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - assets:/srv/assets:ro
+    healthcheck:
+      test: [ "CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:2019/config/" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    depends_on:
+      previews: { condition: service_started }
+  
   valkey:
-    container_name: fluxel-valkey
+    restart: unless-stopped
     image: valkey/valkey:latest
     ports:
       - 127.0.0.1:6379:6379
+    healthcheck:
+      test: [ "CMD", "valkey-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
 
   previews:
-    container_name: fluxel-previews
+    restart: unless-stopped
     image: fluxel-previews
     build:
       context: ../..
       dockerfile: ./fluxel/docker/Previews
+    network_mode: "host"
     volumes:
-      - fluxel:/app/Assets:rw
+      - assets:/srv/assets:rw
     env_file:
       - ../.env
       - ../.docker.env
     environment:
+      - ASSETS_PATH=/srv/assets
       - PORT=2435
       - VALKEY=localhost:6379
-    network_mode: "host"
+    depends_on:
+      valkey: { condition: service_healthy }
 
 volumes:
-  fluxel:
+  assets:
     driver: local
     driver_opts:
       type: none

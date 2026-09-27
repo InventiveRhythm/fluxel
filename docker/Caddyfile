@@ -1,0 +1,24 @@
+:80 {
+	encode zstd gzip
+
+	handle_path /assets* {
+		root * /srv/assets
+    	file_server 
+
+		@image_paths {
+			path_regexp my_pattern ^/(avatar|banner|cover|background|club\-icon|club\-banner)/
+		}
+    
+		route @image_paths {
+			try_files {path} {path}.gif {path}.png {path}.jpg
+		}
+    
+		route /assets/preview/* {
+			try_files {path} {path}.ogg
+		}
+
+		route /assets/replay/* {
+			try_files {path} {path}.frp
+		}
+	}
+}
