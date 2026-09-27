@@ -28,7 +28,7 @@ public class GeneratePreviewTask : IBasicTask
         if (set == null)
             throw new ArgumentException($"No set with id {id} was found!");
 
-        var path = $"{Environment.CurrentDirectory}/Assets/map/{id}.zip";
+        var path = Assets.GetPathForAsset(AssetType.Map, $"{id}");
         using var zip = ZipFile.OpenRead(path);
 
         if (!ServerMapUtils.TryLoadFromZip(zip, out var jsons))

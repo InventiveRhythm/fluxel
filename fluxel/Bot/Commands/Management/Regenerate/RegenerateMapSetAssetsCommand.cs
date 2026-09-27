@@ -32,12 +32,12 @@ public class RegenerateMapSetAssetsCommand : ISlashCommand
 
             foreach (var set in sets)
             {
-                var path = $"{Environment.CurrentDirectory}/Assets/map";
+                var path = Assets.GetPathForAsset(AssetType.Map, $"{set.ID}");
 
-                var zipStream = File.OpenRead($"{path}/{set.ID}.zip");
+                var zipStream = File.OpenRead(path);
                 var zip = new ZipArchive(zipStream, ZipArchiveMode.Read);
 
-                if (ServerMapUtils.TryLoadFromZip($"{path}/{set.ID}.zip", out var jsons))
+                if (ServerMapUtils.TryLoadFromZip(path, out var jsons))
                 {
                     var first = jsons.First();
 

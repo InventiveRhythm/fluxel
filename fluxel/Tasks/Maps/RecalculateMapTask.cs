@@ -29,9 +29,9 @@ public class RecalculateMapTask : IBasicTask
         if (dbMap == null)
             throw new ArgumentException($"No map with id {id} was found!");
 
-        var path = $"{Environment.CurrentDirectory}/Assets/map";
+        var path = Assets.GetPathForAsset(AssetType.Map, $"{dbMap.SetID}");
 
-        if (!ServerMapUtils.OpenArchive($"{path}/{dbMap.SetID}.zip", out var archive))
+        if (!ServerMapUtils.OpenArchive(path, out var archive))
             throw new Exception($"Failed to load mapset {dbMap.SetID}!");
 
         if (!archive.Maps.TryGetValue(dbMap.FileName, out var map))
