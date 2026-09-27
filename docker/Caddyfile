@@ -13,11 +13,11 @@
 			try_files {path} {path}.gif {path}.png {path}.jpg
 		}
     
-		route /assets/preview/* {
+		route /preview/* {
 			try_files {path} {path}.ogg
 		}
 
-		route /assets/replay/* {
+		route /replay/* {
 			try_files {path} {path}.frp
 		}
 	}
