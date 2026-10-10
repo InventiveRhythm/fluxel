@@ -15,6 +15,9 @@
     <PackageReference Include="DotNetEnv" Version="3.2.0" />
     <PackageReference Include="StackExchange.Redis" Version="3.3.1" />
     <PackageReference Include="SteamWebAPI2" Version="5.0.0" />
+    <PackageReference Include="SixLabors.ImageSharp" Version="3.1.11">
+      <NoWarn>NU1902,NU1903</NoWarn>
+    </PackageReference>
   </ItemGroup>
 
   <ItemGroup>

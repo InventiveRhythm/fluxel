@@ -2,6 +2,7 @@
 using System.IO;
 using fluXis.Utils;
 using Microsoft.Extensions.Logging;
+using osu.Framework.Graphics.Textures;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
@@ -36,7 +37,8 @@ public static partial class Assets
             var hash = MapUtils.GetHash(data);
             WriteAsset(type, hash, data, "_a", "gif");
 
-            using var gif = Image.Load<Rgba32>(data);
+            using var dms = new MemoryStream(data);
+            using var gif = TextureUpload.LoadFromStream<Rgba32>(dms);
             using var img = gif.Frames.CloneFrame(0);
 
             using var ms = new MemoryStream();
@@ -62,7 +64,7 @@ public static partial class Assets
             if (stream.CanSeek)
                 stream.Seek(0, SeekOrigin.Begin);
 
-            var image = Image.Load<Rgba32>(stream);
+            var image = TextureUpload.LoadFromStream<Rgba32>(stream);
 
             var sizing = getImageSize(type);
 
