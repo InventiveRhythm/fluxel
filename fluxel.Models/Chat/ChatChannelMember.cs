@@ -36,6 +36,15 @@ public class ChatChannelMember
         UserID = userID;
     }
 
+    public ChatChannelMember(ChatChannel channel, User user)
+    {
+        Channel = channel;
+        User = user;
+
+        ChannelID = channel.ID;
+        UserID = user.ID;
+    }
+
     [UsedImplicitly]
     private ChatChannelMember()
     {

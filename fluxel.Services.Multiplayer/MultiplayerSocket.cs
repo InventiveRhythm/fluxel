@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using fluxel.Components;
+using fluxel.Database.Extensions;
 using fluxel.Services.Multiplayer.Lobby;
 using fluxel.Utils;
 using fluxel.WebSocket;
@@ -11,6 +12,7 @@ using fluXis.Online.Exceptions;
 using fluXis.Online.Multiplayer;
 using fluXis.Scoring;
 using fluXis.Scoring.Structs;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace fluxel.Services.Multiplayer;
 
@@ -20,20 +22,18 @@ public class MultiplayerSocket : AuthenticatedSocket<IMultiplayerServer, IMultip
 
     public IEnumerable<MultiplayerSocket> All => Room is null ? [] : Room.All;
 
-    private readonly MapManager maps;
-    private readonly ModelTranslator translator;
-
-    public MultiplayerSocket(UserManager users, MapManager maps, ModelTranslator translator)
-        : base(users)
+    public MultiplayerSocket(IServiceProvider services)
+        : base(services)
     {
-        this.maps = maps;
-        this.translator = translator;
     }
 
     public Task<MultiplayerRoom> CreateRoom(string name, MultiplayerPrivacy privacy, string password, long map, string hash)
     {
         if (Room is not null)
             throw RoomException.AlreadyInRoom();
+
+        using var scope = Services.CreateScope();
+        var translator = scope.ServiceProvider.GetRequiredService<ModelTranslator>();
 
         Room = MultiplayerRoomManager.Create(this, name, privacy, password, map);
         return Task.FromResult(Room.ToAPI(translator));
@@ -61,7 +61,11 @@ public class MultiplayerSocket : AuthenticatedSocket<IMultiplayerServer, IMultip
                 break;
         }
 
-        if (!Users.TryGet(UserID, out _))
+        using var scope = Services.CreateScope();
+        using var db = UseDatabase(scope.ServiceProvider);
+        var translator = scope.ServiceProvider.GetRequiredService<ModelTranslator>();
+
+        if (!db.Users.TryFind(out _, UserID))
             return null!;
 
         var participant = new ServerMultiplayerRoom.Participant(this);
@@ -147,9 +151,13 @@ public class MultiplayerSocket : AuthenticatedSocket<IMultiplayerServer, IMultip
 
     public async Task<bool> UpdateMap(long map, string hash, List<string> mods)
     {
+        using var scope = Services.CreateScope();
+        using var db = UseDatabase(scope.ServiceProvider);
+        var translator = scope.ServiceProvider.GetRequiredService<ModelTranslator>();
+
         if (Room is null) throw RoomException.NotInRoom();
         if (Room.HostID != UserID) throw RoomException.NotHost();
-        if (!maps.TryGetMap(map, out var m)) throw MultiMapException.NotFound();
+        if (!db.Maps.TryFind(out var m, map)) throw MultiMapException.NotFound();
         if (m.SHA256Hash != hash) throw MultiMapException.Mismatch();
 
         Room.MapID = map;

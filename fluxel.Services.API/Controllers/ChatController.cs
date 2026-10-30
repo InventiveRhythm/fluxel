@@ -22,9 +22,9 @@ public class ChatController
 {
     private readonly DatabaseContext database;
     private readonly ModelTranslator translator;
-    private readonly Valkey valkey;
+    private readonly Valkey? valkey;
 
-    public ChatController(DatabaseContext database, ModelTranslator translator, Valkey valkey)
+    public ChatController(DatabaseContext database, ModelTranslator translator, Valkey? valkey = null)
     {
         this.database = database;
         this.translator = translator;
@@ -80,7 +80,7 @@ public class ChatController
                 database.ChatChannelMembers.Add(new ChatChannelMember(channel.ID, auth.ID));
 
             // TODO: listen to this
-            _ = valkey.Publish(Valkey.ChatChannelMemberAdd, new ValkeyChannelMemberEvent(channel.ID, auth.ID));
+            _ = valkey?.Publish(Valkey.ChatChannelMemberAdd, new ValkeyChannelMemberEvent(channel.ID, auth.ID));
         }
 
         return name;
@@ -135,19 +135,19 @@ public class ChatController
                 if (ch.TargetUserID1 != null && !database.ChatChannelMembers.IsMemberOf(ch.ID, ch.TargetUserID1.Value))
                 {
                     database.ChatChannelMembers.Add(new ChatChannelMember(ch.ID, ch.TargetUserID1.Value));
-                    _ = valkey.Publish(Valkey.ChatChannelMemberAdd, new ValkeyChannelMemberEvent(ch.ID, ch.TargetUserID1.Value));
+                    _ = valkey?.Publish(Valkey.ChatChannelMemberAdd, new ValkeyChannelMemberEvent(ch.ID, ch.TargetUserID1.Value));
                 }
 
                 if (ch.TargetUserID2 != null && !database.ChatChannelMembers.IsMemberOf(ch.ID, ch.TargetUserID2.Value))
                 {
                     database.ChatChannelMembers.Add(new ChatChannelMember(ch.ID, ch.TargetUserID2.Value));
-                    _ = valkey.Publish(Valkey.ChatChannelMemberAdd, new ValkeyChannelMemberEvent(ch.ID, ch.TargetUserID2.Value));
+                    _ = valkey?.Publish(Valkey.ChatChannelMemberAdd, new ValkeyChannelMemberEvent(ch.ID, ch.TargetUserID2.Value));
                 }
             }
         }
 
         // TODO: listen
-        _ = valkey.Publish(Valkey.ChatMessageCreate, new ValkeyStringIDEvent(message.ID));
+        _ = valkey?.Publish(Valkey.ChatMessageCreate, new ValkeyStringIDEvent(message.ID));
         return translator.ToAPI(message);
     }
 
@@ -164,7 +164,7 @@ public class ChatController
         using (database.EditAndSave())
             msg.DeletedAt = DateTime.UtcNow;
 
-        _ = valkey.Publish(Valkey.ChatMessageDelete, new ValkeyStringIDEvent(msg.ID));
+        _ = valkey?.Publish(Valkey.ChatMessageDelete, new ValkeyStringIDEvent(msg.ID));
         return Returns.Okay();
     }
 
@@ -193,7 +193,7 @@ public class ChatController
         }
 
         // we push this regardless in case the client is desynced
-        _ = valkey.Publish(Valkey.ChatChannelMemberAdd, new ChatChannelMember(channel, userid));
+        _ = valkey?.Publish(Valkey.ChatChannelMemberAdd, new ChatChannelMember(channel, userid));
         return !member ? Returns.Created() : Returns.NotModified();
     }
 
@@ -217,7 +217,7 @@ public class ChatController
             database.SaveChanges();
         }
 
-        _ = valkey.Publish(Valkey.ChatChannelMemberRemove, new ChatChannelMember(channel, userid));
+        _ = valkey?.Publish(Valkey.ChatChannelMemberRemove, new ChatChannelMember(channel, userid));
         return entry != null ? Returns.Okay() : Returns.NotModified();
     }
 

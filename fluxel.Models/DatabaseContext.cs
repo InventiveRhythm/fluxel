@@ -18,6 +18,7 @@ using fluxel.Models.Users;
 using fluxel.Models.Users.Connections;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Midori.Utils;
 using osuTK.Graphics;
 using rhym;
@@ -136,6 +137,18 @@ public class DatabaseContext : DbContext
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
+
+        if (Database.ProviderName == "Microsoft.EntityFrameworkCore.InMemory")
+        {
+            var dictionaryConverter = new ValueConverter<Dictionary<string, string>, string>(
+                v => v.Serialize(),
+                v => v.Deserialize<Dictionary<string, string>>() ?? new Dictionary<string, string>()
+            );
+
+            builder.Entity<Map>()
+                   .Property(e => e.Sources)
+                   .HasConversion(dictionaryConverter);
+        }
 
         builder.Entity<AuthInfo>(c =>
         {

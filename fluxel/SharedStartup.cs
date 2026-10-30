@@ -39,29 +39,33 @@ public static class SharedStartup
         builder.Logging.ClearProviders();
         builder.Logging.AddProvider(new MidoriLoggerProvider());
 
-        builder.Services.AddScoped<Donations>();
-        builder.Services.AddScoped<MailDelivery>();
-        builder.Services.AddScoped<ModelTranslator>();
-        builder.Services.AddSingleton<TaskRunner>();
-        builder.Services.AddSingleton<UrlFormatter>();
-        builder.Services.AddSingleton<GameModeManager, ServerGameModeManager>();
-
+        builder.Services.AssignSharedServices();
         builder.Services.AddSingleton<IConnectionMultiplexer>(_ => ConnectionMultiplexer.Connect(config.ValkeyConnection));
         builder.Services.AddSingleton<Valkey>();
 
         return (builder, config);
     }
 
-    extension(HostApplicationBuilder builder)
+    extension(IServiceCollection services)
     {
+        public void AssignSharedServices()
+        {
+            services.AddScoped<Donations>();
+            services.AddScoped<MailDelivery>();
+            services.AddScoped<ModelTranslator>();
+            services.AddSingleton<TaskRunner>();
+            services.AddSingleton<UrlFormatter>();
+            services.AddSingleton<GameModeManager, ServerGameModeManager>();
+        }
+
         public void SetupDatabase<T>(Action<DbContextOptionsBuilder> config)
             where T : DbContext
         {
-            builder.Services.AddDbContext<T>(c =>
+            services.AddDbContext<T>(c =>
             {
                 config.Invoke(c);
 
-                if (!builder.Environment.IsDevelopment())
+                if (!RuntimeUtils.IsDebugBuild)
                 {
                     c.UseLoggerFactory(new NullLoggerFactory());
                     return;
@@ -71,10 +75,13 @@ public static class SharedStartup
                 c.EnableDetailedErrors();
             });
         }
+    }
 
+    extension(HostApplicationBuilder builder)
+    {
         public void SetupPostgres()
         {
-            builder.SetupDatabase<DatabaseContext>(c =>
+            builder.Services.SetupDatabase<DatabaseContext>(c =>
             {
                 c.UseNpgsql(
                     DatabaseContext.BuildConnectionString(x => Env.GetString(x)),

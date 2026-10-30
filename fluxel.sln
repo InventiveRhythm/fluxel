@@ -41,6 +41,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Docker Files", "Docker File
 		docker\s3.json = docker\s3.json
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{E2BF703F-1300-46BA-B700-0A83348EDDB1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "fluxel.Services.API.Tests", "fluxel.Services.API.Tests\fluxel.Services.API.Tests.csproj", "{086B064F-EB19-4BCD-97F7-C8FE67A4707E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -195,6 +199,18 @@ Global
 		{D093E69D-FFE9-4947-AC39-E96773518159}.Release|x64.Build.0 = Release|Any CPU
 		{D093E69D-FFE9-4947-AC39-E96773518159}.Release|x86.ActiveCfg = Release|Any CPU
 		{D093E69D-FFE9-4947-AC39-E96773518159}.Release|x86.Build.0 = Release|Any CPU
+		{086B064F-EB19-4BCD-97F7-C8FE67A4707E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{086B064F-EB19-4BCD-97F7-C8FE67A4707E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{086B064F-EB19-4BCD-97F7-C8FE67A4707E}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{086B064F-EB19-4BCD-97F7-C8FE67A4707E}.Debug|x64.Build.0 = Debug|Any CPU
+		{086B064F-EB19-4BCD-97F7-C8FE67A4707E}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{086B064F-EB19-4BCD-97F7-C8FE67A4707E}.Debug|x86.Build.0 = Debug|Any CPU
+		{086B064F-EB19-4BCD-97F7-C8FE67A4707E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{086B064F-EB19-4BCD-97F7-C8FE67A4707E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{086B064F-EB19-4BCD-97F7-C8FE67A4707E}.Release|x64.ActiveCfg = Release|Any CPU
+		{086B064F-EB19-4BCD-97F7-C8FE67A4707E}.Release|x64.Build.0 = Release|Any CPU
+		{086B064F-EB19-4BCD-97F7-C8FE67A4707E}.Release|x86.ActiveCfg = Release|Any CPU
+		{086B064F-EB19-4BCD-97F7-C8FE67A4707E}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -212,5 +228,6 @@ Global
 		{683D7836-1D1A-4C0A-A269-BF24D5003CAC} = {D000CD0C-156A-494A-B486-1C2DC25B05DF}
 		{BF1ECA4F-D778-40EE-AFFC-8C1C6654691A} = {D000CD0C-156A-494A-B486-1C2DC25B05DF}
 		{D093E69D-FFE9-4947-AC39-E96773518159} = {57D50BBE-44CF-4B6B-B2D0-E4C92355043D}
+		{086B064F-EB19-4BCD-97F7-C8FE67A4707E} = {E2BF703F-1300-46BA-B700-0A83348EDDB1}
 	EndGlobalSection
 EndGlobal

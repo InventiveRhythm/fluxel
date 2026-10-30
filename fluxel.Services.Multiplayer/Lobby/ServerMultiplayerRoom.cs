@@ -4,7 +4,6 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using fluxel.Components;
-using fluxel.Models;
 using fluxel.Utils;
 using fluXis.Online.API.Models.Maps;
 using fluXis.Online.API.Models.Multi;
@@ -120,14 +119,14 @@ public class ServerMultiplayerRoom
     public bool HasPlayer(long id) => Participants.Any(u => u.ID == id);
     public Participant? GetPlayer(long id) => Participants.FirstOrDefault(u => u.ID == id);
 
-    public MultiplayerRoom ToAPI(DatabaseContext database, ModelTranslator translator) => new()
+    public MultiplayerRoom ToAPI(ModelTranslator translator) => new()
     {
         RoomID = RoomID,
         Name = RoomName,
         Privacy = Privacy,
-        Host = translator.ToAPI(database.Users.Find(HostID)) ?? APIUser.CreateUnknown(HostID),
-        Participants = Participants.Select(x => x.ToAPI(translator)).ToList(),
-        Map = translator.ToAPI(database.Maps.Find(MapID)) ?? APIMap.CreateUnknown(MapID)
+        Host = translator.ToAPI(translator.Database.Users.Find(HostID)) ?? APIUser.CreateUnknown(HostID),
+        Participants = [.. Participants.Select(x => x.ToAPI(translator))],
+        Map = translator.ToAPI(translator.Database.Maps.Find(MapID)) ?? APIMap.CreateUnknown(MapID)
     };
 
     public class Participant
@@ -143,15 +142,10 @@ public class ServerMultiplayerRoom
             Socket = sock;
         }
 
-        public MultiplayerParticipant ToAPI(DatabaseContext database, ModelTranslator translator)
+        public MultiplayerParticipant ToAPI(ModelTranslator translator) => new()
         {
-            var user = translator.Cache.Users.Get(ID);
-
-            return new MultiplayerParticipant
-            {
-                Player = user != null ? translator.ToAPI(user) : APIUser.CreateUnknown(ID),
-                State = State
-            };
-        }
+            Player = translator.ToAPI(translator.Database.Users.Find(ID)) ?? APIUser.CreateUnknown(ID),
+            State = State
+        };
     }
 }

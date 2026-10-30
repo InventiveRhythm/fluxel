@@ -40,27 +40,27 @@ namespace fluxel.Components;
 /// </summary>
 public class ModelTranslator
 {
-    private readonly DatabaseContext database;
-    private readonly Valkey valkey;
+    public readonly DatabaseContext Database;
+    private readonly Valkey? valkey;
 
-    public ModelTranslator(DatabaseContext database, Valkey valkey)
+    public ModelTranslator(DatabaseContext database, Valkey? valkey = null)
     {
-        this.database = database;
+        this.Database = database;
         this.valkey = valkey;
     }
 
     public APIChatChannel ToAPI(ChatChannel channel)
     {
-        database.Entry(channel).Reference(x => x.TargetUser1).Load();
-        database.Entry(channel).Reference(x => x.TargetUser2).Load();
+        Database.Entry(channel).Reference(x => x.TargetUser1).Load();
+        Database.Entry(channel).Reference(x => x.TargetUser2).Load();
 
-        var club = channel.ClubID is null ? null : database.Clubs.Find(channel.ClubID.Value);
+        var club = channel.ClubID is null ? null : Database.Clubs.Find(channel.ClubID.Value);
 
         return new APIChatChannel
         {
             Name = channel.ID,
             Type = channel.Type,
-            UserCount = database.Entry(channel).Collection(c => c.Members).Query().Count(),
+            UserCount = Database.Entry(channel).Collection(c => c.Members).Query().Count(),
             Target1 = ToAPI(channel.TargetUser1),
             Target2 = ToAPI(channel.TargetUser2),
             Club = ToAPI(club)
@@ -69,8 +69,8 @@ public class ModelTranslator
 
     public APIScore ToAPI(Score score, List<ScoreIncludes>? include = null)
     {
-        database.Entry(score).Reference(x => x.Map).Load();
-        database.Entry(score).Reference(x => x.User).Load();
+        Database.Entry(score).Reference(x => x.Map).Load();
+        Database.Entry(score).Reference(x => x.User).Load();
 
         var s = new APIScore
         {
@@ -108,7 +108,7 @@ public class ModelTranslator
         if (user is null)
             return null;
 
-        database.Entry(user).Reference(x => x.Profile).Load();
+        Database.Entry(user).Reference(x => x.Profile).Load();
 
         var u = new APIUser
         {
@@ -125,11 +125,11 @@ public class ModelTranslator
             CountryCode = user.CountryCode,
             Groups =
             [
-                .. database.Entry(user).Collection(x => x.GroupMemberships)
+                .. Database.Entry(user).Collection(x => x.GroupMemberships)
                            .Query().Include(x => x.Group)
                            .ToArray().Select(x => ToAPI(x.Group!))
             ],
-            IsOnline = valkey.Database.SetContains(Valkey.UsersOnline, user.ID),
+            IsOnline = valkey?.Database.SetContains(Valkey.UsersOnline, user.ID) ?? false,
             IsSupporter = user.IsSupporter
         };
 
@@ -139,14 +139,14 @@ public class ModelTranslator
 
         if (!exclude.HasFlagFast(UserExcludes.Club))
         {
-            database.Entry(user).Reference(x => x.Club).Load();
+            Database.Entry(user).Reference(x => x.Club).Load();
             u.Club = ToAPI(user.Club);
         }
 
         if (u.IsOnline)
         {
-            var val = valkey.Database.StringGet($"{Valkey.USER_ACTIVITY}:{user.ID}");
-            if (!val.IsNull) u.Activity = ((string)val!).Deserialize<APIActivity>();
+            var val = valkey?.Database.StringGet($"{Valkey.USER_ACTIVITY}:{user.ID}");
+            if (!(val?.IsNull ?? true)) u.Activity = ((string)val!).Deserialize<APIActivity>();
         }
 
         if (include.HasFlagFast(UserIncludes.CreatedAt))
@@ -202,8 +202,8 @@ public class ModelTranslator
         if (set is null)
             return null;
 
-        database.Entry(set).Collection(x => x.Maps).Load();
-        database.Entry(set).Reference(x => x.User).Load();
+        Database.Entry(set).Collection(x => x.Maps).Load();
+        Database.Entry(set).Reference(x => x.User).Load();
 
         var api = new APIMapSet
         {
@@ -223,26 +223,26 @@ public class ModelTranslator
             DateSubmitted = set.Submitted.ToUnixSeconds(),
             DateRanked = set.DateRanked?.ToUnixSeconds(),
             LastUpdated = set.LastUpdated.ToUnixSeconds(),
-            UpVotes = database.Entry(set).Collection(x => x.UserStates).Query().Count(x => x.Vote == true),
-            DownVotes = database.Entry(set).Collection(x => x.UserStates).Query().Count(x => x.Vote == false),
-            ShowModActions = database.ModdingActions.Any(x => x.MapSetID == set.ID)
+            UpVotes = Database.Entry(set).Collection(x => x.UserStates).Query().Count(x => x.Vote == true),
+            DownVotes = Database.Entry(set).Collection(x => x.UserStates).Query().Count(x => x.Vote == false),
+            ShowModActions = Database.ModdingActions.Any(x => x.MapSetID == set.ID)
         };
 
         if (include.HasFlagFast(MapSetIncludes.QueueInfo) && set.QueueSubmitted != null)
         {
-            var actions = database.ModdingActions.Where(x => x.MapSetID == set.ID);
+            var actions = Database.ModdingActions.Where(x => x.MapSetID == set.ID);
 
             api.QueueInfo = new APIQueueInfo
             {
                 // why does this return an array of booleans
                 // what was I even thinking
                 Votes = [.. actions.Where(x => x.Created >= set.QueueSubmitted && x.Type == APIModdingActionType.Approve).Select(_ => true)],
-                LastAction = actions.OrderBy(x => x.Created).Last().ToAPI(database, x => ToAPI(x))
+                LastAction = actions.OrderBy(x => x.Created).Last().ToAPI(Database, x => ToAPI(x))
             };
         }
 
         if (userid > 0)
-            api.Favorite = database.MapSetUserStates.Find(set.ID, userid)?.Favorite ?? false;
+            api.Favorite = Database.MapSetUserStates.Find(set.ID, userid)?.Favorite ?? false;
 
         return api;
     }
@@ -257,11 +257,11 @@ public class ModelTranslator
         {
             ID = map.ID,
             MapSetID = map.MapSetID,
-            Mappers = [.. map.MapperIDs.Select(x => database.Users.Find(x)).Zip(map.MapperIDs).Select(x => ToAPI(x.First) ?? APIUser.CreateUnknown(x.Second))],
+            Mappers = [.. map.MapperIDs.Select(x => Database.Users.Find(x)).Zip(map.MapperIDs).Select(x => ToAPI(x.First) ?? APIUser.CreateUnknown(x.Second))],
             Difficulty = map.DifficultyName,
             SHA256Hash = map.SHA256Hash,
             Mode = map.Mode,
-            Status = (int)(database.MapSets.Find(map.MapSetID)?.Status ?? MapSetStatus.Unsubmitted),
+            Status = (int)(Database.MapSets.Find(map.MapSetID)?.Status ?? MapSetStatus.Unsubmitted),
             Title = map.Title,
             TitleRomanized = map.TitleRomanized ?? map.Title,
             Artist = map.Artist,
@@ -282,7 +282,7 @@ public class ModelTranslator
         };
 
         if (userid > 0)
-            m.HasVotedRate = database.MapUserStates.Find(map.ID, userid.Value)?.RateChart > 0;
+            m.HasVotedRate = Database.MapUserStates.Find(map.ID, userid.Value)?.RateChart > 0;
 
         if (include.HasFlagFast(MapIncludes.FileName))
             m.FileName = map.FileName;
@@ -294,7 +294,7 @@ public class ModelTranslator
 
         void addClaimInfo(APIMap am)
         {
-            var owned = database.ClubClaims.Find(am.ID);
+            var owned = Database.ClubClaims.Find(am.ID);
             if (owned is null || owned.ClubID <= 0) return;
 
             // TODO
@@ -327,7 +327,7 @@ public class ModelTranslator
 
     public APIChatMessage ToAPI(ChatMessage message)
     {
-        database.Entry(message).Reference(x => x.Author).Load();
+        Database.Entry(message).Reference(x => x.Author).Load();
 
         return new APIChatMessage
         {
@@ -352,7 +352,7 @@ public class ModelTranslator
             Tag = club.Tag,
             IconHash = club.IconHash,
             BannerHash = club.BannerHash,
-            MemberCount = database.Entry(club).Collection(x => x.Members).Query().Count(),
+            MemberCount = Database.Entry(club).Collection(x => x.Members).Query().Count(),
             Colors =
             [
                 new APIGradientColor { Color = club.ColorStart.ToHex(), Position = 0 },
@@ -366,7 +366,7 @@ public class ModelTranslator
 
         if (include.HasFlagFast(ClubIncludes.Owner))
         {
-            database.Entry(club).Reference(x => x.Owner).Load();
+            Database.Entry(club).Reference(x => x.Owner).Load();
             c.Owner = ToAPI(club.Owner) ?? APIUser.CreateUnknown(club.OwnerID);
         }
 
@@ -375,7 +375,7 @@ public class ModelTranslator
 
         if (include.HasFlagFast(ClubIncludes.Members))
         {
-            database.Entry(club).Collection(x => x.Members).Load();
+            Database.Entry(club).Collection(x => x.Members).Load();
             c.Members = [.. club.Members.Select(m => ToAPI(m, include: UserIncludes.LastLogin, exclude: UserExcludes.Club))];
         }
 
@@ -400,7 +400,7 @@ public class ModelTranslator
 
     public APIClubScore ToAPI(ClubScore score)
     {
-        database.Entry(score).Reference(x => x.Club).Load();
+        Database.Entry(score).Reference(x => x.Club).Load();
 
         return new APIClubScore
         {
@@ -414,8 +414,8 @@ public class ModelTranslator
 
     public APIClubInvite ToAPI(ClubInvite invite)
     {
-        database.Entry(invite).Reference(x => x.Club).Load();
-        database.Entry(invite).Reference(x => x.User).Load();
+        Database.Entry(invite).Reference(x => x.Club).Load();
+        Database.Entry(invite).Reference(x => x.User).Load();
 
         return new APIClubInvite
         {
@@ -444,7 +444,7 @@ public class ModelTranslator
         {
             case ClubInviteNotification ci:
             {
-                var invite = database.ClubInvites.Include(x => x.Club)
+                var invite = Database.ClubInvites.Include(x => x.Club)
                                      .FirstOrDefault(x => x.InviteCode == ci.ClubInviteCode);
 
                 if (invite is null)
@@ -463,7 +463,7 @@ public class ModelTranslator
             {
                 notif.Data = JObject.FromObject(new QueueUpdateNotification
                 {
-                    MapSet = ToAPI(database.MapSets.Find(qu.MapSet)) ?? APIMapSet.CreateUnknown(qu.MapSet),
+                    MapSet = ToAPI(Database.MapSets.Find(qu.MapSet)) ?? APIMapSet.CreateUnknown(qu.MapSet),
                     Type = qu.QueueAction
                 });
 
