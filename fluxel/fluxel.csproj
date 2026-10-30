@@ -6,14 +6,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="BCrypt.Net-Next" Version="4.2.0" />
-    <PackageReference Include="DSharpPlus" Version="4.5.3" />
-    <PackageReference Include="Fido2" Version="4.1.0" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.12" />
-    <PackageReference Include="MongoDB.Bson" Version="3.12.0" />
-    <PackageReference Include="Otp.NET" Version="1.4.1" />
+    <PackageReference Include="InventiveRhythm.fluXis.Modes.Keys" Version="2026.1029.0" />
+    <PackageReference Include="MessagePack" Version="3.1.12" />
     <PackageReference Include="DotNetEnv" Version="3.2.0" />
-    <PackageReference Include="StackExchange.Redis" Version="3.3.1" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />
+    <PackageReference Include="StackExchange.Redis" Version="3.4.20" />
     <PackageReference Include="SteamWebAPI2" Version="5.0.0" />
     <PackageReference Include="SixLabors.ImageSharp" Version="3.1.11">
       <NoWarn>NU1902,NU1903</NoWarn>
@@ -21,7 +18,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\fluXis\fluXis\fluXis.csproj" />
+    <ProjectReference Include="..\fluxel.Models\fluxel.Models.csproj" />
   </ItemGroup>
 
   <ItemGroup Label="Code Analysis">
@@ -30,6 +27,7 @@
 
   <ItemGroup>
     <Folder Include="API\Routes\" />
+    <Folder Include="Models\Payment\" />
   </ItemGroup>
 
 </Project>

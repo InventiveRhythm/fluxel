@@ -1,3 +1,4 @@
+/*
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
@@ -67,3 +68,4 @@ public class ArtistManager
     public void UpdateAlbum(FeaturedArtistAlbum album) => albums.Replace(m => m.InternalID == album.InternalID, album);
     public void UpdateTrack(FeaturedArtistTrack track) => songs.Replace(m => m.InternalID == track.InternalID, track);
 }
+*/

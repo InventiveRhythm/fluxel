@@ -1,5 +1,7 @@
+/*
 using System.Collections.Generic;
 using System.Linq;
+using fluxel.Components.Tasks;
 using fluxel.Models.Notifications;
 using fluxel.Tasks;
 using fluxel.Tasks.Users;
@@ -10,7 +12,7 @@ public class NotificationManager : DatabaseManager
 {
     private readonly TaskRunner tasks;
 
-    public NotificationManager(DatabaseContext database, TaskRunner tasks)
+    public NotificationManager(LegacyDatabaseContext database, TaskRunner tasks)
         : base(database)
     {
         this.tasks = tasks;
@@ -28,3 +30,4 @@ public class NotificationManager : DatabaseManager
     public List<Notification> ForUser(long id)
         => [.. Database.Notifications.Where(x => x.UserID == id)];
 }
+*/

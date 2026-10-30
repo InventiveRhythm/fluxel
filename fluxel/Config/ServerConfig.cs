@@ -8,12 +8,15 @@ public partial class ServerConfig
     public string AssetsPath { get; init; } = string.Empty;
 
     public string ValkeyConnection { get; init; } = string.Empty;
+
+    public string MeilisearchUrl { get; init; } = string.Empty;
+    public string MeilisearchKey { get; init; } = string.Empty;
+
     public string FfmpegPath { get; init; } = string.Empty;
     public string KoFiSecret { get; init; } = string.Empty;
     public long[] BundledSets { get; init; } = Array.Empty<long>();
 
     public LimitsConfig Limits { get; init; } = new();
-    public MongoConfig Mongo { get; init; } = new();
     public SteamConfig Steam { get; init; } = new();
     public UrlConfig Urls { get; init; } = new();
     public DiscordConfig Discord { get; init; } = new();

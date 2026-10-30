@@ -1,15 +1,21 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using fluxel.Constants;
-using fluxel.Database;
+using fluxel.Database.Extensions;
+using fluxel.Models;
 using fluxel.Models.Users;
 using fluxel.Utils;
+using JetBrains.Annotations;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Midori.Logging;
 using Midori.Networking.WebSockets.Typed;
 
 namespace fluxel.WebSocket;
 
+[UsedImplicitly(ImplicitUseTargetFlags.WithInheritors)]
 public abstract class AuthenticatedSocket<S, C> : TypedWebSocketSession<S, C>
     where S : class where C : class
 {
@@ -18,13 +24,30 @@ public abstract class AuthenticatedSocket<S, C> : TypedWebSocketSession<S, C>
     public IPEndPoint? Address { get; private set; }
     public long UserID { get; set; }
 
-    public User CurrentUser => Users.Get(UserID) ?? throw new InvalidOperationException("Tried to get user before login.");
-
-    protected UserManager Users { get; }
-
-    protected AuthenticatedSocket(UserManager users)
+    public User CurrentUser
     {
-        Users = users;
+        get
+        {
+            if (UserID <= 0)
+                throw new InvalidOperationException("Tried to get user before login.");
+
+            using var db = UseDatabase();
+            return db.Users.Find(UserID) ?? throw new KeyNotFoundException("Failed to find the current user.");
+        }
+    }
+
+    protected readonly IServiceProvider Services;
+
+    protected AuthenticatedSocket(IServiceProvider services)
+    {
+        Services = services;
+    }
+
+    protected DatabaseContext UseDatabase(IServiceProvider? svc = null)
+    {
+        svc ??= Services.CreateScope().ServiceProvider;
+        var db = svc.GetRequiredService<DatabaseContext>();
+        return db;
     }
 
     protected override bool Authenticate(out string message)
@@ -89,7 +112,9 @@ public abstract class AuthenticatedSocket<S, C> : TypedWebSocketSession<S, C>
     private bool login(string token, string ip, out string issue)
     {
         issue = "";
-        var session = Users.GetSessionFromToken(token);
+
+        using var db = UseDatabase();
+        var session = db.AuthSessions.FirstOrDefault(x => x.Token == token);
 
         if (session == null)
         {
@@ -97,11 +122,14 @@ public abstract class AuthenticatedSocket<S, C> : TypedWebSocketSession<S, C>
             return false;
         }
 
-        if (!Users.TryGet(session.UserID, out var user))
+        if (!db.Users.TryFind(out var user, session.UserID))
         {
             issue = ResponseStrings.TokenUserNotFound;
             return false;
         }
+
+        using (db.EditAndSave())
+            session.LastActivity = DateTime.UtcNow;
 
         UserID = user.ID;
 
@@ -109,7 +137,10 @@ public abstract class AuthenticatedSocket<S, C> : TypedWebSocketSession<S, C>
             return true;
 
         var code = IpUtils.GetCountryCode(ip).Result;
-        Users.UpdateLocked(UserID, u => u.CountryCode = code);
+
+        using (db.EditAndSave())
+            user.CountryCode = code;
+
         return true;
     }
 }

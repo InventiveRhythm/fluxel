@@ -1,126 +1,25 @@
-﻿using System;
+﻿/*
+using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using fluxel.Components;
 using fluxel.Database;
-using fluxel.Database.Extensions;
-using fluxel.Models.Clubs;
-using fluxel.Models.Groups;
-using fluxel.Models.Maps;
 using fluXis.Online.API.Models.Maps;
 using Newtonsoft.Json;
 
 namespace fluxel.Models.Users;
 
 [Table(UserManager.TABLE_NAME)]
-public class User : IHasID
+public class LegacyUser
 {
-    [Key, Column("_id")]
-    public long ID { get; init; }
-
-    [Column("discord-id")]
-    public ulong? DiscordID { get; set; }
-
-    [Column("steam-id")]
-    public ulong? SteamID { get; set; }
-
-    [Column("name"), MaxLength(16)]
-    public string Username { get; set; } = "";
-
-    [Column("last-name-change")]
-    public long LastNameChange { get; set; }
-
-    [Column("force-name-change")]
-    public bool ForceNameChange { get; set; }
-
-    [Column("last-notification-read")]
-    public long LastNotificationRead { get; set; }
-
-    [Column("nick"), MaxLength(24)]
-    public string? DisplayName { get; set; } = "";
-
-    [Column("avatar"), MaxLength(64)]
-    public string? AvatarHash { get; set; } = "";
-
-    [Column("avatar_animated")]
-    public bool? HasAnimatedAvatar { get; set; }
-
-    [Column("banner"), MaxLength(64)]
-    public string? BannerHash { get; set; } = "";
-
-    [Column("banner_animated")]
-    public bool? HasAnimatedBanner { get; set; }
-
-    [Column("kofi-email"), MaxLength(64)]
-    public string? KoFiEmail { get; set; }
-
-    [Column("support-end")]
-    public DateTime? SupportEndTime { get; set; }
-
-    [Column("aboutme"), MaxLength(256)]
-    public string AboutMe { get; set; } = "";
-
-    [Column("pronouns"), MaxLength(16)]
-    public string Pronouns { get; set; } = "";
-
-    [Column("paint"), MaxLength(32)]
-    public string Paint { get; set; } = "";
-
-    [Column("groups")]
-    public List<string> GroupIDs { get; set; } = new();
-
-    [Column("club")]
-    public long? ClubID { get; set; }
-
-    [Column("role")]
-    public int RoleInt { get; set; }
-
-    [Column("ban-flags")]
-    public UserBanFlag BanFlags { get; set; }
-
-    [Column("country"), MaxLength(2)]
-    public string? CountryCode { get; set; } = string.Empty;
-
-    [Column("created")]
-    public long CreatedAt { get; init; } = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-
-    [Column("lastlogin")]
-    public long LastLogin { get; set; } = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-
-    [Column("ovr")]
-    public double OverallRating { get; set; }
-
-    [Column("ptr")]
-    public double PotentialRating { get; set; }
-
-    [Column("combo")]
-    public int MaxCombo { get; set; }
-
-    [Column("score")]
-    public long RankedScore { get; set; }
-
-    [Column("ova")]
-    public double OverallAccuracy { get; set; }
-
-    [InverseProperty(nameof(UserStatistics.User))]
-    public List<UserStatistics> Statistics { get; init; } = [];
-
-    [NotMapped]
-    public bool IsSupporter => SupportEndTime > DateTime.UtcNow || this.IsPurifier() || this.IsModerator();
-
-    public List<Group> GetGroups(GroupManager gm)
-        => [.. GroupIDs.Select(gm.Get).OfType<Group>()];
-
-    public Club? GetClub(ClubManager cm) => ClubID == null ? null : cm.Get(ClubID.Value);
-
     public int GetGlobalRank(RequestCache cache, int mode = 0) => getRank(mode, cache);
-    public int GetCountryRank(RequestCache cache, int mode = 0) => getRank(mode, cache, e => e.Where(u => u.CountryCode == CountryCode));
+    public int GetCountryRank(RequestCache cache, int mode = 0) => getRank(mode, cache, e => e.Where(u => u.CountryCode == ""));
 
     private int getRank(int mode, RequestCache cache, Func<IEnumerable<User>, IEnumerable<User>>? func = null)
     {
-        if (OverallRating == 0)
+        return 0;
+        /*if (OverallRating == 0)
             return 0;
 
         var rank = 0;
@@ -147,12 +46,12 @@ public class User : IHasID
 
             var m = user.GetModeStatistics(mode);
             return m.OverallRating;
-        }
+        }#1#
     }
 
     public void Recalculate(ScoreManager sm, MapManager maps, RequestCache cache)
     {
-        var scores = sm.GetByUser(ID);
+        /*var scores = sm.GetByUser(ID);
         var best = this.GetBestScores(cache, scores);
         var recent = this.GetRecentScores(cache, scores);
 
@@ -175,10 +74,10 @@ public class User : IHasID
             stat.OverallRating = UserExtensions.CalculateOverallRating(best);
             stat.PotentialRating = UserExtensions.CalculatePotentialRating(best, recent);
             if (wasNull) Statistics.Add(stat);
-        }
+        }#1#
     }
 
-    public UserStatistics GetModeStatistics(int mode)
+    /*public UserStatistics GetModeStatistics(int mode)
     {
         if (mode is < 4 or > 8)
             throw new ArgumentOutOfRangeException(nameof(mode));
@@ -186,7 +85,7 @@ public class User : IHasID
         var str = $"{mode}";
         var m = Statistics.FirstOrDefault(x => x.Mode == str);
         return m ?? new UserStatistics();
-    }
+    }#1#
 
     [JsonObject(MemberSerialization.OptIn)]
     public class UserMaps
@@ -210,7 +109,7 @@ public class User : IHasID
 
         public UserMaps(MapManager mm, ModelTranslator translator, User user, User? requestedBy)
         {
-            this.user = user;
+            /*this.user = user;
 
             var byUser = mm.GetSetsByCreator(user.ID);
             byUser.Reverse();
@@ -229,23 +128,8 @@ public class User : IHasID
                 return;
 
             LimitUploadedCount = mm.CountUploaded(user.ID, mm.UploadLimitStartDate);
-            LimitMaximumCount = mm.GetUploadLimit(user);
+            LimitMaximumCount = mm.GetUploadLimit(user);#1#
         }
     }
 }
-
-[Flags]
-public enum UserIncludes
-{
-    CreatedAt = 1 << 0,
-    LastLogin = 1 << 1,
-    Statistics = 1 << 2,
-    Following = 1 << 3,
-    Flags = 1 << 4
-}
-
-[Flags]
-public enum UserExclude
-{
-    Club = 1 << 0
-}
+*/

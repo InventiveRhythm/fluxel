@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿/*
+using System.Collections.Generic;
 using fluxel.Components;
 using fluxel.Models.Maps;
 using fluxel.Models.Users;
@@ -24,3 +25,4 @@ public static class MapExtensions
 
     public static bool AllowScores(this MapSet set) => set.Status >= MapStatus.Pure;
 }
+*/

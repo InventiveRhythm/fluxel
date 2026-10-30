@@ -1,4 +1,5 @@
-﻿using System;
+﻿/*
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using fluxel.Components;
@@ -138,3 +139,4 @@ public static class UserExtensions
 
     public static UserBanFlag[] GetFlags(this User user) => Enum.GetValues(typeof(UserBanFlag)).Cast<UserBanFlag>().Where(user.HasFlag).ToArray();
 }
+*/

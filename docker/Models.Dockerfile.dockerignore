@@ -1,0 +1,13 @@
+**/.git
+**/.vs
+**/bin
+**/obj
+
+**/Assets
+
+**/fluXis.Resources/Fonts
+**/fluXis.Resources/Localization
+**/fluXis.Resources/Samples
+**/fluXis.Resources/Shaders
+**/fluXis.Resources/Textures
+**/fluXis.Resources/Tracks

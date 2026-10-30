@@ -1,40 +1,35 @@
 ﻿using System;
-using System.Diagnostics.CodeAnalysis;
-using System.Linq;
 using System.Text;
-using fluxel.Database;
-using fluxel.Models.Payment;
-using Midori.Database;
-using Midori.Utils;
-using MongoDB.Bson;
-using MongoDB.Bson.Serialization.Attributes;
+using fluxel.Models;
+using fluxel.Models.Monetize;
 
 namespace fluxel.Components;
 
 public class Donations
 {
-    private readonly IDatabaseTable<KoFiPayment> collection;
-    private readonly IDatabaseTable<LinkID> links;
-
-    private readonly UserManager users;
-    private readonly RedemptionManager redemptions;
+    private readonly DatabaseContext database;
     private readonly MailDelivery mail;
 
-    public Donations(IDatabaseProvider db, UserManager users, MailDelivery mail, RedemptionManager redemptions)
+    public Donations(DatabaseContext database, MailDelivery mail)
     {
-        this.users = users;
+        this.database = database;
         this.mail = mail;
-        this.redemptions = redemptions;
-        collection = db.GetTable<KoFiPayment>("payments");
-        links = db.GetTable<LinkID>("payment-links");
     }
 
     public void RegisterPayment(KoFiPayment payment)
     {
-        collection.Add(payment);
+        using (database.EditAndSave())
+        {
+            payment.RedemptionCode = new DonatorRedemptionCode
+            {
+                UsesMaximum = 1,
+                DonateTime = TimeSpan.FromDays(payment.Amount / 2 * 31)
+            };
 
-        var rc = redemptions.Create(new BsonDocument().Add(RedemptionCode.DONATE_AMOUNT, payment.Amount));
-        sendCodeLink(payment.Email, payment.Amount, rc.Code);
+            database.KoFiPayments.Add(payment);
+        }
+
+        sendCodeLink(payment.Email, payment.Amount, payment.RedemptionCode.Code);
     }
 
     private void sendCodeLink(string email, double amount, string code)
@@ -79,56 +74,5 @@ public class Donations
         body.AppendLine("- flustix");
 
         mail.SendMail(email, "Thank you for supporting fluXis!", body.ToString(), -1, true);
-    }
-
-    public bool Connect(string code, long user, [NotNullWhen(false)] out string? error)
-    {
-        error = null;
-
-        var link = links.Find(x => x.Code.Equals(code)).FirstOrDefault();
-
-        if (link is null)
-        {
-            error = "Invalid link code.";
-            return false;
-        }
-
-        users.UpdateLocked(user, u => u.KoFiEmail = link.Email);
-        return true;
-    }
-
-    public void SendLink(string target)
-    {
-        var link = links.Find(x => x.Email.Equals(target, StringComparison.CurrentCultureIgnoreCase)).FirstOrDefault();
-
-        if (link is null)
-        {
-            link = new LinkID(target);
-            links.Add(link);
-        }
-
-        var body = new StringBuilder();
-        body.AppendLine("Hi! Thank you for supporting fluXis!");
-        body.AppendLine();
-        body.AppendLine("But it seems like your Ko-fi email is not linked to a fluXis account!");
-        body.AppendLine("Please click on the following link to connect your account:");
-        body.AppendLine();
-        body.AppendLine($"https://auth.flux.moe/link/kofi?code={link.Code}");
-        mail.SendMail(target, "Link your Ko-fi account to fluXis!", body.ToString(), 0);
-    }
-
-    private class LinkID
-    {
-        [BsonId]
-        public string Email { get; init; }
-
-        [BsonElement("code")]
-        public string Code { get; init; }
-
-        public LinkID(string mail)
-        {
-            Email = mail.ToLowerInvariant();
-            Code = RandomizeUtils.GenerateRandomString(12);
-        }
     }
 }

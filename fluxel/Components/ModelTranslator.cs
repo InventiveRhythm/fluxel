@@ -1,16 +1,18 @@
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-using fluxel.Database;
-using fluxel.Database.Extensions;
+using fluxel.Components.IPC;
+using fluxel.Models;
 using fluxel.Models.Chat;
 using fluxel.Models.Clubs;
+using fluxel.Models.Cosmetics;
 using fluxel.Models.Groups;
 using fluxel.Models.Maps;
+using fluxel.Models.Maps.Flags;
 using fluxel.Models.Notifications;
 using fluxel.Models.Scores;
 using fluxel.Models.Users;
-using fluxel.Models.Users.Equipment;
-using fluxel.Modules;
+using fluxel.Models.Users.Flags;
 using fluxel.Utils;
 using fluXis.Online.API.Models.Chat;
 using fluXis.Online.API.Models.Clubs;
@@ -23,65 +25,65 @@ using fluXis.Online.API.Models.Other;
 using fluXis.Online.API.Models.Scores;
 using fluXis.Online.API.Models.Users;
 using fluXis.Online.API.Models.Users.Equipment;
+using Microsoft.EntityFrameworkCore;
+using Midori.Utils;
 using Newtonsoft.Json.Linq;
+using osu.Framework.Extensions.Color4Extensions;
 using osu.Framework.Extensions.EnumExtensions;
+using rhym;
+using ClubInviteNotification = fluxel.Models.Notifications.ClubInviteNotification;
 
 namespace fluxel.Components;
 
 /// <summary>
-/// Transient class that converts all database models to their respective API variants.
+/// Helper class that converts all database models to their respective API variants.
 /// </summary>
 public class ModelTranslator
 {
-    private readonly IOnlineStateManager? onlineStates;
-    private readonly ClubManager clubs;
-    private readonly GroupManager groups;
-    private readonly MapManager maps;
-    private readonly UserManager users;
+    private readonly DatabaseContext database;
+    private readonly Valkey valkey;
 
-    public RequestCache Cache { get; }
-
-    public ModelTranslator(UserManager users, GroupManager groups, ClubManager clubs, MapManager maps, RequestCache cache, IOnlineStateManager? onlineStates = null)
+    public ModelTranslator(DatabaseContext database, Valkey valkey)
     {
-        this.onlineStates = onlineStates;
-        this.users = users;
-        this.groups = groups;
-        this.clubs = clubs;
-        this.maps = maps;
-        Cache = cache;
+        this.database = database;
+        this.valkey = valkey;
     }
 
     public APIChatChannel ToAPI(ChatChannel channel)
     {
-        var club = channel.Club is null ? null : clubs.Get(channel.Club.Value);
+        database.Entry(channel).Reference(x => x.TargetUser1).Load();
+        database.Entry(channel).Reference(x => x.TargetUser2).Load();
+
+        var club = channel.ClubID is null ? null : database.Clubs.Find(channel.ClubID.Value);
 
         return new APIChatChannel
         {
-            Name = channel.Name,
+            Name = channel.ID,
             Type = channel.Type,
-            UserCount = channel.Users.Count,
-            Target1 = channel.Target1 is not null && users.TryGet(channel.Target1.Value, out var t1) ? ToAPI(t1) : null,
-            Target2 = channel.Target2 is not null && users.TryGet(channel.Target2.Value, out var t2) ? ToAPI(t2) : null,
-            Club = club is null ? null : ToAPI(club)
+            UserCount = database.Entry(channel).Collection(c => c.Members).Query().Count(),
+            Target1 = ToAPI(channel.TargetUser1),
+            Target2 = ToAPI(channel.TargetUser2),
+            Club = ToAPI(club)
         };
     }
 
     public APIScore ToAPI(Score score, List<ScoreIncludes>? include = null)
     {
-        var map = maps.GetMap(score.MapID);
+        database.Entry(score).Reference(x => x.Map).Load();
+        database.Entry(score).Reference(x => x.User).Load();
 
-        var apiScore = new APIScore
+        var s = new APIScore
         {
             ID = score.ID,
-            User = users.TryGet(score.UserID, out var u) ? ToAPI(u) : APIUser.CreateUnknown(score.UserID),
-            Time = score.TimeLong,
-            Mode = map?.Mode ?? 0,
-            Mods = score.Mods,
+            User = ToAPI(score.User) ?? APIUser.CreateUnknown(score.UserID),
+            Time = score.Time.ToUnixSeconds(),
+            Mode = score.Map?.Mode ?? "unknown:unknown",
+            Mods = string.Join(',', score.Mods),
             PerformanceRating = score.PerformanceRating,
-            TotalScore = score.TotalScore,
+            TotalScore = score.NumericScore,
             Accuracy = score.Accuracy,
-            Rank = score.Grade,
-            MaxCombo = score.MaxCombo,
+            Rank = score.Rank,
+            MaxCombo = score.HighestCombo,
             FlawlessCount = score.FlawlessCount,
             PerfectCount = score.PerfectCount,
             GreatCount = score.GreatCount,
@@ -92,62 +94,76 @@ public class ModelTranslator
         };
 
         if (include == null || include.Count == 0)
-            return apiScore;
+            return s;
 
         if (include.Contains(ScoreIncludes.Map))
-            apiScore.Map = map is not null ? ToAPI(map) : APIMap.CreateUnknown(score.MapID);
+            s.Map = ToAPI(score.Map) ?? APIMap.CreateUnknown(score.MapID);
 
-        return apiScore;
+        return s;
     }
 
-    public APIUser ToAPI(User user, long reqID = -1, int mode = 0, UserIncludes include = 0, UserExclude exclude = 0)
+    [return: NotNullIfNotNull(nameof(user))]
+    public APIUser? ToAPI(User? user, long reqID = -1, ResourceLocation? mode = null, UserIncludes include = 0, UserExcludes exclude = 0)
     {
+        if (user is null)
+            return null;
+
+        database.Entry(user).Reference(x => x.Profile).Load();
+
         var u = new APIUser
         {
             ID = user.ID,
             SteamID = user.SteamID,
             Username = user.Username,
-            DisplayName = user.DisplayName,
-            AvatarHash = user.AvatarHash,
-            BannerHash = user.BannerHash,
-            HasAnimatedAvatar = user is { HasAnimatedAvatar: true, IsSupporter: true },
-            HasAnimatedBanner = user is { HasAnimatedBanner: true, IsSupporter: true },
-            AboutMe = user.AboutMe,
-            Pronouns = user.Pronouns,
+            DisplayName = user.Profile?.DisplayName,
+            AvatarHash = user.Profile?.AvatarHash,
+            BannerHash = user.Profile?.BannerHash,
+            HasAnimatedAvatar = user.IsSupporter && (user.Profile?.HasAnimatedAvatar ?? false),
+            HasAnimatedBanner = user.IsSupporter && (user.Profile?.HasAnimatedBanner ?? false),
+            AboutMe = user.Profile?.AboutMe,
+            Pronouns = user.Profile?.Pronouns,
             CountryCode = user.CountryCode,
-            Groups = user.GroupIDs.Select(x => groups.Get(x)).OfType<Group>().Where(x => !x.Hidden).Select(x => ToAPI(x)).ToList(),
-            IsOnline = onlineStates?.IsOnline(user.ID) ?? false,
+            Groups =
+            [
+                .. database.Entry(user).Collection(x => x.GroupMemberships)
+                           .Query().Include(x => x.Group)
+                           .ToArray().Select(x => ToAPI(x.Group!))
+            ],
+            IsOnline = valkey.Database.SetContains(Valkey.UsersOnline, user.ID),
             IsSupporter = user.IsSupporter
         };
 
-        var paint = user.GetPaint(users);
-        if (paint != null) u.NamePaint = ToAPI(paint);
+        // TODO:
+        // var paint = user.GetPaint(users);
+        // if (paint != null) u.NamePaint = ToAPI(paint);
 
-        if (!exclude.HasFlagFast(UserExclude.Club))
+        if (!exclude.HasFlagFast(UserExcludes.Club))
         {
-            var club = user.GetClub(clubs);
-            u.Club = club != null ? ToAPI(club) : null;
+            database.Entry(user).Reference(x => x.Club).Load();
+            u.Club = ToAPI(user.Club);
         }
 
         if (u.IsOnline)
         {
-            var act = onlineStates?.GetActivity(u.ID);
-            if (act != null) u.Activity = act;
+            var val = valkey.Database.StringGet($"{Valkey.USER_ACTIVITY}:{user.ID}");
+            if (!val.IsNull) u.Activity = ((string)val!).Deserialize<APIActivity>();
         }
 
         if (include.HasFlagFast(UserIncludes.CreatedAt))
-            u.CreatedAt = user.CreatedAt;
+            u.CreatedAt = user.CreatedAt.ToUnixSeconds();
         if (include.HasFlagFast(UserIncludes.LastLogin))
-            u.LastLogin = user.LastLogin;
+            u.LastLogin = user.LastLogin.ToUnixSeconds();
         if (include.HasFlagFast(UserIncludes.Flags))
             u.Flags = (long)user.BanFlags;
 
-        if (include.HasFlagFast(UserIncludes.Following) && reqID >= 0)
-            u.Following = users.GetFollowState(reqID, user.ID);
+        // TODO
+        // if (include.HasFlagFast(UserIncludes.Following) && reqID >= 0)
+        // u.Following = users.GetFollowState(reqID, user.ID);
 
         if (include.HasFlagFast(UserIncludes.Statistics))
         {
-            var stats = new APIUserStatistics
+            // TODO
+            /*var stats = new APIUserStatistics
             {
                 MaxCombo = user.MaxCombo,
                 RankedScore = user.RankedScore,
@@ -168,7 +184,7 @@ public class ModelTranslator
                 stats.PotentialRating = user.PotentialRating;
             }
 
-            u.Statistics = stats;
+            u.Statistics = stats;*/
         }
 
         return u;
@@ -177,88 +193,96 @@ public class ModelTranslator
     public APINamePaint ToAPI(NamePaint paint) => new()
     {
         ID = paint.ID,
-        Name = paint.Name,
-        Colors = paint.Colors.Select(c => new APIGradientColor
-        {
-            Color = c.Color,
-            Position = c.Position
-        }).ToList()
+        Name = paint.Name
     };
 
-    public APIMapSet ToAPI(MapSet set, MapSetInclude include = 0, long? userid = null, MapIncludes mapInclude = 0)
+    [return: NotNullIfNotNull(nameof(set))]
+    public APIMapSet? ToAPI(MapSet? set, MapSetIncludes include = 0, long? userid = null, MapIncludes mapInclude = 0)
     {
-        var creator = Cache.Users.Get(set.CreatorID);
+        if (set is null)
+            return null;
+
+        database.Entry(set).Collection(x => x.Maps).Load();
+        database.Entry(set).Reference(x => x.User).Load();
 
         var api = new APIMapSet
         {
             ID = set.ID,
-            Creator = creator is null ? APIUser.CreateUnknown(set.CreatorID) : ToAPI(creator),
-            Maps = set.GetMaps(Cache).Select(map => ToAPI(map, mapInclude, set, userid)).ToList(),
+            Creator = ToAPI(set.User) ?? APIUser.CreateUnknown(set.UserID),
+            Maps = [.. set.Maps.Select(m => ToAPI(m, mapInclude, set, userid))],
             Title = set.Title,
-            TitleRomanized = set.SortingTitle,
+            TitleRomanized = set.TitleRomanized ?? set.Title,
             Artist = set.Artist,
-            ArtistRomanized = set.SortingArtist,
-            Source = set.GetSource(Cache),
+            ArtistRomanized = set.ArtistRomanized ?? set.Artist,
+            Source = set.Maps.Select(x => x.Sources.GetValueOrDefault("audio", string.Empty))
+                        .GroupBy(x => x).OrderByDescending(x => x.Count())
+                        .FirstOrDefault()?.Key ?? string.Empty,
             Flags = set.Flags,
-            Tags = set.GetTags(Cache),
+            Tags = [.. set.Maps.SelectMany(x => x.Tags).Distinct()],
             Status = (int)set.Status,
-            DateSubmitted = set.Submitted.ToUnixTimeSeconds(),
-            DateRanked = set.DateRanked?.ToUnixTimeSeconds(),
-            LastUpdated = set.LastUpdated.ToUnixTimeSeconds(),
-            UpVotes = set.UpVotes,
-            DownVotes = set.DownVotes,
-            ShowModActions = maps.HasActions(set.ID),
+            DateSubmitted = set.Submitted.ToUnixSeconds(),
+            DateRanked = set.DateRanked?.ToUnixSeconds(),
+            LastUpdated = set.LastUpdated.ToUnixSeconds(),
+            UpVotes = database.Entry(set).Collection(x => x.UserStates).Query().Count(x => x.Vote == true),
+            DownVotes = database.Entry(set).Collection(x => x.UserStates).Query().Count(x => x.Vote == false),
+            ShowModActions = database.ModdingActions.Any(x => x.MapSetID == set.ID)
         };
 
-        if (include.HasFlagFast(MapSetInclude.QueueInfo))
+        if (include.HasFlagFast(MapSetIncludes.QueueInfo) && set.QueueSubmitted != null)
         {
+            var actions = database.ModdingActions.Where(x => x.MapSetID == set.ID);
+
             api.QueueInfo = new APIQueueInfo
             {
-                Votes = set.QueueVotes.Select(x => x.Approve).ToList(),
-                LastAction = maps.GetRecentModAction(set.ID)?.ToAPI(this)
+                // why does this return an array of booleans
+                // what was I even thinking
+                Votes = [.. actions.Where(x => x.Created >= set.QueueSubmitted && x.Type == APIModdingActionType.Approve).Select(_ => true)],
+                LastAction = actions.OrderBy(x => x.Created).Last().ToAPI(database, x => ToAPI(x))
             };
         }
 
         if (userid > 0)
-            api.Favorite = maps.HasFavorite(userid.Value, set.ID);
+            api.Favorite = database.MapSetUserStates.Find(set.ID, userid)?.Favorite ?? false;
 
         return api;
     }
 
-    public APIMap ToAPI(Map map, MapIncludes include = 0, MapSet? set = null, long? userid = null)
+    [return: NotNullIfNotNull(nameof(map))]
+    public APIMap? ToAPI(Map? map, MapIncludes include = 0, MapSet? set = null, long? userid = null)
     {
-        var mappers = map.MapperIDs.Select(Cache.Users.Get).ToList();
+        if (map is null)
+            return null;
 
         var m = new APIMap
         {
             ID = map.ID,
-            MapSetID = map.SetID,
-            Mappers = mappers.Select((x, i) => x != null ? ToAPI(x) : APIUser.CreateUnknown(map.MapperIDs[i])).ToList(),
+            MapSetID = map.MapSetID,
+            Mappers = [.. map.MapperIDs.Select(x => database.Users.Find(x)).Zip(map.MapperIDs).Select(x => ToAPI(x.First) ?? APIUser.CreateUnknown(x.Second))],
             Difficulty = map.DifficultyName,
             SHA256Hash = map.SHA256Hash,
             Mode = map.Mode,
-            Status = (int)(set?.Status ?? Cache.MapSets.Get(map.SetID)?.Status ?? MapStatus.Unsubmitted),
+            Status = (int)(database.MapSets.Find(map.MapSetID)?.Status ?? MapSetStatus.Unsubmitted),
             Title = map.Title,
-            TitleRomanized = map.SortingTitle,
+            TitleRomanized = map.TitleRomanized ?? map.Title,
             Artist = map.Artist,
-            ArtistRomanized = map.SortingArtist,
-            Source = map.Source,
-            Tags = map.Tags,
+            ArtistRomanized = map.ArtistRomanized ?? map.Artist,
+            Source = map.Sources.GetValueOrDefault("audio", string.Empty),
+            Tags = string.Join(',', map.Tags),
             BPM = map.BPM,
             Length = map.Length,
-            Rating = map.Rating,
-            MaxCombo = map.MaxCombo,
-            NoteCount = map.Hits,
-            LongNoteCount = map.LongNotes,
-            NotesPerSecond = map.NotesPerSecond,
+            Rating = map.DifficultyRating,
+            // MaxCombo = map.MaxCombo, // TODO
+            // NoteCount = map.Hits, // TODO
+            // LongNoteCount = map.LongNotes, // TODO
+            // NotesPerSecond = map.NotesPerSecond, // TODO
             AccuracyDifficulty = map.AccuracyDifficulty,
             HealthDifficulty = map.HealthDifficulty,
-            Effects = map.Effects,
-            Color = map.Color
+            // Effects = map.Effects, // TODO
+            Color = map.AccentColor.ToRGBA()
         };
 
         if (userid > 0)
-            m.HasVotedRate = maps.HasRateVoted(userid.Value, map.ID);
+            m.HasVotedRate = database.MapUserStates.Find(map.ID, userid.Value)?.RateChart > 0;
 
         if (include.HasFlagFast(MapIncludes.FileName))
             m.FileName = map.FileName;
@@ -270,10 +294,11 @@ public class ModelTranslator
 
         void addClaimInfo(APIMap am)
         {
-            var owned = clubs.GetClaim(map.ID);
+            var owned = database.ClubClaims.Find(am.ID);
             if (owned is null || owned.ClubID <= 0) return;
 
-            var ownedScore = clubs.GetScore(owned.ClubID, owned.MapID);
+            // TODO
+            /*var ownedScore = clubs.GetScore(owned.ClubID, owned.MapID);
             if (ownedScore is null) return;
 
             var ownedClub = Cache.Clubs.Get(owned.ClubID);
@@ -296,26 +321,30 @@ public class ModelTranslator
             {
                 Club = ToAPI(userClub),
                 Score = ToAPI(clubScore)
-            };
+            };*/
         }
     }
 
     public APIChatMessage ToAPI(ChatMessage message)
     {
-        var sender = Cache.Users.Get(message.SenderID);
+        database.Entry(message).Reference(x => x.Author).Load();
 
         return new APIChatMessage
         {
-            ID = message.ID.ToString(),
-            CreatedAtUnix = message.CreatedAt.ToUnixTimeSeconds(),
+            ID = message.ID,
+            CreatedAtUnix = message.CreatedAt.ToUnixSeconds(),
             Content = message.Content,
-            Channel = message.Channel,
-            Sender = sender is not null ? ToAPI(sender) : APIUser.CreateUnknown(message.SenderID)
+            Channel = message.ChannelID,
+            Sender = ToAPI(message.Author) ?? APIUser.CreateUnknown(message.AuthorID)
         };
     }
 
-    public APIClub ToAPI(Club club, ClubIncludes include = 0)
+    [return: NotNullIfNotNull(nameof(club))]
+    public APIClub? ToAPI(Club? club, ClubIncludes include = 0)
     {
+        if (club is null)
+            return null;
+
         var c = new APIClub
         {
             ID = club.ID,
@@ -323,12 +352,12 @@ public class ModelTranslator
             Tag = club.Tag,
             IconHash = club.IconHash,
             BannerHash = club.BannerHash,
-            MemberCount = users.GetCountInClub(club.ID),
-            Colors = club.Colors.Select(c => new APIGradientColor
-            {
-                Color = c.Color,
-                Position = c.Position
-            }).ToList()
+            MemberCount = database.Entry(club).Collection(x => x.Members).Query().Count(),
+            Colors =
+            [
+                new APIGradientColor { Color = club.ColorStart.ToHex(), Position = 0 },
+                new APIGradientColor { Color = club.ColorEnd.ToHex(), Position = 1 }
+            ]
         };
 
         // don't bother with the rest if we don't need it
@@ -337,8 +366,8 @@ public class ModelTranslator
 
         if (include.HasFlagFast(ClubIncludes.Owner))
         {
-            var owner = club.GetOwner(users, Cache);
-            c.Owner = owner != null ? ToAPI(owner, exclude: UserExclude.Club) : APIUser.CreateUnknown(club.OwnerID);
+            database.Entry(club).Reference(x => x.Owner).Load();
+            c.Owner = ToAPI(club.Owner) ?? APIUser.CreateUnknown(club.OwnerID);
         }
 
         if (include.HasFlagFast(ClubIncludes.JoinType))
@@ -346,13 +375,14 @@ public class ModelTranslator
 
         if (include.HasFlagFast(ClubIncludes.Members))
         {
-            c.Members = [.. users.GetInClub(club.ID).Select(m => ToAPI(m, include: UserIncludes.LastLogin, exclude: UserExclude.Club))];
-            c.Members.RemoveAll(m => m.ID == -1);
+            database.Entry(club).Collection(x => x.Members).Load();
+            c.Members = [.. club.Members.Select(m => ToAPI(m, include: UserIncludes.LastLogin, exclude: UserExcludes.Club))];
         }
 
         if (include.HasFlagFast(ClubIncludes.Statistics))
         {
-            var claims = clubs.GetAllClaimed(club.ID).Count();
+            // TODO:
+            /*var claims = clubs.GetAllClaimed(club.ID).Count();
             var pureMaps = maps.PureMapCount;
 
             c.Statistics = new APIClubStatistics
@@ -362,7 +392,7 @@ public class ModelTranslator
                 Rank = club.GetRank(Cache),
                 TotalClaims = claims,
                 ClaimPercentage = (claims / (double)pureMaps) * 100
-            };
+            };*/
         }
 
         return c;
@@ -370,13 +400,13 @@ public class ModelTranslator
 
     public APIClubScore ToAPI(ClubScore score)
     {
-        var club = clubs.Get(score.ClubID);
+        database.Entry(score).Reference(x => x.Club).Load();
 
         return new APIClubScore
         {
-            Club = club is null ? APIClub.CreateUnknown(score.ClubID) : ToAPI(club),
+            Club = ToAPI(score.Club),
             MapID = score.MapID,
-            TotalScore = score.TotalScore,
+            TotalScore = score.NumericScore,
             PerformanceRating = score.PerformanceRating,
             Accuracy = score.Accuracy
         };
@@ -384,62 +414,57 @@ public class ModelTranslator
 
     public APIClubInvite ToAPI(ClubInvite invite)
     {
-        var club = clubs.Get(invite.ClubID);
-        var user = users.Get(invite.UserID);
+        database.Entry(invite).Reference(x => x.Club).Load();
+        database.Entry(invite).Reference(x => x.User).Load();
 
         return new APIClubInvite
         {
             InviteCode = invite.InviteCode,
-            Club = club != null ? ToAPI(club) : APIClub.CreateUnknown(invite.ClubID),
-            User = user != null ? ToAPI(user) : APIUser.CreateUnknown(invite.UserID)
+            Club = ToAPI(invite.Club) ?? APIClub.CreateUnknown(invite.ClubID),
+            User = ToAPI(invite.User) ?? APIUser.CreateUnknown(invite.UserID)
         };
     }
 
-    public APIGroup ToAPI(Group group, bool members = false) => new()
+    public APIGroup ToAPI(Group group) => new()
     {
         ID = group.ID,
-        Color = group.Color,
+        Color = group.Color.ToHex(),
         Name = group.Name,
-        Tag = group.Tag,
-        Members = members ? users.InGroup(group.ID).Select(u => ToAPI(u)) : null
+        Tag = group.Tag
     };
 
     public APINotification? ToAPI(Notification notification)
     {
         var notif = new APINotification
         {
-            Type = notification.Type,
             Time = notification.Time.ToUnixSeconds()
         };
 
-        switch (notification.Type)
+        switch (notification)
         {
-            case NotificationType.ClubInvite:
+            case ClubInviteNotification ci:
             {
-                if (notification.ClubInviteCode is null) return null;
+                var invite = database.ClubInvites.Include(x => x.Club)
+                                     .FirstOrDefault(x => x.InviteCode == ci.ClubInviteCode);
 
-                var invite = clubs.GetInvite(notification.ClubInviteCode);
-                if (invite is null) return null;
+                if (invite is null)
+                    return null;
 
-                var club = Cache.Clubs.Get(invite.ClubID);
-
-                notif.Data = JObject.FromObject(new ClubInviteNotification
+                notif.Data = JObject.FromObject(new fluXis.Online.API.Models.Notifications.Data.ClubInviteNotification()
                 {
-                    Club = club != null ? ToAPI(club) : APIClub.CreateUnknown(invite.ClubID),
+                    Club = ToAPI(invite.Club) ?? APIClub.CreateUnknown(invite.ClubID),
                     InviteCode = invite.InviteCode
                 });
 
                 break;
             }
 
-            case NotificationType.QueueStatus:
+            case QueueNotification qu:
             {
-                var set = maps.GetSet(notification.MapSet ?? 0);
-
                 notif.Data = JObject.FromObject(new QueueUpdateNotification
                 {
-                    MapSet = set != null ? ToAPI(set) : APIMapSet.CreateUnknown(notification.MapSet ?? 0),
-                    Type = notification.QueueAction ?? APIModdingActionType.Note
+                    MapSet = ToAPI(database.MapSets.Find(qu.MapSet)) ?? APIMapSet.CreateUnknown(qu.MapSet),
+                    Type = qu.QueueAction
                 });
 
                 break;

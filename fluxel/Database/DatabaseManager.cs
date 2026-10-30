@@ -1,15 +1,17 @@
+/*
 using System;
 
 namespace fluxel.Database;
 
 public class DatabaseManager
 {
-    protected DatabaseContext Database { get; }
+    protected LegacyDatabaseContext Database { get; }
 
-    protected DatabaseManager(DatabaseContext database)
+    protected DatabaseManager(LegacyDatabaseContext database)
     {
         Database = database;
     }
 
     public IDisposable EditAndSave() => Database.EditAndSave();
 }
+*/

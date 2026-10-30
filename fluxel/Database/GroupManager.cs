@@ -1,3 +1,4 @@
+/*
 using System.Collections.Generic;
 using System.Linq;
 using fluxel.Models.Groups;
@@ -19,3 +20,4 @@ public class GroupManager
     public void Add(Group group) => groups.Add(group);
     public Group? Get(string id) => groups.Find(m => m.ID == id).FirstOrDefault();
 }
+*/

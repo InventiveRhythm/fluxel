@@ -1,3 +1,4 @@
+/*
 using System.Collections.Generic;
 using System.Linq;
 using fluxel.Database.Extensions;
@@ -45,3 +46,4 @@ public class ScoreManager
     public Score? GetFirst(long mapId)
         => All.Where(s => s.MapID == mapId).MaxBy(s => s.PerformanceRating);
 }
+*/

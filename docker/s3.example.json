@@ -1,0 +1,20 @@
+{
+  "identities": [
+    {
+      "name": "fluxel",
+      "credentials": [
+        {
+          "accessKey": "fluxel",
+          "secretKey": "REPLACE_THIS_WITH_ACTUAL_KEY"
+        }
+      ],
+      "actions": [
+        "Admin",
+        "Read",
+        "Write",
+        "List",
+        "Tagging"
+      ]
+    }
+  ]
+}

@@ -8,6 +8,7 @@ namespace fluxel.Utils;
 
 public static class IpUtils
 {
+    // TODO: return more info
     public static async Task<string?> GetCountryCode(string ip)
     {
         if (ip is "127.0.0.1" or "::1")

@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using DSharpPlus.Entities;
-using osu.Framework.Graphics;
 
 namespace fluxel.Utils;
 
@@ -20,11 +18,5 @@ public static class ExtensionMethods
     {
         var dto = new DateTimeOffset(dt);
         return dto.ToUnixTimeSeconds();
-    }
-
-    public static DiscordColor ToDiscord(this Colour4 color)
-    {
-        var str = color.ToHex();
-        return new DiscordColor(str[..7]);
     }
 }

@@ -1,38 +1,14 @@
-﻿using System;
-using System.Globalization;
-using DSharpPlus.Entities;
-using fluxel.Bot;
-using fluxel.Database;
-using fluxel.Models.Maps;
+﻿using fluxel.Models.Maps;
 using fluxel.Models.Scores;
-using fluxel.Models.Users;
-using fluxel.Utils;
-using fluXis.Graphics.UserInterface.Color;
-using fluXis.Online.API.Models.Maps.Modding;
 using MongoDB.Bson;
 
 namespace fluxel.Components;
 
 public class ServerEvents
 {
-    private readonly MapManager maps;
-    private readonly UserManager users;
-    private readonly ScoreManager scores;
-    private readonly UrlFormatter urls;
-    private readonly DiscordBot discord;
-
-    public ServerEvents(MapManager maps, UserManager users, UrlFormatter urls, DiscordBot discord, ScoreManager scores)
-    {
-        this.maps = maps;
-        this.users = users;
-        this.urls = urls;
-        this.discord = discord;
-        this.scores = scores;
-    }
-
     public void UploadMap(long mapsetId)
     {
-        var set = maps.GetSet(mapsetId) ?? throw new ArgumentNullException(nameof(MapSet), "erm");
+        /*var set = maps.GetSet(mapsetId) ?? throw new ArgumentNullException(nameof(MapSet), "erm");
         var creator = users.Get(set.CreatorID) ?? throw new ArgumentNullException(nameof(User), "erm");
 
         var embed = new DiscordEmbedBuilder
@@ -46,12 +22,12 @@ public class ServerEvents
              .WithThumbnail(urls.Cover(set))
              .WithImageUrl(urls.Background(set));
 
-        discord.GetChannel(DiscordBot.ChannelType.MapSubmissions)?.SendMessageAsync(embed.Build());
+        discord.GetChannel(DiscordBot.ChannelType.MapSubmissions)?.SendMessageAsync(embed.Build());*/
     }
 
     public void MapPure(long mapsetId)
     {
-        var set = maps.GetSet(mapsetId) ?? throw new ArgumentNullException(nameof(MapSet), "erm");
+        /*var set = maps.GetSet(mapsetId) ?? throw new ArgumentNullException(nameof(MapSet), "erm");
         var creator = users.Get(set.CreatorID) ?? throw new ArgumentNullException(nameof(User), "erm");
 
         var embed = new DiscordEmbedBuilder
@@ -78,12 +54,12 @@ public class ServerEvents
         }
         catch { }
 
-        discord.GetChannel(DiscordBot.ChannelType.MapRanked)?.SendMessageAsync(message);
+        discord.GetChannel(DiscordBot.ChannelType.MapRanked)?.SendMessageAsync(message);*/
     }
 
     public void QueueActionCreate(ObjectId id)
     {
-        var action = maps.GetAction(id);
+        /*var action = maps.GetAction(id);
         if (action is null) return;
 
         var set = maps.GetSet(action.MapSetID);
@@ -130,12 +106,12 @@ public class ServerEvents
             message = message.WithAllowedMention(new UserMention(mapper.DiscordID.Value)).WithContent($"<@{mapper.DiscordID}>");
 
         message = message.WithEmbed(embed);
-        discord.GetChannel(DiscordBot.ChannelType.Queue)?.SendMessageAsync(message);
+        discord.GetChannel(DiscordBot.ChannelType.Queue)?.SendMessageAsync(message);*/
     }
 
     public void FirstPlace(Map map, Score? currentFirst)
     {
-        var newFirst = scores.GetFirst(map.ID);
+        /*var newFirst = scores.GetFirst(map.ID);
 
         // did not change
         if (newFirst != null && currentFirst?.ID == newFirst.ID)
@@ -166,19 +142,6 @@ public class ServerEvents
             embed.AddField("Previous PR", $"{currentFirst.PerformanceRating:00.00}pr", true);
         }
 
-        discord.GetChannel(DiscordBot.ChannelType.MapFirstPlace)?.SendMessageAsync(embed.Build());
-    }
-
-    public void NotifySameEmail(User existing)
-    {
-        discord.GetChannel(DiscordBot.ChannelType.Registrations)?.SendMessageAsync(new DiscordMessageBuilder
-        {
-            Embed = new DiscordEmbedBuilder
-            {
-                Author = existing.ToEmbedAuthor(urls),
-                Description = "Someone tried to register with an existing email!",
-                Color = new DiscordColor("#ff5555")
-            }.WithFooter($"ID: {existing.ID}").Build()
-        });
+        discord.GetChannel(DiscordBot.ChannelType.MapFirstPlace)?.SendMessageAsync(embed.Build());*/
     }
 }

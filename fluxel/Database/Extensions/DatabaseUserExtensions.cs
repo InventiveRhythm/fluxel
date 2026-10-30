@@ -1,3 +1,4 @@
+/*
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -20,8 +21,9 @@ public static class DatabaseUserExtensions
         if (exists)
             discord.Replace(c => c.ID == conn.ID, conn);
         else
-            discord.Add(conn);*/
+            discord.Add(conn);#1#
     }
 
     #endregion
 }
+*/

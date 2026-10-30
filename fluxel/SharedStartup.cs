@@ -1,19 +1,27 @@
 using System;
 using System.Collections.Generic;
 using System.Net;
+using System.Reflection;
 using DotNetEnv;
 using fluxel.API;
 using fluxel.Components;
+using fluxel.Components.IPC;
+using fluxel.Components.Tasks;
 using fluxel.Config;
-using fluxel.Database;
-using fluxel.Tasks;
+using fluxel.Models;
+using fluXis.Modes;
+using fluXis.Utils;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Midori.API;
 using Midori.API.Handlers;
 using Midori.Logging;
+using Midori.Networking;
 using Midori.Networking.Handlers;
+using Midori.Utils;
 using Midori.Utils.Extensions;
 using StackExchange.Redis;
 
@@ -23,34 +31,20 @@ public static class SharedStartup
 {
     public static (HostApplicationBuilder builder, ServerConfig config) CreateDefault()
     {
+        JsonUtils.Converters.Add(new JsonResourceLocationConverter());
+
         var builder = new HostApplicationBuilder();
         var config = Assets.Config = builder.setupConfig();
 
         builder.Logging.ClearProviders();
         builder.Logging.AddProvider(new MidoriLoggerProvider());
 
-        builder.Services.AddScoped<ArtistManager>();
-        builder.Services.AddScoped<AuthManager>();
-        builder.Services.AddScoped<ChatManager>();
-        builder.Services.AddScoped<ClubManager>();
-        builder.Services.AddScoped<CollectionManager>();
-        builder.Services.AddScoped<CounterManager>();
-        builder.Services.AddScoped<EventManager>();
-        builder.Services.AddScoped<GroupManager>();
-        builder.Services.AddScoped<MapManager>();
-        builder.Services.AddScoped<NotificationManager>();
-        builder.Services.AddScoped<OAuthManager>();
-        builder.Services.AddScoped<RedemptionManager>();
-        builder.Services.AddScoped<ScoreManager>();
-        builder.Services.AddScoped<UserManager>();
-
         builder.Services.AddScoped<Donations>();
         builder.Services.AddScoped<MailDelivery>();
         builder.Services.AddScoped<ModelTranslator>();
-        builder.Services.AddScoped<RequestCache>();
-        builder.Services.AddSingleton<Statistics>();
         builder.Services.AddSingleton<TaskRunner>();
         builder.Services.AddSingleton<UrlFormatter>();
+        builder.Services.AddSingleton<GameModeManager, ServerGameModeManager>();
 
         builder.Services.AddSingleton<IConnectionMultiplexer>(_ => ConnectionMultiplexer.Connect(config.ValkeyConnection));
         builder.Services.AddSingleton<Valkey>();
@@ -58,16 +52,72 @@ public static class SharedStartup
         return (builder, config);
     }
 
-    public static void SetupAPI(this HostApplicationBuilder builder, ServerConfig config)
+    extension(HostApplicationBuilder builder)
     {
-        builder.Services.AddSingleton<IHttpReplyHandler, DefaultAPIReplyHandler>();
-        builder.Services.AddScoped<IAPIAuthenticator, FluxelAPIAuthenticator>();
-
-        builder.Services.AddHttpServer(c =>
+        public void SetupDatabase<T>(Action<DbContextOptionsBuilder> config)
+            where T : DbContext
         {
-            c.Address = IPAddress.Loopback;
-            c.Port = (ushort)config.Port;
-        });
+            builder.Services.AddDbContext<T>(c =>
+            {
+                config.Invoke(c);
+
+                if (!builder.Environment.IsDevelopment())
+                {
+                    c.UseLoggerFactory(new NullLoggerFactory());
+                    return;
+                }
+
+                c.EnableSensitiveDataLogging();
+                c.EnableDetailedErrors();
+            });
+        }
+
+        public void SetupPostgres()
+        {
+            builder.SetupDatabase<DatabaseContext>(c =>
+            {
+                c.UseNpgsql(
+                    DatabaseContext.BuildConnectionString(x => Env.GetString(x)),
+                    o => o.ConfigureDataSource(d => d.EnableDynamicJson())
+                );
+            });
+        }
+
+        public void SetupAPI(ServerConfig config)
+        {
+            builder.Services.AddSingleton<IHttpReplyHandler, DefaultAPIReplyHandler>();
+            builder.Services.AddScoped<IAPIAuthenticator, FluxelAPIAuthenticator>();
+
+            builder.Services.AddHttpServer(c =>
+            {
+                c.Address = IPAddress.Any;
+                c.Port = (ushort)config.Port;
+            });
+        }
+    }
+
+    extension(IHost host)
+    {
+        public HttpConnectionManager<T>? RegisterModule<T>(string path, bool manager = false)
+            where T : class, IHttpModule
+        {
+            var router = host.Services.GetRequiredService<HttpRouter>();
+            router.AddMiddleware<FluxelAtMeMiddleware>();
+            return router.MapModule<T>(path, manager: manager);
+        }
+
+        public void RegisterControllers(Assembly assembly)
+        {
+            var router = host.Services.GetRequiredService<HttpRouter>();
+            router.AddMiddleware<FluxelAtMeMiddleware>();
+            router.RegisterControllersFromAssembly(assembly);
+        }
+
+        public void ValkeyCleanup(RedisValue pattern)
+        {
+            var valkey = host.Services.GetRequiredService<Valkey>();
+            valkey.Cleanup(pattern);
+        }
     }
 
     private static ServerConfig setupConfig(this HostApplicationBuilder builder)
@@ -79,6 +129,8 @@ public static class SharedStartup
             Port = Env.GetInt("PORT", 2434),
             AssetsPath = Env.GetString("ASSETS_PATH", "/srv/assets"),
             ValkeyConnection = Env.GetString("VALKEY", "localhost:6379"),
+            MeilisearchUrl = Env.GetString("MEILI_URL", "http://localhost:7700"),
+            MeilisearchKey = Env.GetString("MEILI_MASTER_KEY"),
             FfmpegPath = Env.GetString("FFMPEG_PATH", "ffmpeg"),
             KoFiSecret = Env.GetString("KOFI_SECRET"),
             BundledSets = [.. envLongList("BUNDLED_SETS")],
@@ -86,11 +138,6 @@ public static class SharedStartup
             {
                 MaxMapSets = Env.GetInt("LIMITS_MAX_MAPSETS"),
                 IncreasePerPure = Env.GetInt("LIMITS_INCREASE_PER_PURE")
-            },
-            Mongo = new ServerConfig.MongoConfig
-            {
-                Connection = Env.GetString("MONGO_CONN"),
-                Database = Env.GetString("MONGO_DB"),
             },
             Steam = new ServerConfig.SteamConfig
             {

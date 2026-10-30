@@ -11,4 +11,7 @@ obj
 .env
 .docker.env
 
+docker/data/**/*
+docker/s3.json
+
 username-blacklist.txt

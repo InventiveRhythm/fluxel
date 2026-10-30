@@ -1,3 +1,4 @@
+/*
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,7 +19,7 @@ public class ClubManager : DatabaseManager
     private readonly IDatabaseTable<ClubInvite> invites;
     private readonly CounterManager counters;
 
-    public ClubManager(IDatabaseProvider db, CounterManager counters, DatabaseContext db1)
+    public ClubManager(IDatabaseProvider db, CounterManager counters, LegacyDatabaseContext db1)
         : base(db1)
     {
         scores = db.GetTable<ClubScore>("club-scores");
@@ -146,3 +147,4 @@ public class ClubManager : DatabaseManager
 
     #endregion
 }
+*/

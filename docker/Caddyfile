@@ -1,24 +1,17 @@
 :80 {
 	encode zstd gzip
 
+
+	reverse_proxy /search* atlas
+	reverse_proxy /sockets/notifications* beacon
+	reverse_proxy /sockets/spectator* broadcast
+	reverse_proxy /leaderboards* /scores* chronicle
+	reverse_proxy /downloads* content
+	reverse_proxy /sockets/multiplayer* multiplayer
+	reverse_proxy api # catch-all
+
 	handle_path /assets* {
-		root * /srv/assets
-    	file_server 
-
-		@image_paths {
-			path_regexp my_pattern ^/(avatar|banner|cover|background|club\-icon|club\-banner)/
-		}
-    
-		route @image_paths {
-			try_files {path} {path}.gif {path}.png {path}.jpg
-		}
-    
-		route /preview/* {
-			try_files {path} {path}.ogg
-		}
-
-		route /replay/* {
-			try_files {path} {path}.frp
-		}
+		rewrite * /buckets/fluxel{uri}
+		reverse_proxy seaweedfs:8888
 	}
 }

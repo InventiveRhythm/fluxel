@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
-using fluxel.Database;
-using fluxel.Database.Extensions;
+using fluxel.Models;
 using Midori.API;
 using Midori.Networking;
 
@@ -9,11 +8,11 @@ namespace fluxel.API;
 
 public class FluxelAPIAuthenticator : IAPIAuthenticator
 {
-    private readonly UserManager users;
+    private readonly DatabaseContext database;
 
-    public FluxelAPIAuthenticator(UserManager users)
+    public FluxelAPIAuthenticator(DatabaseContext database)
     {
-        this.users = users;
+        this.database = database;
     }
 
     public bool Authenticate(HttpServerContext ctx, out List<string> scopes, out Dictionary<string, object> data)
@@ -29,17 +28,18 @@ public class FluxelAPIAuthenticator : IAPIAuthenticator
 
         token = token.Split(" ").Last().Trim();
 
-        var session = users.GetSessionFromToken(token);
+        var session = database.AuthSessions.FirstOrDefault(x => x.Token == token);
 
         if (session == null)
             return false;
 
-        var user = users.Get(session.UserID);
+        var user = database.Users.Find(session.UserID);
 
         if (user == null)
             return false;
 
-        if (user.IsDeveloper())
+        // TODO:
+        /*if (user.IsDeveloper())
         {
             scopes.Add(Scopes.DEV);
             scopes.Add(Scopes.MOD);
@@ -51,7 +51,7 @@ public class FluxelAPIAuthenticator : IAPIAuthenticator
                 scopes.Add(Scopes.MOD);
             if (user.IsPurifier())
                 scopes.Add(Scopes.PURIFY);
-        }
+        }*/
 
         data["auth"] = user;
         return true;

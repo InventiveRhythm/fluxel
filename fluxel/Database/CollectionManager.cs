@@ -1,3 +1,4 @@
+/*
 using System.Linq;
 using fluxel.Models.Collections;
 using Midori.Database;
@@ -19,3 +20,4 @@ public class CollectionManager
     public Collection? Get(string id) => !ObjectId.TryParse(id, out var obj) ? null : Get(obj);
     public Collection? Get(ObjectId id) => collections.Find(x => x.ID == id).FirstOrDefault();
 }
+*/

@@ -1,3 +1,4 @@
+/*
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -26,7 +27,7 @@ public class ChatManager
         {
             SenderID = uid,
             Content = content,
-            Channel = channel,
+            ChannelID = channel,
             DiscordID = discord
         };
 
@@ -35,7 +36,7 @@ public class ChatManager
     }
 
     public ChatMessage? Get(string channel, string id) => Guid.TryParse(id, out var g) ? Get(channel, g) : null;
-    public ChatMessage? Get(string channel, Guid id) => messages.Find(x => x.Channel == channel && x.ID == id).FirstOrDefault();
+    public ChatMessage? Get(string channel, Guid id) => messages.Find(x => x.ChannelID == channel && x.ID == id).FirstOrDefault();
     public ChatMessage? Get(Guid id) => messages.Find(x => x.ID == id).FirstOrDefault();
     public ChatMessage? GetByDiscordID(ulong id) => messages.Find(x => x.DiscordID == id).FirstOrDefault();
 
@@ -54,7 +55,7 @@ public class ChatManager
         messages.Replace(x => x.ID == message.ID, message);
     }
 
-    public IEnumerable<ChatMessage> FromChannel(string channel) => messages.Find(x => x.Channel == channel && !x.Deleted).ToList();
+    public IEnumerable<ChatMessage> FromChannel(string channel) => messages.Find(x => x.ChannelID == channel && !x.Deleted).ToList();
 
     #endregion
 
@@ -123,3 +124,4 @@ public class ChatManager
 
     #endregion
 }
+*/

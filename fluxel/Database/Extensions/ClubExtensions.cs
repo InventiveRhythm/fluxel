@@ -1,4 +1,5 @@
-﻿using fluxel.Components;
+﻿/*
+using fluxel.Components;
 using fluxel.Models.Clubs;
 
 namespace fluxel.Database.Extensions;
@@ -25,3 +26,4 @@ public static class ClubExtensions
         return rank;
     }
 }
+*/

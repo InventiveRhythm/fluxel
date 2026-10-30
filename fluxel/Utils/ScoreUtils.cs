@@ -10,7 +10,7 @@ public static class ScoreUtils
     {
         var maxScore = (int)(1000000 * getMulitpliers(score));
         var accBased = (int)(score.Accuracy / 100f * (maxScore * .9f));
-        var comboBased = (int)(score.MaxCombo / (float)map.MaxCombo * (maxScore * .1f));
+        var comboBased = (int)(score.HighestCombo / (float)0 /*map.MaxCombo*/ * (maxScore * .1f));
         return accBased + comboBased;
     }
 
@@ -30,7 +30,7 @@ public static class ScoreUtils
 
     public static float CalculatePerformanceRating(this Score score)
     {
-        var totalScore = score.TotalScore;
+        var totalScore = score.NumericScore;
 
         return totalScore switch
         {
@@ -42,11 +42,9 @@ public static class ScoreUtils
 
     private static float getMulitpliers(this Score score)
     {
-        var mods = score.Mods.Split(",");
-
         var multiplier = 1f;
 
-        foreach (var mod in mods)
+        foreach (var mod in score.Mods)
         {
             switch (mod)
             {
