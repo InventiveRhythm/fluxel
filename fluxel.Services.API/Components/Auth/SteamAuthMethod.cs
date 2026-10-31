@@ -6,19 +6,20 @@ using fluxel.Models.Users;
 using fluxel.Utils.Steam;
 using fluXis.Online.API.Payloads.Auth;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using Midori.Networking;
 
 namespace fluxel.Services.API.Components.Auth;
 
 public class SteamAuthMethod : IAuthMethod
 {
-    private readonly ServerConfig config;
+    private readonly SteamConfig config;
     private readonly IServiceProvider services;
 
-    public SteamAuthMethod(IServiceProvider services, ServerConfig config)
+    public SteamAuthMethod(IServiceProvider services, IOptions<SteamConfig> config)
     {
         this.services = services;
-        this.config = config;
+        this.config = config.Value;
     }
 
     public bool TryAuthenticate(HttpServerContext ctx, LoginPayload payload, [NotNullWhen(true)] out User? user, [NotNullWhen(false)] out string? error)
@@ -38,7 +39,7 @@ public class SteamAuthMethod : IAuthMethod
 
         try
         {
-            id = SteamHelper.FetchUserIDFromTicket(config.Steam, ticket).Result;
+            id = SteamHelper.FetchUserIDFromTicket(config, ticket).Result;
         }
         catch (Exception)
         {

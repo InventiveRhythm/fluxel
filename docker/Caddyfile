@@ -1,13 +1,14 @@
 :80 {
 	encode zstd gzip
 
-
+	reverse_proxy /downloads* content
+	reverse_proxy /leaderboards* chronicle
+	reverse_proxy /multiplayer* multiplayer
+	reverse_proxy /scores* chronicle
 	reverse_proxy /search* atlas
+	reverse_proxy /sockets/multiplayer* multiplayer
 	reverse_proxy /sockets/notifications* beacon
 	reverse_proxy /sockets/spectator* broadcast
-	reverse_proxy /leaderboards* /scores* chronicle
-	reverse_proxy /downloads* content
-	reverse_proxy /sockets/multiplayer* multiplayer
 	reverse_proxy api # catch-all
 
 	handle_path /assets* {

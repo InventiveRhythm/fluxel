@@ -18,10 +18,13 @@ public static partial class Extensions
 
     extension(DbSet<User> db)
     {
+        public User? ByUsername(string name)
+            => db.FirstOrDefault(u => string.Equals(u.Username, name, StringComparison.CurrentCultureIgnoreCase));
+
         public User? BySteamID(ulong id)
             => db.FirstOrDefault(x => x.SteamID == id);
 
-        public User? ByUsername(string name)
-            => db.FirstOrDefault(u => string.Equals(u.Username, name, StringComparison.CurrentCultureIgnoreCase));
+        public User? ByDiscordID(ulong id)
+            => db.FirstOrDefault(x => x.DiscordID == id);
     }
 }

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Net;
 using System.Reflection;
 using DotNetEnv;
@@ -11,6 +12,7 @@ using fluxel.Config;
 using fluxel.Models;
 using fluXis.Modes;
 using fluXis.Utils;
+using Humanizer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -23,6 +25,7 @@ using Midori.Networking;
 using Midori.Networking.Handlers;
 using Midori.Utils;
 using Midori.Utils.Extensions;
+using osu.Framework.Extensions.TypeExtensions;
 using StackExchange.Redis;
 
 namespace fluxel;
@@ -38,6 +41,8 @@ public static class SharedStartup
 
         builder.Logging.ClearProviders();
         builder.Logging.AddProvider(new MidoriLoggerProvider());
+
+        builder.Services.ParseConfiguration<MailConfig>("MAIL");
 
         builder.Services.AssignSharedServices();
         builder.Services.AddSingleton<IConnectionMultiplexer>(_ => ConnectionMultiplexer.Connect(config.ValkeyConnection));
@@ -56,6 +61,58 @@ public static class SharedStartup
             services.AddSingleton<TaskRunner>();
             services.AddSingleton<UrlFormatter>();
             services.AddSingleton<GameModeManager, ServerGameModeManager>();
+        }
+
+        public void ParseConfiguration<T>(string prefix)
+            where T : class, new()
+        {
+            services.Configure<T>(result =>
+            {
+                var properties = typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance);
+
+                foreach (var property in properties)
+                {
+                    if (!property.CanWrite)
+                        return;
+
+                    var name = $"FLUXEL_{prefix.ToUpperInvariant()}_{property.Name.Underscore().ToUpper()}";
+                    name = name.Replace("__", "_");
+                    Logger.Log($"{property.Name} -> {name}");
+
+                    var raw = Env.GetString(name);
+                    if (string.IsNullOrWhiteSpace(raw)) continue;
+
+                    var nullable = property.IsNullable();
+                    var type = property.PropertyType.GetUnderlyingNullableType() ?? property.PropertyType;
+
+                    switch (type.Name)
+                    {
+                        case nameof(String):
+                            property.SetValue(result, raw);
+                            break;
+
+                        case nameof(Int32):
+                            property.SetValue(result, int.Parse(raw));
+                            break;
+
+                        case nameof(Int64):
+                            property.SetValue(result, long.Parse(raw));
+                            break;
+
+                        case nameof(UInt32):
+                            property.SetValue(result, uint.Parse(raw));
+                            break;
+
+                        case nameof(UInt64):
+                            property.SetValue(result, ulong.Parse(raw));
+                            break;
+
+                        default:
+                            Logger.Log($"Unknown config type '{type.FullName}'!", level: LogLevel.Warning);
+                            break;
+                    }
+                }
+            });
         }
 
         public void SetupDatabase<T>(Action<DbContextOptionsBuilder> config)
@@ -129,6 +186,9 @@ public static class SharedStartup
 
     private static ServerConfig setupConfig(this HostApplicationBuilder builder)
     {
+        if (File.Exists("docker/.env"))
+            Env.Load("docker/.env");
+
         Env.Load();
 
         var config = new ServerConfig
@@ -146,44 +206,10 @@ public static class SharedStartup
                 MaxMapSets = Env.GetInt("LIMITS_MAX_MAPSETS"),
                 IncreasePerPure = Env.GetInt("LIMITS_INCREASE_PER_PURE")
             },
-            Steam = new ServerConfig.SteamConfig
-            {
-                AppID = (uint)Env.GetInt("STEAM_APPID"),
-                WebKey = Env.GetString("STEAM_WEBKEY")
-            },
             Urls = new ServerConfig.UrlConfig
             {
                 Website = Env.GetString("URL_WEB"),
                 Assets = Env.GetString("URL_ASSETS"),
-            },
-            Discord = new ServerConfig.DiscordConfig
-            {
-                Token = Env.GetString("DISCORD_TOKEN"),
-                ClientID = Env.GetString("DISCORD_CLIENT_ID"),
-                ClientSecret = Env.GetString("DISCORD_CLIENT_SECRET"),
-                Logging = envULong("DISCORD_LOGGING"),
-                Registrations = envULong("DISCORD_REGISTER"),
-                MapSubmissions = envULong("DISCORD_SUBMISSIONS"),
-                MapFirstPlace = envULong("DISCORD_FIRST_PLACE"),
-                MapRanked = envULong("DISCORD_RANKED"),
-                QueueUpdates = envULong("DISCORD_QUEUE"),
-                ChatLink = envULong("DISCORD_CHAT_LINK")
-            },
-            Mail = new ServerConfig.MailConfig
-            {
-                Host = Env.GetString("MAIL_HOST"),
-                Port = Env.GetInt("MAIL_PORT"),
-                Username = Env.GetString("MAIL_USER"),
-                Password = Env.GetString("MAIL_PASS"),
-                Name = Env.GetString("MAIL_NAME")
-            },
-            MailFlux = new ServerConfig.MailConfig
-            {
-                Host = Env.GetString("MAIL_DONO_HOST"),
-                Port = Env.GetInt("MAIL_DONO_PORT"),
-                Username = Env.GetString("MAIL_DONO_USER"),
-                Password = Env.GetString("MAIL_DONO_PASS"),
-                Name = Env.GetString("MAIL_DONO_NAME")
             }
         };
 

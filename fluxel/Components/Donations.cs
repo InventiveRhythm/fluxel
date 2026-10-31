@@ -73,6 +73,6 @@ public class Donations
         body.AppendLine("Have a great day!");
         body.AppendLine("- flustix");
 
-        mail.SendMail(email, "Thank you for supporting fluXis!", body.ToString(), -1, true);
+        mail.SendMail(email, "Thank you for supporting fluXis!", body.ToString());
     }
 }

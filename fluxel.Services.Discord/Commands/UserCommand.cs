@@ -1,4 +1,5 @@
-﻿using System;
+﻿/*
+using System;
 using System.Collections.Generic;
 using DSharpPlus;
 using DSharpPlus.Entities;
@@ -68,3 +69,4 @@ public class UserCommand : ISlashCommand
         interaction.ReplyEmbed(embed);
     }
 }
+*/

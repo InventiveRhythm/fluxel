@@ -1,13 +1,13 @@
 using System;
 using System.Net;
 using System.Net.Http;
-using fluxel.Components.Tasks;
 using fluxel.Config;
 using fluxel.Models;
 using fluxel.Models.Users;
 using fluxel.Models.Users.Connections;
 using fluxel.Utils.Steam;
 using fluXis.Online.API.Models.Users.Connections;
+using Microsoft.Extensions.Options;
 using Midori.API.Attributes;
 using Midori.API.Components;
 using Midori.Logging;
@@ -22,14 +22,14 @@ namespace fluxel.Services.API.Controllers.Users;
 public class SingleUserConnectionsController
 {
     private readonly DatabaseContext database;
-    private readonly ServerConfig config;
-    private readonly TaskRunner tasks;
+    private readonly DiscordConfig discord;
+    private readonly SteamConfig steam;
 
-    public SingleUserConnectionsController(ServerConfig config, TaskRunner tasks, DatabaseContext database)
+    public SingleUserConnectionsController(IOptions<DiscordConfig> discord, IOptions<SteamConfig> steam, DatabaseContext database)
     {
-        this.config = config;
+        this.discord = discord.Value;
+        this.steam = steam.Value;
         this.database = database;
-        this.tasks = tasks;
     }
 
     [Authenticated]
@@ -55,8 +55,8 @@ public class SingleUserConnectionsController
         var req = new WebRequest("https://discord.com/api/v10/oauth2/token");
         req.Method = HttpMethod.Post;
         req.AddParameter("grant_type", "authorization_code");
-        req.AddParameter("client_id", config.Discord.ClientID);
-        req.AddParameter("client_secret", config.Discord.ClientSecret);
+        req.AddParameter("client_id", discord.ClientID.ToString());
+        req.AddParameter("client_secret", discord.ClientSecret);
         req.AddParameter("code", payload.Code);
         req.AddParameter("redirect_uri", payload.RedirectUri);
         req.AddParameter("code_verifier", payload.CodeVerifier);
@@ -106,7 +106,7 @@ public class SingleUserConnectionsController
 
         try
         {
-            var sid = SteamHelper.FetchUserIDFromTicket(config.Steam, token).Result;
+            var sid = SteamHelper.FetchUserIDFromTicket(steam, token).Result;
 
             using (database.EditAndSave())
                 auth.SteamID = sid;

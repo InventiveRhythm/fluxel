@@ -8,6 +8,7 @@ using fluxel.Services.API.Components.Auth;
 using fluxel.Utils.Steam;
 using fluXis.Online.API.Payloads.Auth;
 using fluXis.Online.API.Responses.Auth;
+using Microsoft.Extensions.Options;
 using Midori.API.Attributes;
 using Midori.API.Components;
 using Midori.Logging;
@@ -20,14 +21,14 @@ public class AuthController
 {
     private readonly AuthModuleManager modules;
     private readonly DatabaseContext database;
-    private readonly ServerConfig config;
+    private readonly SteamConfig steam;
     private readonly Valkey valkey;
 
-    public AuthController(DatabaseContext database, AuthModuleManager modules, ServerConfig config, Valkey valkey)
+    public AuthController(DatabaseContext database, AuthModuleManager modules, IOptions<SteamConfig> steam, Valkey valkey)
     {
         this.database = database;
         this.modules = modules;
-        this.config = config;
+        this.steam = steam.Value;
         this.valkey = valkey;
     }
 
@@ -82,7 +83,7 @@ public class AuthController
 
         try
         {
-            sid = SteamHelper.FetchUserIDFromTicket(config.Steam, payload.SteamTicket).Result;
+            sid = SteamHelper.FetchUserIDFromTicket(steam, payload.SteamTicket).Result;
         }
         catch (Exception ex)
         {

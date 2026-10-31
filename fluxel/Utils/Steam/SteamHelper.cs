@@ -8,7 +8,7 @@ namespace fluxel.Utils.Steam;
 
 public static class SteamHelper
 {
-    public static async Task<ulong> FetchUserIDFromTicket(ServerConfig.SteamConfig config, string ticket)
+    public static async Task<ulong> FetchUserIDFromTicket(SteamConfig config, string ticket)
     {
         var usr = new SteamWebInterfaceFactory(config.WebKey).CreateSteamWebInterface<SteamUserAuth>();
         var res = await usr.AuthenticateUserTicket(config.AppID, ticket);

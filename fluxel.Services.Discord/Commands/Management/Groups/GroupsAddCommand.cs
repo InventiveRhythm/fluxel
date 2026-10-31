@@ -1,4 +1,5 @@
-﻿using System;
+﻿/*
+using System;
 using System.Collections.Generic;
 using DSharpPlus.Entities;
 using fluxel.Models.Groups;
@@ -46,3 +47,4 @@ public class GroupsAddCommand : ISlashCommand
         interaction.Reply($"Added group {name} ({tag}).", true);
     }
 }
+*/

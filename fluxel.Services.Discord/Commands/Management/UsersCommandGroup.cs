@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿/*
+using System.Collections.Generic;
 using fluxel.Services.Discord.Commands.Management.Users;
 using fluxel.Services.Discord.Components;
 
@@ -18,3 +19,4 @@ public class UsersCommandGroup : ISlashCommandGroup
         new SendKoFiEmail()
     };
 }
+*/

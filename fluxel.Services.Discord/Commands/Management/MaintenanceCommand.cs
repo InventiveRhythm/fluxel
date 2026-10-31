@@ -1,4 +1,5 @@
-﻿using System;
+﻿/*
+using System;
 using System.Collections.Generic;
 using DSharpPlus.Entities;
 using fluxel.Services.Discord.Components;
@@ -36,3 +37,4 @@ public class MaintenanceCommand : ISlashCommand
         interaction.Reply("Maintenance countdown started", true);
     }
 }
+*/

@@ -7,42 +7,43 @@ using System.Threading.Tasks;
 using DSharpPlus;
 using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
+using fluxel.Components.IPC;
 using fluxel.Config;
-using fluxel.Services.Discord.Commands;
-using fluxel.Services.Discord.Commands.Management;
-using fluxel.Services.Discord.Commands.Testing;
+using fluxel.Models;
+using fluxel.Models.Chat;
 using fluxel.Services.Discord.Components;
 using fluxel.Services.Discord.Utils;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 using Midori.Logging;
 
 namespace fluxel.Services.Discord;
 
 public class DiscordBot : BackgroundService
 {
-    private readonly ServerConfig.DiscordConfig config;
-    private readonly ModuleManager modules;
+    private readonly DiscordConfig config;
+    private readonly Valkey valkey;
     private readonly IServiceProvider services;
 
     public DiscordClient? Bot { get; private set; }
     private static List<ISlashCommand>? commands { get; set; }
 
-    public DiscordBot(ServerConfig config, ModuleManager modules, IServiceProvider services)
+    public DiscordBot(IOptions<DiscordConfig> options, IServiceProvider services, Valkey valkey)
     {
-        this.modules = modules;
+        config = options.Value;
         this.services = services;
-        this.config = config.Discord;
+        this.valkey = valkey;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        if (string.IsNullOrWhiteSpace(config.Token))
+        if (string.IsNullOrWhiteSpace(config.BotToken))
             return;
 
         Bot = new DiscordClient(new DiscordConfiguration
         {
-            Token = config.Token,
+            Token = config.BotToken,
             TokenType = TokenType.Bot,
             Intents = DiscordIntents.AllUnprivileged | DiscordIntents.MessageContents,
             AutoReconnect = true,
@@ -51,7 +52,7 @@ public class DiscordBot : BackgroundService
 
         commands = new List<ISlashCommand>
         {
-            new AchievementTestCommand(),
+            /*new AchievementTestCommand(),
             new GroupsCommandGroup(),
             new MaintenanceCommand(),
             new MapSetCommand(),
@@ -60,7 +61,7 @@ public class DiscordBot : BackgroundService
             new RegenerateCommandGroup(),
             new RunTaskCommand(),
             new UserCommand(),
-            new UsersCommandGroup(),
+            new UsersCommandGroup(),*/
         };
 
         Bot.Ready += ready;
@@ -101,77 +102,75 @@ public class DiscordBot : BackgroundService
         await Bot.UpdateStatusAsync(new DiscordActivity("fluXis", ActivityType.Playing));
     }
 
-    private Task messageCreated(DiscordClient _, MessageCreateEventArgs args)
+    private async Task messageCreated(DiscordClient _, MessageCreateEventArgs args)
     {
-        if (args.Channel.Id != config.ChatLink)
-            return Task.CompletedTask;
-        if (args.Author.IsBot)
-            return Task.CompletedTask;
+        if (args.Channel.Id != config.ChannelChat) return;
+        if (args.Author.IsBot) return;
 
         if (string.IsNullOrWhiteSpace(args.Message.Content))
         {
             Logger.Log("No message content. Is the message content intent enabled?");
-            return Task.CompletedTask;
+            return;
         }
 
-        var svc = services.CreateScope();
-        var users = svc.ServiceProvider.GetRequiredService<UserManager>();
-        var chat = svc.ServiceProvider.GetRequiredService<ChatManager>();
+        using var svc = services.CreateScope();
+        using var database = svc.ServiceProvider.GetRequiredService<DatabaseContext>();
 
-        var user = users.GetByDiscordID(args.Author.Id);
+        var user = database.Users.ByDiscordID(args.Author.Id);
 
         if (user is null)
         {
             try
             {
-                args.Message.DeleteAsync();
+                await args.Message.DeleteAsync();
 
-                var member = args.Guild.GetMemberAsync(args.Author.Id).Result;
-                var channel = member.CreateDmChannelAsync().Result;
+                var member = await args.Guild.GetMemberAsync(args.Author.Id);
+                var channel = await member.CreateDmChannelAsync();
 
                 var sb = new StringBuilder();
                 sb.AppendLine("Your message has not been sent because your discord account is not linked to any fluXis account.");
                 sb.AppendLine("Launch the game while having discord open and link your account using the popup in discord.");
-                channel.SendMessageAsync(new DiscordMessageBuilder().WithContent(sb.ToString()));
+                await channel.SendMessageAsync(new DiscordMessageBuilder().WithContent(sb.ToString()));
             }
             catch { }
 
-            return Task.CompletedTask;
+            return;
         }
 
-        var message = chat.Add(user.ID, args.Message.Content, "general", args.Message.Id);
-        modules.SendMessage(new ChatMessageCreateMessage(message.ID));
+        var message = database.ChatMessages.Add(new ChatMessage("general", user.ID, args.Message.Content)).Entity;
+        await database.SaveChangesAsync();
 
-        return Task.CompletedTask;
+        await valkey.Publish(Valkey.ChatMessageCreate, new ValkeyStringIDEvent(message.ID));
     }
 
-    private Task messageDeleted(DiscordClient _, MessageDeleteEventArgs args)
+    private async Task messageDeleted(DiscordClient _, MessageDeleteEventArgs args)
     {
-        if (args.Channel.Id != config.ChatLink)
-            return Task.CompletedTask;
+        if (args.Channel.Id != config.ChannelChat)
+            return;
 
-        var svc = services.CreateScope();
-        var chat = svc.ServiceProvider.GetRequiredService<ChatManager>();
+        using var svc = services.CreateScope();
+        using var database = svc.ServiceProvider.GetRequiredService<DatabaseContext>();
 
-        var message = chat.GetByDiscordID(args.Message.Id);
-        if (message is null) return Task.CompletedTask;
+        var message = database.ChatMessages.FirstOrDefault(x => x.DiscordID == args.Message.Id);
+        if (message is null) return;
 
-        chat.Delete(message);
-        modules.SendMessage(new ChatMessageDeleteMessage(message.ID));
-        return Task.CompletedTask;
+        using (database.EditAndSave())
+            message.DeletedAt = DateTime.UtcNow;
+
+        await valkey.Publish(Valkey.ChatMessageDelete, new ValkeyStringIDEvent(message.ID));
     }
 
     private DiscordChannel? getChannel(ulong id) => Bot?.GetChannelAsync(id).Result;
 
     public DiscordChannel? GetChannel(ChannelType type) => type switch
     {
-        ChannelType.Registrations => getChannel(config.Registrations),
-        ChannelType.Logging => getChannel(config.Logging),
-        ChannelType.MapSubmissions => getChannel(config.MapSubmissions),
-        ChannelType.MapRanked => getChannel(config.MapRanked),
-        ChannelType.Queue => getChannel(config.QueueUpdates),
-        ChannelType.MapFirstPlace => getChannel(config.MapFirstPlace),
-        ChannelType.ChatLink => getChannel(config.ChatLink),
+        ChannelType.Registrations => getChannel(config.ChannelRegistrations),
+        ChannelType.Logging => getChannel(config.ChannelLogging),
+        ChannelType.MapSubmissions => getChannel(config.ChannelSubmissions),
+        ChannelType.MapRanked => getChannel(config.ChannelRanked),
+        ChannelType.Queue => getChannel(config.ChannelQueue),
+        ChannelType.MapFirstPlace => getChannel(config.ChannelRecords),
+        ChannelType.ChatLink => getChannel(config.ChannelChat),
         _ => null
     };
 

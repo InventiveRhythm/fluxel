@@ -1,4 +1,5 @@
-﻿using System;
+﻿/*
+using System;
 using System.Collections.Generic;
 using DSharpPlus;
 using DSharpPlus.Entities;
@@ -56,3 +57,4 @@ public class UsersResetPasswordCommand : ISlashCommand
         }
     }
 }
+*/

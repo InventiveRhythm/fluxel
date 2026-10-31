@@ -1,4 +1,5 @@
-﻿using System;
+﻿/*
+using System;
 using System.Collections.Generic;
 using DSharpPlus.Entities;
 using fluxel.Services.Discord.Components;
@@ -57,3 +58,4 @@ public class UsersAddGroupCommand : ISlashCommand
         interaction.Reply($"Added {user.Username} to {group.Name} ({group.Tag}).", true);
     }
 }
+*/

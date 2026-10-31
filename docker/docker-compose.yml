@@ -3,16 +3,39 @@ name: fluxel
 x-fluxel-env: &fluxel-env
   PORT: 80
   VALKEY: ${VALKEY:-valkey:6379}
-  
-  URL_WEB: ${URL_WEB:-http://localhost:2400}
-  URL_ASSETS: ${URL_ASSETS:-http://localhost:2400/assets}
-
-x-fluxel-db-env: &fluxel-db-env
   DATABASE_HOST: ${DATABASE_HOST:-postgres}
   DATABASE_PORT: ${DATABASE_PORT:-5432}
   DATABASE_DATABASE: ${DATABASE_DATABASE:-fluxel}
   DATABASE_USERNAME: ${DATABASE_USERNAME:-fluxel}
   DATABASE_PASSWORD: ${DATABASE_PASSWORD:?set DATABASE_PASSWORD in .env}
+  URL_WEB: ${URL_WEB:-http://localhost:2400}
+  URL_ASSETS: ${URL_ASSETS:-http://localhost:2400/assets}
+  MEILI_URL: http://meilisearch:7700
+  MEILI_MASTER_KEY: ${MEILI_MASTER_KEY:?set MEILI_MASTER_KEY in .env}
+  
+  FLUXEL_DISCORD_BOT_TOKEN: ${FLUXEL_DISCORD_BOT_TOKEN}
+  FLUXEL_DISCORD_CLIENT_ID: ${FLUXEL_DISCORD_CLIENT_ID}
+  FLUXEL_DISCORD_CLIENT_SECRET: ${FLUXEL_DISCORD_CLIENT_SECRET}
+  FLUXEL_DISCORD_CHANNEL_LOGGING: ${FLUXEL_DISCORD_CHANNEL_LOGGING}
+  FLUXEL_DISCORD_CHANNEL_REGISTRATIONS: ${FLUXEL_DISCORD_CHANNEL_REGISTRATIONS}
+  FLUXEL_DISCORD_CHANNEL_SUBMISSIONS: ${FLUXEL_DISCORD_CHANNEL_SUBMISSIONS}
+  FLUXEL_DISCORD_CHANNEL_RECORDS: ${FLUXEL_DISCORD_CHANNEL_RECORDS}
+  FLUXEL_DISCORD_CHANNEL_RANKED: ${FLUXEL_DISCORD_CHANNEL_RANKED}
+  FLUXEL_DISCORD_CHANNEL_QUEUE: ${FLUXEL_DISCORD_CHANNEL_QUEUE}
+  FLUXEL_DISCORD_CHANNEL_CHAT: ${FLUXEL_DISCORD_CHANNEL_CHAT}
+  
+  FLUXEL_MAIL_HOST: ${FLUXEL_MAIL_HOST}
+  FLUXEL_MAIL_PORT: ${FLUXEL_MAIL_PORT}
+  FLUXEL_MAIL_USERNAME: ${FLUXEL_MAIL_USERNAME}
+  FLUXEL_MAIL_PASSWORD: ${FLUXEL_MAIL_PASSWORD}
+  FLUXEL_MAIL_NAME: ${FLUXEL_MAIL_NAME}
+  
+  FLUXEL_S3_URL: http://seaweedfs:8333
+  FLUXEL_S3_ACCESS_KEY: ${FLUXEL_S3_ACCESS_KEY?-fluxel}
+  FLUXEL_S3_SECRET_KEY: ${FLUXEL_S3_SECRET_KEY?set FLUXEL_S3_SECRET_KEY in .env}
+  
+  FLUXEL_STEAM_APP_ID: ${FLUXEL_STEAM_APP_ID}
+  FLUXEL_STEAM_WEB_KEY: ${FLUXEL_STEAM_WEB_KEY}
 
 x-fluxel-wait: &fluxel-wait
   valkey: { condition: service_healthy }
@@ -80,7 +103,7 @@ services:
     depends_on:
       postgres: { condition: service_healthy }
     environment:
-      <<: *fluxel-db-env
+      <<: *fluxel-env
   
   meilisearch:
     <<: *fluxel-service
@@ -108,23 +131,23 @@ services:
       <<: *fluxel-healthcheck
       test: [ "CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8333/healthz" ]
     ports:
-      - "2401:8888"
-      - "127.0.0.1:2402:8333"
+      - "127.0.0.1:2401:8333"
+      - "127.0.0.1:2402:8888"
     volumes:
       - ./s3.json:/etc/seaweedfs/s3.json:ro
       - ${FLUXEL_DATA_SEAWEEDFS:-./data/seaweed}:/data
   
-#  admin:
-#    <<: *fluxel-service
-#    build:
-#      context: ../..
-#      dockerfile: ./fluxel/docker/Dockerfile
-#      args:
-#        SERVICE: Admin
-#    depends_on:
-#      <<: *fluxel-wait
-#    environment:
-#      <<: [ *fluxel-db-env, *fluxel-env ]
+  admin:
+    <<: *fluxel-service
+    build:
+      context: ../..
+      dockerfile: ./fluxel/docker/Dockerfile
+      args:
+        SERVICE: Admin
+    depends_on:
+      <<: *fluxel-wait
+    environment:
+      <<: *fluxel-env
   
   api:
     <<: *fluxel-service
@@ -136,9 +159,7 @@ services:
     depends_on:
       <<: *fluxel-wait
     environment:
-      <<: [ *fluxel-db-env, *fluxel-env ]
-      STEAM_APPID: ${STEAM_APPID}
-      STEAM_WEBKEY: ${STEAM_WEBKEY}
+      <<: *fluxel-env
   
   atlas:
     <<: *fluxel-service
@@ -151,9 +172,7 @@ services:
       <<: *fluxel-wait
       meilisearch: { condition: service_healthy }
     environment:
-      <<: [ *fluxel-db-env, *fluxel-env ]
-      MEILI_URL: http://meilisearch:7700
-      MEILI_MASTER_KEY: ${MEILI_MASTER_KEY:?set MEILI_MASTER_KEY in .env}
+      <<: *fluxel-env
   
   beacon:
     <<: *fluxel-service
@@ -165,7 +184,7 @@ services:
     depends_on:
       <<: *fluxel-wait
     environment:
-      <<: [ *fluxel-db-env, *fluxel-env ]
+      <<: *fluxel-env
 
   broadcast:
     <<: *fluxel-service
@@ -177,19 +196,19 @@ services:
     depends_on:
       <<: *fluxel-wait
     environment:
-      <<: [ *fluxel-db-env, *fluxel-env ]
+      <<: *fluxel-env
   
-#  chronicle:
-#    <<: *fluxel-service
-#    build:
-#      context: ../..
-#      dockerfile: ./fluxel/docker/Dockerfile
-#      args:
-#        SERVICE: Chronicle
-#    depends_on:
-#      <<: *fluxel-wait
-#    environment:
-#      <<: [ *fluxel-db-env, *fluxel-env ]
+  chronicle:
+    <<: *fluxel-service
+    build:
+      context: ../..
+      dockerfile: ./fluxel/docker/Dockerfile
+      args:
+        SERVICE: Chronicle
+    depends_on:
+      <<: *fluxel-wait
+    environment:
+      <<: *fluxel-env
   
   content:
     <<: *fluxel-service
@@ -201,34 +220,31 @@ services:
     depends_on:
       <<: *fluxel-wait
     environment:
-      <<: [ *fluxel-db-env, *fluxel-env ]
-      FLUXEL_S3_URL: http://seaweedfs:8333
-      FLUXEL_S3_ACCESS_KEY: ${FLUXEL_S3_ACCESS_KEY?-fluxel}
-      FLUXEL_S3_SECRET_KEY: ${FLUXEL_S3_SECRET_KEY?set FLUXEL_S3_SECRET_KEY in .env}
-  
-#  discord:
-#    <<: *fluxel-service
-#    build:
-#      context: ../..
-#      dockerfile: ./fluxel/docker/Dockerfile
-#      args:
-#        SERVICE: Discord
-#    depends_on:
-#      <<: *fluxel-wait
-#    environment:
-#      <<: [ *fluxel-db-env, *fluxel-env ]
+      <<: *fluxel-env
 
-#  multiplayer:
-#    <<: *fluxel-service
-#    build:
-#      context: ../..
-#      dockerfile: ./fluxel/docker/Dockerfile
-#      args:
-#        SERVICE: Multiplayer
-#    depends_on:
-#      <<: *fluxel-wait
-#    environment:
-#      <<: [ *fluxel-db-env, *fluxel-env ]
+  discord:
+    <<: *fluxel-service
+    build:
+      context: ../..
+      dockerfile: ./fluxel/docker/Dockerfile
+      args:
+        SERVICE: Discord
+    depends_on:
+      <<: *fluxel-wait
+    environment:
+      <<: *fluxel-env
+
+  multiplayer:
+    <<: *fluxel-service
+    build:
+      context: ../..
+      dockerfile: ./fluxel/docker/Dockerfile
+      args:
+        SERVICE: Multiplayer
+    depends_on:
+      <<: *fluxel-wait
+    environment:
+      <<: *fluxel-env
 
 networks:
   fluxel:

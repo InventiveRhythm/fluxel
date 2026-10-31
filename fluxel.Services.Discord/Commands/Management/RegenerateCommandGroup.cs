@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿/*
+using System.Collections.Generic;
 using fluxel.Services.Discord.Commands.Management.Regenerate;
 using fluxel.Services.Discord.Components;
 
@@ -14,3 +15,4 @@ public class RegenerateCommandGroup : ISlashCommandGroup
         new RegenerateMapSetAssetsCommand()
     };
 }
+*/

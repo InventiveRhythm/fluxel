@@ -1,25 +1,19 @@
-﻿using System;
-
-namespace fluxel.Config;
+﻿namespace fluxel.Config;
 
 public partial class ServerConfig
 {
-    public int Port { get; init; } = 2434;
-    public string AssetsPath { get; init; } = string.Empty;
+    public required int Port { get; init; }
+    public required string AssetsPath { get; init; }
 
-    public string ValkeyConnection { get; init; } = string.Empty;
+    public required string ValkeyConnection { get; init; }
 
-    public string MeilisearchUrl { get; init; } = string.Empty;
-    public string MeilisearchKey { get; init; } = string.Empty;
+    public required string MeilisearchUrl { get; init; }
+    public required string MeilisearchKey { get; init; }
 
-    public string FfmpegPath { get; init; } = string.Empty;
-    public string KoFiSecret { get; init; } = string.Empty;
-    public long[] BundledSets { get; init; } = Array.Empty<long>();
+    public required string FfmpegPath { get; init; }
+    public required string KoFiSecret { get; init; }
+    public required long[] BundledSets { get; init; }
 
     public LimitsConfig Limits { get; init; } = new();
-    public SteamConfig Steam { get; init; } = new();
     public UrlConfig Urls { get; init; } = new();
-    public DiscordConfig Discord { get; init; } = new();
-    public MailConfig Mail { get; init; } = new();
-    public MailConfig MailFlux { get; init; } = new();
 }

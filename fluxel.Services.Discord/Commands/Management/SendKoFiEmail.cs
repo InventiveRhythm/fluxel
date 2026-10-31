@@ -1,4 +1,5 @@
-﻿using System;
+﻿/*
+using System;
 using System.Collections.Generic;
 using DSharpPlus.Entities;
 using fluxel.Components;
@@ -39,3 +40,4 @@ public class SendKoFiEmail : ISlashCommand
         }
     }
 }
+*/

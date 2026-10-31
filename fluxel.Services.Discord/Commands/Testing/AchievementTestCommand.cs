@@ -1,4 +1,5 @@
-﻿using System;
+﻿/*
+using System;
 using System.Collections.Generic;
 using DSharpPlus;
 using DSharpPlus.Entities;
@@ -52,3 +53,4 @@ public class AchievementTestCommand : ISlashCommand
         interaction.Reply("Showing achievement", true);
     }
 }
+*/

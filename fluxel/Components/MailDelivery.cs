@@ -2,32 +2,31 @@
 using System.Net;
 using System.Net.Mail;
 using fluxel.Config;
+using Microsoft.Extensions.Options;
 using Midori.Logging;
 
 namespace fluxel.Components;
 
 public class MailDelivery
 {
-    private readonly ServerConfig config;
+    private readonly MailConfig config;
 
-    public MailDelivery(ServerConfig config)
+    public MailDelivery(IOptions<MailConfig> config)
     {
-        this.config = config;
+        this.config = config.Value;
     }
 
-    public bool SendMail(string to, string subject, string body, long id, bool asFlux = false)
+    public bool SendMail(string to, string subject, string body)
     {
         try
         {
-            var settings = asFlux ? config.MailFlux : config.Mail;
+            var mail = new MailMessage(config.Username, to, subject, body);
+            mail.From = new MailAddress(config.Username, config.Name);
 
-            var mail = new MailMessage(settings.Username, to, subject, body);
-            mail.From = new MailAddress(settings.Username, settings.Name);
-
-            var client = new SmtpClient(settings.Host, settings.Port)
+            var client = new SmtpClient(config.Host, config.Port)
             {
-                Credentials = new NetworkCredential(settings.Username, settings.Password),
-                EnableSsl = settings.Port == 587
+                Credentials = new NetworkCredential(config.Username, config.Password),
+                EnableSsl = config.Port == 587
             };
 
             client.Send(mail);
@@ -35,7 +34,7 @@ public class MailDelivery
         }
         catch (Exception ex)
         {
-            Logger.Error(ex, $"Failed to send mail to {id} ({to}): {ex.Message}", LoggingTarget.Network);
+            Logger.Error(ex, $"Failed to send mail to '{to}': {ex.Message}", LoggingTarget.Network);
             return false;
         }
     }

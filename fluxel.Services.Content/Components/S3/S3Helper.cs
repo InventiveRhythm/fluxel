@@ -3,8 +3,8 @@ using System.Net;
 using System.Threading.Tasks;
 using Amazon.S3;
 using Amazon.S3.Model;
-using DotNetEnv;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace fluxel.Services.Content.Components.S3;
 
@@ -13,15 +13,10 @@ public class S3Helper
     private readonly ILogger logger;
     public readonly AmazonS3Client Client;
 
-    public S3Helper(AmazonS3Config config, ILoggerFactory logs)
+    public S3Helper(IOptions<S3Config> options, AmazonS3Config config, ILoggerFactory logs)
     {
         logger = logs.CreateLogger("S3");
-
-        Client = new AmazonS3Client(
-            Env.GetString("FLUXEL_S3_ACCESS_KEY"),
-            Env.GetString("FLUXEL_S3_SECRET_KEY"),
-            config
-        );
+        Client = new AmazonS3Client(options.Value.AccessKey, options.Value.SecretKey, config);
     }
 
     public async Task<bool> FileExists(string bucket, string name)

@@ -1,4 +1,5 @@
-﻿using System;
+﻿/*
+using System;
 using System.Collections.Generic;
 using DSharpPlus.Entities;
 using fluxel.Components;
@@ -49,3 +50,4 @@ public class ModdingInactiveCommand : ISlashCommand
         interaction.Reply("okayge :+1::+1:", true);
     }
 }
+*/

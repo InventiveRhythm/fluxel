@@ -16,6 +16,7 @@ internal abstract class Program
         builder.SetupPostgres();
 
         var host = builder.Build();
+        host.RegisterControllers(typeof(Program).Assembly);
         SocketManager = host.RegisterModule<MultiplayerSocket>("/sockets/multiplayer", manager: true)!;
 
         MultiplayerRoomManager.StartThread();
