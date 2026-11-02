@@ -24,15 +24,15 @@ public class LogUserRegistrationTask : IBasicTask
     {
         var user = services.GetRequiredService<UserManager>().Get(id) ?? throw new ArgumentException($"No user with id {id} was found!");
 
-        services.GetRequiredService<DiscordBot>().GetChannel(DiscordBot.ChannelType.Registrations)?.SendMessageAsync(new DiscordMessageBuilder
-        {
-            Embed = new DiscordEmbedBuilder
+        services.GetRequiredService<DiscordBot>().GetChannel(DiscordBot.ChannelType.Registrations)?.SendMessageAsync(new DiscordMessageBuilder().AddEmbed
+        (
+            new DiscordEmbedBuilder
             {
                 Author = user.ToEmbedAuthor(services.GetRequiredService<UrlFormatter>()),
                 Description = "Just registered!",
                 Color = new DiscordColor("#55ff55")
             }.WithFooter($"ID: {user.ID}").Build()
-        });
+        ));
 
         return Task.CompletedTask;
     }

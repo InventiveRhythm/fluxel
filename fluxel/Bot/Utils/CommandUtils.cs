@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using DSharpPlus;
 using DSharpPlus.Entities;
 using fluxel.Bot.Components;
 
@@ -45,7 +44,7 @@ public static class CommandUtils
             option.Description,
             option.Type.convert(),
             option.Required,
-            option.Choices.Select(x => new DiscordApplicationCommandOptionChoice(x.Name, x.Value))
+            option.Choices.Select(x => new DiscordApplicationCommandOptionChoice(x.Name, x.Value as string ?? "what"))
         );
     }
 
@@ -59,7 +58,7 @@ public static class CommandUtils
                 builder = new DiscordApplicationCommandOption(
                     subCommand.Name,
                     subCommand.Description,
-                    ApplicationCommandOptionType.SubCommandGroup,
+                    DiscordApplicationCommandOptionType.SubCommandGroup,
                     null, Array.Empty<DiscordApplicationCommandOptionChoice>(),
                     group.Subcommands.Select(s => buildSubcommand(s, depth + 1)));
                 break;
@@ -68,7 +67,7 @@ public static class CommandUtils
                 builder = new DiscordApplicationCommandOption(
                     subCommand.Name,
                     subCommand.Description,
-                    ApplicationCommandOptionType.SubCommand,
+                    DiscordApplicationCommandOptionType.SubCommand,
                     null, Array.Empty<DiscordApplicationCommandOptionChoice>(),
                     subCommand.Options.Select(buildOption));
 
@@ -78,17 +77,17 @@ public static class CommandUtils
         return builder;
     }
 
-    private static ApplicationCommandOptionType convert(this OptionType type)
+    private static DiscordApplicationCommandOptionType convert(this OptionType type)
     {
         return type switch
         {
-            OptionType.String => ApplicationCommandOptionType.String,
-            OptionType.Integer => ApplicationCommandOptionType.Integer,
-            OptionType.Boolean => ApplicationCommandOptionType.Boolean,
-            OptionType.User => ApplicationCommandOptionType.User,
-            OptionType.Channel => ApplicationCommandOptionType.Channel,
-            OptionType.Role => ApplicationCommandOptionType.Role,
-            _ => ApplicationCommandOptionType.String
+            OptionType.String => DiscordApplicationCommandOptionType.String,
+            OptionType.Integer => DiscordApplicationCommandOptionType.Integer,
+            OptionType.Boolean => DiscordApplicationCommandOptionType.Boolean,
+            OptionType.User => DiscordApplicationCommandOptionType.User,
+            OptionType.Channel => DiscordApplicationCommandOptionType.Channel,
+            OptionType.Role => DiscordApplicationCommandOptionType.Role,
+            _ => DiscordApplicationCommandOptionType.String
         };
     }
 
@@ -96,7 +95,7 @@ public static class CommandUtils
 
     public static void ReplyEmbed(this DiscordInteraction interaction, DiscordEmbedBuilder embed, bool ephemeral = false)
     {
-        interaction.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource, new DiscordInteractionResponseBuilder
+        interaction.CreateResponseAsync(DiscordInteractionResponseType.ChannelMessageWithSource, new DiscordInteractionResponseBuilder
         {
             IsEphemeral = ephemeral
         }.AddEmbed(embed.Build()));
@@ -104,7 +103,7 @@ public static class CommandUtils
 
     public static void Reply(this DiscordInteraction interaction, string content, bool ephemeral = false)
     {
-        interaction.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource, new DiscordInteractionResponseBuilder
+        interaction.CreateResponseAsync(DiscordInteractionResponseType.ChannelMessageWithSource, new DiscordInteractionResponseBuilder
         {
             IsEphemeral = ephemeral,
             Content = content
@@ -115,7 +114,7 @@ public static class CommandUtils
     {
         var response = new DiscordInteractionResponseBuilder();
         response.AddAutoCompleteChoices(choices);
-        interaction.CreateResponseAsync(InteractionResponseType.AutoCompleteResult, response);
+        interaction.CreateResponseAsync(DiscordInteractionResponseType.AutoCompleteResult, response);
     }
 
     #endregion
@@ -124,12 +123,12 @@ public static class CommandUtils
 
     public static async Task Acknowledge(this DiscordInteraction interaction)
     {
-        await interaction.CreateResponseAsync(InteractionResponseType.DeferredChannelMessageWithSource);
+        await interaction.CreateResponseAsync(DiscordInteractionResponseType.DeferredChannelMessageWithSource);
     }
 
     public static async Task AcknowledgeEphemeral(this DiscordInteraction interaction)
     {
-        await interaction.CreateResponseAsync(InteractionResponseType.DeferredChannelMessageWithSource, new DiscordInteractionResponseBuilder
+        await interaction.CreateResponseAsync(DiscordInteractionResponseType.DeferredChannelMessageWithSource, new DiscordInteractionResponseBuilder
         {
             IsEphemeral = true
         });
@@ -196,13 +195,13 @@ public static class CommandUtils
     public static DiscordChannel? GetChannel(this DiscordInteraction interaction, string name)
     {
         var value = interaction.getOptions()?.Where(option => option.Name == name).Select(option => option.Value).FirstOrDefault();
-        return value is not ulong id ? null : interaction.Guild.GetChannel(id);
+        return value is not ulong id ? null : interaction.Guild?.GetChannelAsync(id).Result;
     }
 
     public static DiscordRole? GetRole(this DiscordInteraction interaction, string name)
     {
         var value = interaction.getOptions()?.Where(option => option.Name == name).Select(option => option.Value).FirstOrDefault();
-        return value is not ulong id ? null : interaction.Guild.GetRole(id);
+        return value is not ulong id ? null : interaction.Guild?.GetRoleAsync(id).Result;
     }
 
     public static DiscordAttachment? GetAttachment(this DiscordInteraction interaction, string name)

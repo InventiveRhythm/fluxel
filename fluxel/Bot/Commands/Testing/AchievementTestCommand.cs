@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using DSharpPlus;
 using DSharpPlus.Entities;
 using fluxel.Bot.Components;
 using fluxel.Bot.Utils;
@@ -15,7 +14,7 @@ public class AchievementTestCommand : ISlashCommand
 {
     public string Name => "achievement";
     public string Description => "Test the achievement splash";
-    public Permissions Permissions => Permissions.Administrator;
+    public DiscordPermission Permissions => DiscordPermission.Administrator;
 
     public IEnumerable<ISlashCommand.Option> Options => new List<ISlashCommand.Option>
     {

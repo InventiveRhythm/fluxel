@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using DSharpPlus;
 using DSharpPlus.Entities;
 using JetBrains.Annotations;
 
@@ -11,7 +10,7 @@ public interface ISlashCommand
 {
     string Name { get; }
     string Description { get; }
-    Permissions Permissions => Permissions.Administrator;
+    DiscordPermission Permissions => DiscordPermission.Administrator;
     IEnumerable<Option> Options => Array.Empty<Option>();
 
     void Handle(DiscordInteraction interaction, IServiceProvider services);

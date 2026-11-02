@@ -66,7 +66,7 @@ public class ServerEvents
              .WithImageUrl(urls.Background(set));
 
         var message = new DiscordMessageBuilder()
-            .WithEmbed(embed.Build());
+            .AddEmbed(embed.Build());
 
         try
         {
@@ -129,7 +129,7 @@ public class ServerEvents
         if (user.ID != mapper.ID && mapper.DiscordID != null)
             message = message.WithAllowedMention(new UserMention(mapper.DiscordID.Value)).WithContent($"<@{mapper.DiscordID}>");
 
-        message = message.WithEmbed(embed);
+        message = message.AddEmbed(embed);
         discord.GetChannel(DiscordBot.ChannelType.Queue)?.SendMessageAsync(message);
     }
 
@@ -171,14 +171,13 @@ public class ServerEvents
 
     public void NotifySameEmail(User existing)
     {
-        discord.GetChannel(DiscordBot.ChannelType.Registrations)?.SendMessageAsync(new DiscordMessageBuilder
-        {
-            Embed = new DiscordEmbedBuilder
+        discord.GetChannel(DiscordBot.ChannelType.Registrations)?.SendMessageAsync(new DiscordMessageBuilder().AddEmbed(
+            new DiscordEmbedBuilder
             {
                 Author = existing.ToEmbedAuthor(urls),
                 Description = "Someone tried to register with an existing email!",
                 Color = new DiscordColor("#ff5555")
-            }.WithFooter($"ID: {existing.ID}").Build()
-        });
+            }.WithFooter($"ID: {existing.ID}").Build())
+        );
     }
 }

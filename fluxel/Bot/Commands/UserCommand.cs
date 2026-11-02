@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using DSharpPlus;
 using DSharpPlus.Entities;
 using fluxel.Bot.Components;
 using fluxel.Bot.Utils;
@@ -17,7 +16,7 @@ public class UserCommand : ISlashCommand
 {
     public string Name => "user";
     public string Description => "Get information about a user.";
-    public Permissions Permissions => Permissions.SendMessages;
+    public DiscordPermission Permissions => DiscordPermission.SendMessages;
 
     public IEnumerable<ISlashCommand.Option> Options => new List<ISlashCommand.Option>
     {

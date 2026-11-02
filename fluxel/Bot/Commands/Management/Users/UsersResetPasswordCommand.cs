@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using DSharpPlus;
 using DSharpPlus.Entities;
 using fluxel.Bot.Components;
 using fluxel.Bot.Utils;
@@ -15,7 +14,7 @@ public class UsersResetPasswordCommand : ISlashCommand
 {
     public string Name => "reset-password";
     public string Description => "Create a password reset token.";
-    public Permissions Permissions => Permissions.Administrator;
+    public DiscordPermission Permissions => DiscordPermission.Administrator;
 
     public IEnumerable<ISlashCommand.Option> Options => new List<ISlashCommand.Option>
     {
@@ -35,7 +34,7 @@ public class UsersResetPasswordCommand : ISlashCommand
 
             if (user == null)
             {
-                interaction.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource, new DiscordInteractionResponseBuilder
+                interaction.CreateResponseAsync(DiscordInteractionResponseType.ChannelMessageWithSource, new DiscordInteractionResponseBuilder
                 {
                     Content = "The provided user ID is invalid.",
                     IsEphemeral = true
@@ -50,7 +49,7 @@ public class UsersResetPasswordCommand : ISlashCommand
         {
             Logger.Error(e, "Failed to create password reset token.");
 
-            interaction.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource, new DiscordInteractionResponseBuilder
+            interaction.CreateResponseAsync(DiscordInteractionResponseType.ChannelMessageWithSource, new DiscordInteractionResponseBuilder
             {
                 Content = "shitdt i fuckeded up",
                 IsEphemeral = true

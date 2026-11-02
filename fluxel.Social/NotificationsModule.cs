@@ -128,9 +128,9 @@ public class NotificationsModule : IModule, IOnlineStateManager
 
                 var dmsg = discord.GetChannel(DiscordBot.ChannelType.ChatLink)?.SendMessageAsync(
                     new DiscordMessageBuilder()
-                        .WithEmbed(new DiscordEmbedBuilder { Author = user.ToEmbedAuthor(urls) }
-                                   .WithColor(Theme.Highlight.ToDiscord())
-                                   .WithDescription(message.Content)
+                        .AddEmbed(new DiscordEmbedBuilder { Author = user.ToEmbedAuthor(urls) }
+                                  .WithColor(Theme.Highlight.ToDiscord())
+                                  .WithDescription(message.Content)
                         )
                 ).Result;
 
