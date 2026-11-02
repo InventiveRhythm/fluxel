@@ -1,3 +1,4 @@
+using DotNetEnv;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -10,9 +11,12 @@ internal abstract class ModelProgram
 {
     public static void Main()
     {
+        if (File.Exists("docker/.env")) Env.Load("docker/.env");
+        Env.Load();
+
         var build = new HostApplicationBuilder();
         build.Services.AddDbContext<DatabaseContext>(c => c.UseNpgsql(
-            DatabaseContext.BuildConnectionString(Environment.GetEnvironmentVariable),
+            DatabaseContext.BuildConnectionString(x => Env.GetString(x)),
             n => n.ConfigureDataSource(d => d.EnableDynamicJson())
         ));
 
