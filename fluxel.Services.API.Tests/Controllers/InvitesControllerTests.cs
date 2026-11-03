@@ -3,7 +3,7 @@ using fluxel.Services.API.Controllers;
 using Microsoft.Extensions.DependencyInjection;
 using Midori.Networking;
 
-namespace fluxel.Services.API.Tests;
+namespace fluxel.Services.API.Tests.Controllers;
 
 public class InvitesControllerTests : DependencyStackTest
 {
@@ -19,7 +19,7 @@ public class InvitesControllerTests : DependencyStackTest
 
         var u1 = CreateUser(1);
         var u2 = CreateUser(2);
-        var u3 = CreateUser(3);
+        _ = CreateUser(3);
 
         var club = Database.Clubs.Add(new Club
         {
@@ -46,9 +46,7 @@ public class InvitesControllerTests : DependencyStackTest
     [Test]
     public void TestAcceptNormal()
     {
-        var user = Database.Users.Find(2L);
-        Assert.NotNull(user);
-
+        var user = Database.Users.Find(2L)!;
         var result = controller.Accept(user, code);
         LogResult(result);
 
@@ -72,7 +70,6 @@ public class InvitesControllerTests : DependencyStackTest
     public void TestInvalidTarget()
     {
         var user = Database.Users.Find(3L)!;
-
         var result = controller.Accept(user, code);
         LogResult(result);
 

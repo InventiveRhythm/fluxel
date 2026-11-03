@@ -4,8 +4,9 @@ using fluxel.Services.API.Controllers;
 using fluXis.Online.API.Models.Chat;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace fluxel.Services.API.Tests;
+namespace fluxel.Services.API.Tests.Controllers;
 
+[TestFixture, TestOf(typeof(ChatController))]
 public class ChatControllerTests : DependencyStackTest
 {
     private ChatController controller = null!;
