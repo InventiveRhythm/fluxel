@@ -80,13 +80,15 @@ public class ScoreController
 
         query = query.OrderByDescending(x => x.PerformanceRating)
                      .GroupBy(x => x.UserID)
-                     .Select(g => g.OrderByDescending(x => x.PerformanceRating).First())
-                     .Take(50);
+                     .Select(g => g.OrderByDescending(x => x.PerformanceRating).First());
 
         return new MapLeaderboard(
             translator.ToAPI(map.MapSet!),
             translator.ToAPI(map),
-            query.ToArray().Select(x => translator.ToAPI(x))
+            query.ToArray()
+                 .OrderByDescending(x => x.PerformanceRating)
+                 .Take(50)
+                 .Select(x => translator.ToAPI(x))
         );
     }
 
@@ -100,17 +102,12 @@ public class ScoreController
                           .Include(x => x.Map).ThenInclude(x => x!.MapSet)
                           .Where(x => x.UserID == user.ID)
                           .Where(x => x.Map!.MapSet!.Status >= MapSetStatus.Pure)
+                          .GroupBy(x => x.MapID)
+                          .Select(g => g.OrderByDescending(x => x.PerformanceRating).First())
                           .ToArray();
 
-        var recent = all.GroupBy(x => x.MapID)
-                        .Select(g => g.OrderByDescending(x => x.PerformanceRating).First())
-                        .OrderByDescending(x => x.Time)
-                        .Take(24);
-
-        var best = all.GroupBy(x => x.MapID)
-                      .Select(g => g.OrderByDescending(x => x.PerformanceRating).First())
-                      .OrderByDescending(x => x.PerformanceRating)
-                      .Take(32);
+        var recent = all.OrderByDescending(x => x.Time).Take(24);
+        var best = all.OrderByDescending(x => x.PerformanceRating).Take(32);
 
         return new APIUserScores(
             [.. recent.Select(x => translator.ToAPI(x, ScoreIncludes.Map))],
