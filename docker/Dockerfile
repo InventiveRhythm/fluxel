@@ -8,13 +8,15 @@ COPY fluxel/fluxel.Models/fluxel.Models.csproj fluxel/fluxel.Models/fluxel.Model
 COPY fluxel/fluxel/fluxel.csproj fluxel/fluxel/fluxel.csproj
 COPY fluxel/fluxel.Services.${SERVICE}/fluxel.Services.${SERVICE}.csproj fluxel/fluxel.Services.${SERVICE}/fluxel.Services.${SERVICE}.csproj
 
-RUN dotnet restore fluxel/fluxel.Services.${SERVICE}/fluxel.Services.${SERVICE}.csproj -r linux-x64
+RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages,sharing=locked \
+    dotnet restore fluxel/fluxel.Services.${SERVICE}/fluxel.Services.${SERVICE}.csproj -r linux-x64
 
 COPY fluxel/fluxel.Models fluxel/fluxel.Models
 COPY fluxel/fluxel fluxel/fluxel
 COPY fluxel/fluxel.Services.${SERVICE} fluxel/fluxel.Services.${SERVICE}
 
-RUN dotnet publish fluxel/fluxel.Services.${SERVICE}/fluxel.Services.${SERVICE}.csproj -r linux-x64 -c Release -o /app/publish --no-restore
+RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages,sharing=locked \
+    dotnet publish fluxel/fluxel.Services.${SERVICE}/fluxel.Services.${SERVICE}.csproj -r linux-x64 -c Release -o /app/publish --no-restore
 	
 FROM mcr.microsoft.com/dotnet/runtime:10.0-alpine AS final
 ARG SERVICE
