@@ -17,18 +17,6 @@ namespace fluxel.API.Controllers;
 [Controller]
 public class IndexController
 {
-    [HttpRoute("/events")]
-    public APIReturn<List<StoredEvent>> Events() => events.GetActive();
-
-    [HttpRoute("/stats")]
-    public APIReturn<object> Statistics() => new
-    {
-        users = users.UserCount - 1,
-        online = stats.Online,
-        scores = scores.Count,
-        mapsets = maps.SetCount
-    };
-
     [HttpRoute("/tasks")]
     [Authenticated(Scopes.DEV)]
     public APIReturn<object> Tasks()

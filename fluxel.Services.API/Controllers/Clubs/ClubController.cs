@@ -18,7 +18,6 @@ using Microsoft.EntityFrameworkCore;
 using Midori.API.Attributes;
 using Midori.API.Components;
 using Midori.Networking;
-using Midori.Utils;
 using osu.Framework.Extensions.Color4Extensions;
 
 namespace fluxel.Services.API.Controllers.Clubs;
@@ -233,7 +232,7 @@ public class ClubController
         if (!database.Clubs.TryFind(out var club, id))
             return Returns.NotFound("club");
 
-        if (!database.Users.TryFind(out _, payload.UserID.Value))
+        if (!database.Users.TryFind(out var user, payload.UserID.Value))
             return Returns.NotFound("user");
 
         if (club.OwnerID != auth.ID)
@@ -243,12 +242,7 @@ public class ClubController
 
         using (database.EditAndSave())
         {
-            invite = database.ClubInvites.Add(new ClubInvite
-            {
-                InviteCode = RandomizeUtils.GenerateRandomString(7),
-                ClubID = club.ID,
-                UserID = payload.UserID.Value
-            }).Entity;
+            invite = database.ClubInvites.Add(new ClubInvite(club, user)).Entity;
 
             database.Notifications.Add(new ClubInviteNotification
             {

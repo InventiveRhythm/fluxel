@@ -37,8 +37,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Docker Files", "Docker File
 		docker\Dockerfile.dockerignore = docker\Dockerfile.dockerignore
 		docker\Models.Dockerfile = docker\Models.Dockerfile
 		docker\Models.Dockerfile.dockerignore = docker\Models.Dockerfile.dockerignore
-		docker\s3.example.json = docker\s3.example.json
-		docker\s3.json = docker\s3.json
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{E2BF703F-1300-46BA-B700-0A83348EDDB1}"

@@ -186,6 +186,9 @@ public static class SharedStartup
 
     private static ServerConfig setupConfig(this HostApplicationBuilder builder)
     {
+        if (RuntimeUtils.IsDebugBuild)
+            Env.Load("docker/dev.env", new LoadOptions());
+
         if (File.Exists("docker/.env"))
             Env.Load("docker/.env");
 
@@ -194,9 +197,8 @@ public static class SharedStartup
         var config = new ServerConfig
         {
             Port = Env.GetInt("PORT", 2434),
-            AssetsPath = Env.GetString("ASSETS_PATH", "/srv/assets"),
-            ValkeyConnection = Env.GetString("VALKEY", "localhost:6379"),
-            MeilisearchUrl = Env.GetString("MEILI_URL", "http://localhost:7700"),
+            ValkeyConnection = Env.GetString("VALKEY", "valkey:6379"),
+            MeilisearchUrl = Env.GetString("MEILI_URL", "http://meilisearch:7700"),
             MeilisearchKey = Env.GetString("MEILI_MASTER_KEY"),
             FfmpegPath = Env.GetString("FFMPEG_PATH", "ffmpeg"),
             KoFiSecret = Env.GetString("KOFI_SECRET"),

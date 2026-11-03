@@ -1,4 +1,6 @@
 name: fluxel
+include:
+  - docker-compose.core.yml
 
 x-fluxel-env: &fluxel-env
   PORT: 80
@@ -31,7 +33,7 @@ x-fluxel-env: &fluxel-env
   FLUXEL_MAIL_NAME: ${FLUXEL_MAIL_NAME}
   
   FLUXEL_S3_URL: http://seaweedfs:8333
-  FLUXEL_S3_ACCESS_KEY: ${FLUXEL_S3_ACCESS_KEY?-fluxel}
+  FLUXEL_S3_ACCESS_KEY: fluxel
   FLUXEL_S3_SECRET_KEY: ${FLUXEL_S3_SECRET_KEY?set FLUXEL_S3_SECRET_KEY in .env}
   
   FLUXEL_STEAM_APP_ID: ${FLUXEL_STEAM_APP_ID}
@@ -71,71 +73,6 @@ services:
       seaweedfs: { condition: service_started }
       atlas: { condition: service_started }
       beacon: { condition: service_started }
-  
-  valkey:
-    <<: *fluxel-service
-    image: valkey/valkey:latest
-    healthcheck:
-      <<: *fluxel-healthcheck
-      test: [ "CMD", "valkey-cli", "ping" ]
-    ports:
-      - "127.0.0.1:6379:6379"
-  
-  postgres:
-    <<: *fluxel-service
-    image: postgres:latest
-    environment:
-      POSTGRES_DB: ${DATABASE_DATABASE:-fluxel}
-      POSTGRES_USER: ${DATABASE_USERNAME:-fluxel}
-      POSTGRES_PASSWORD: ${DATABASE_PASSWORD:?set DATABASE_PASSWORD in .env}
-    volumes:
-      - ${FLUXEL_DATA_POSTGRES:-./data/postgres}:/var/lib/postgresql
-    ports: [ "127.0.0.1:5432:5432" ]
-    healthcheck:
-      <<: *fluxel-healthcheck
-      test: [ "CMD-SHELL", "pg_isready -U fluxel" ]
-  
-  postgres-init:
-    networks: [ fluxel ]
-    build:
-      context: ../..
-      dockerfile: ./fluxel/docker/Models.Dockerfile
-    depends_on:
-      postgres: { condition: service_healthy }
-    environment:
-      <<: *fluxel-env
-  
-  meilisearch:
-    <<: *fluxel-service
-    image: getmeili/meilisearch:latest
-    environment:
-      MEILI_ENV: production
-      MEILI_NO_ANALYTICS: true
-      MEILI_UPGRADE_DB: true
-      MEILI_MASTER_KEY: ${MEILI_MASTER_KEY:?set MEILI_MASTER_KEY in .env}
-    healthcheck:
-      <<: *fluxel-healthcheck
-      test: [ "CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:7700/health" ]
-    ports:
-      - "127.0.0.1:7700:7700"
-    volumes:
-      - ${FLUXEL_DATA_MEILISEARCH:-./data/meili}:/meili_data
-  
-  seaweedfs:
-    <<: *fluxel-service
-    image: chrislusf/seaweedfs:4.50
-    command: [ "server", "-s3", "-s3.config=/etc/seaweedfs/s3.json", "-dir=/data", "-master.telemetry=false" ]
-    environment:
-      WEED_MASTER_VOLUME_GROWTH_COPY_1: 1
-    healthcheck:
-      <<: *fluxel-healthcheck
-      test: [ "CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8333/healthz" ]
-    ports:
-      - "127.0.0.1:2401:8333"
-      - "127.0.0.1:2402:8888"
-    volumes:
-      - ./s3.json:/etc/seaweedfs/s3.json:ro
-      - ${FLUXEL_DATA_SEAWEEDFS:-./data/seaweed}:/data
   
   admin:
     <<: *fluxel-service
@@ -245,7 +182,3 @@ services:
       <<: *fluxel-wait
     environment:
       <<: *fluxel-env
-
-networks:
-  fluxel:
-    name: fluxel

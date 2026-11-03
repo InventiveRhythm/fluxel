@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using fluxel.Models.Users;
 using Microsoft.EntityFrameworkCore;
+using Midori.Utils;
 
 namespace fluxel.Models.Clubs;
 
@@ -31,4 +32,22 @@ public class ClubInvite
     public User? User { get; init; }
 
     #endregion
+
+    public ClubInvite(long club, long user)
+    {
+        InviteCode = RandomizeUtils.GenerateRandomString(7);
+        ClubID = club;
+        UserID = user;
+    }
+
+    public ClubInvite(Club club, User user)
+    {
+        InviteCode = RandomizeUtils.GenerateRandomString(7);
+        Club = club;
+        User = user;
+    }
+
+    private ClubInvite()
+    {
+    }
 }

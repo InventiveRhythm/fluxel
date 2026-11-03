@@ -187,7 +187,11 @@ public class DatabaseContext : DbContext
         });
     }
 
-    public IDisposable EditAndSave() => new InvokeOnDisposal(() => SaveChanges());
+    public IDisposable EditAndSave()
+    {
+        Database.BeginTransaction();
+        return new InvokeOnDisposal(() => Database.CommitTransaction());
+    }
 
     public static string BuildConnectionString(Func<string, string?> getEnv)
     {

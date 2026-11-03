@@ -1,0 +1,91 @@
+name: fluxel
+
+x-fluxel-service: &fluxel-service
+  user: "1000:1000"
+  restart: ${FLUXEL_RESTART_BEHAVIOUR:-unless-stopped}
+  networks: [ fluxel ]
+  environment:
+    UID: 1000
+    GID: 1000
+
+x-fluxel-healthcheck: &fluxel-healthcheck
+  interval: 10s
+  timeout: 5s
+  retries: 30
+  start_period: 90s
+
+services:
+  valkey:
+    <<: *fluxel-service
+    image: valkey/valkey:latest
+    healthcheck:
+      <<: *fluxel-healthcheck
+      test: [ "CMD", "valkey-cli", "ping" ]
+    ports:
+      - "127.0.0.1:6379:6379"
+
+  postgres:
+    <<: *fluxel-service
+    image: postgres:latest
+    environment:
+      POSTGRES_DB: ${DATABASE_DATABASE:-fluxel}
+      POSTGRES_USER: ${DATABASE_USERNAME:-fluxel}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD:?set DATABASE_PASSWORD in .env}
+    volumes:
+      - ${FLUXEL_DATA_POSTGRES:-./data/postgres}:/var/lib/postgresql
+    ports: [ "127.0.0.1:5432:5432" ]
+    healthcheck:
+      <<: *fluxel-healthcheck
+      test: [ "CMD-SHELL", "pg_isready -U fluxel" ]
+  
+  postgres-init:
+    networks: [ fluxel ]
+    build:
+      context: ../..
+      dockerfile: ./fluxel/docker/Models.Dockerfile
+    depends_on:
+      postgres: { condition: service_healthy }
+    environment:
+      DATABASE_HOST: ${DATABASE_HOST:-postgres}
+      DATABASE_PORT: ${DATABASE_PORT:-5432}
+      DATABASE_DATABASE: ${DATABASE_DATABASE:-fluxel}
+      DATABASE_USERNAME: ${DATABASE_USERNAME:-fluxel}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD:?set DATABASE_PASSWORD in .env}
+  
+  meilisearch:
+    <<: *fluxel-service
+    image: getmeili/meilisearch:latest
+    environment:
+      MEILI_ENV: production
+      MEILI_NO_ANALYTICS: true
+      MEILI_UPGRADE_DB: true
+      MEILI_MASTER_KEY: ${MEILI_MASTER_KEY:?set MEILI_MASTER_KEY in .env}
+    healthcheck:
+      <<: *fluxel-healthcheck
+      test: [ "CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:7700/health" ]
+    ports:
+      - "127.0.0.1:7700:7700"
+    volumes:
+      - ${FLUXEL_DATA_MEILISEARCH:-./data/meili}:/meili_data
+
+  seaweedfs:
+    <<: *fluxel-service
+    image: chrislusf/seaweedfs:4.50
+    entrypoint: [ "sh", "/seaweed.sh" ]
+    environment:
+      AWS_ACCESS_KEY_ID: fluxel
+      AWS_SECRET_ACCESS_KEY: ${FLUXEL_S3_SECRET_KEY:-S3_DEV_KEY}
+      WEED_MASTER_VOLUME_GROWTH_COPY_1: 1
+    healthcheck:
+      <<: *fluxel-healthcheck
+      test: [ "CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8333/healthz" ]
+    ports:
+      - "127.0.0.1:2401:8333"
+      - "127.0.0.1:2402:8888"
+    volumes:
+      - ./seaweed.sh:/seaweed.sh
+      - ${FLUXEL_DATA_SEAWEEDFS:-./data/seaweed}:/data
+
+networks:
+  fluxel:
+    name: fluxel

@@ -50,7 +50,7 @@ public class User
     public UserBanFlag BanFlags { get; set; }
 
     [Column("country"), StringLength(2)]
-    public string? CountryCode { get; set; } = string.Empty;
+    public string? CountryCode { get; set; }
 
     [Column("created"), DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public DateTime CreatedAt { get; init; } = DateTime.UtcNow;

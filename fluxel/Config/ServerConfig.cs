@@ -3,7 +3,7 @@
 public partial class ServerConfig
 {
     public required int Port { get; init; }
-    public required string AssetsPath { get; init; }
+    public string AssetsPath { get; init; } = string.Empty;
 
     public required string ValkeyConnection { get; init; }
 
