@@ -1,7 +1,11 @@
 using System.Linq;
 using fluxel.Components;
+using fluxel.Database.Extensions;
 using fluxel.Models;
+using fluxel.Models.Maps.Flags;
+using fluxel.Models.Scores;
 using fluxel.Models.Users;
+using fluXis.Online.API.Models.Users;
 using fluXis.Online.API.Responses.Maps;
 using Microsoft.EntityFrameworkCore;
 using Midori.API.Attributes;
@@ -83,6 +87,34 @@ public class ScoreController
             translator.ToAPI(map.MapSet!),
             translator.ToAPI(map),
             query.ToArray().Select(x => translator.ToAPI(x))
+        );
+    }
+
+    [HttpRoute("/users/:id")]
+    public APIReturn<APIUserScores> User(long id)
+    {
+        if (!database.Users.TryFind(out var user, id))
+            return Returns.NotFound("user");
+
+        var all = database.Scores
+                          .Include(x => x.Map).ThenInclude(x => x!.MapSet)
+                          .Where(x => x.UserID == user.ID)
+                          .Where(x => x.Map!.MapSet!.Status >= MapSetStatus.Pure)
+                          .ToArray();
+
+        var recent = all.GroupBy(x => x.MapID)
+                        .Select(g => g.OrderByDescending(x => x.PerformanceRating).First())
+                        .OrderByDescending(x => x.Time)
+                        .Take(24);
+
+        var best = all.GroupBy(x => x.MapID)
+                      .Select(g => g.OrderByDescending(x => x.PerformanceRating).First())
+                      .OrderByDescending(x => x.PerformanceRating)
+                      .Take(32);
+
+        return new APIUserScores(
+            [.. recent.Select(x => translator.ToAPI(x, ScoreIncludes.Map))],
+            [.. best.Select(x => translator.ToAPI(x, ScoreIncludes.Map))]
         );
     }
 }

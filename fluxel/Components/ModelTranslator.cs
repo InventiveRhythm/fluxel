@@ -67,7 +67,7 @@ public class ModelTranslator
         };
     }
 
-    public APIScore ToAPI(Score score, List<ScoreIncludes>? include = null)
+    public APIScore ToAPI(Score score, ScoreIncludes include = 0)
     {
         Database.Entry(score).Reference(x => x.Map).Load();
         Database.Entry(score).Reference(x => x.User).Load();
@@ -93,10 +93,10 @@ public class ModelTranslator
             ScrollSpeed = score.ScrollSpeed
         };
 
-        if (include == null || include.Count == 0)
+        if (include == 0)
             return s;
 
-        if (include.Contains(ScoreIncludes.Map))
+        if (include.HasFlagFast(ScoreIncludes.Map))
             s.Map = ToAPI(score.Map) ?? APIMap.CreateUnknown(score.MapID);
 
         return s;
