@@ -37,6 +37,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Docker Files", "Docker File
 		docker\Dockerfile.dockerignore = docker\Dockerfile.dockerignore
 		docker\Models.Dockerfile = docker\Models.Dockerfile
 		docker\Models.Dockerfile.dockerignore = docker\Models.Dockerfile.dockerignore
+		docker\dev.env = docker\dev.env
+		docker\docker-compose.core.yml = docker\docker-compose.core.yml
+		docker\README.md = docker\README.md
+		docker\seaweed.sh = docker\seaweed.sh
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{E2BF703F-1300-46BA-B700-0A83348EDDB1}"
