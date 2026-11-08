@@ -19,6 +19,8 @@ public class Valkey
     public static RedisChannel MapSetCreate { get; } = RedisChannel.Literal("mapset:create");
     public static RedisChannel MapSetUpdate { get; } = RedisChannel.Literal("mapset:update");
 
+    public static RedisChannel MapRating { get; } = RedisChannel.Literal("map:rating");
+
     public static RedisChannel UserCreate { get; } = RedisChannel.Literal("user:create");
     public static RedisChannel UserOnline { get; } = RedisChannel.Literal("user:online");
     public static RedisChannel UserOffline { get; } = RedisChannel.Literal("user:offline");

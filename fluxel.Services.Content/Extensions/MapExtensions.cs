@@ -1,16 +1,14 @@
 using System;
-using System.Linq;
 using fluxel.Models.Maps;
 
 namespace fluxel.Services.Content.Extensions;
 
 public static class MapExtensions
 {
-    public static double CalculateRating(this Map map, out bool refresh)
+    public static double CalculateRating(this Map map, MapUserState[] states, out bool refresh)
     {
         refresh = false;
 
-        var states = map.UserStates.Where(x => x.RateChart != null).ToArray();
         if (states.Length == 0) return 0;
 
         var count = 0;

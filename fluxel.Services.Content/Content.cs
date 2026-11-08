@@ -7,6 +7,7 @@ using fluxel.Components.IPC;
 using fluxel.Components.Tasks;
 using fluxel.Services.Content.Components;
 using fluxel.Services.Content.Components.S3;
+using fluxel.Services.Content.Tasks.Maps;
 using fluxel.Services.Content.Tasks.Previews;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -52,6 +53,7 @@ internal abstract class Content
         var valkey = host.Services.GetRequiredService<Valkey>();
         await valkey.Subscribe<ValkeyIDEvent>(Valkey.MapSetCreate, ev => tasks.Schedule(new GeneratePreviewTask(ev.ID)));
         await valkey.Subscribe<ValkeyIDEvent>(Valkey.MapSetUpdate, ev => tasks.Schedule(new GeneratePreviewTask(ev.ID)));
+        await valkey.Subscribe<ValkeyIDEvent>(Valkey.MapRating, ev => tasks.Schedule(new RecalculateMapRatingTask(ev.ID)));
 
         await tasks.StartAsync(CancellationToken.None);
         await host.RunAsync();

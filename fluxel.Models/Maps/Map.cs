@@ -52,6 +52,9 @@ public class Map
     [Column("mode"), Required]
     public ResourceLocation Mode { get; set; }
 
+    [Column("pending_score_refresh")]
+    public bool HasPendingScoreRefresh { get; set; }
+
     [Column("title"), MaxLength(256)]
     public string Title { get; set; } = string.Empty;
 

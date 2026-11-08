@@ -187,7 +187,7 @@ public static class SharedStartup
     private static ServerConfig setupConfig(this HostApplicationBuilder builder)
     {
         if (RuntimeUtils.IsDebugBuild)
-            Env.Load("docker/dev.env", new LoadOptions());
+            Env.Load("docker/dev.env");
 
         if (File.Exists("docker/.env"))
             Env.Load("docker/.env");

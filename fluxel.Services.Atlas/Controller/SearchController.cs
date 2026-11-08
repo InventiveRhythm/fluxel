@@ -2,13 +2,16 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
+using fluxel.API;
 using fluxel.Components;
 using fluxel.Models;
 using fluxel.Models.Maps;
 using fluxel.Models.Users;
 using fluxel.Services.Atlas.Indexing;
+using fluxel.Utils;
 using fluXis.Online.API.Models.Maps;
 using Meilisearch;
+using Microsoft.EntityFrameworkCore;
 using Midori.API.Attributes;
 using Midori.API.Components;
 using osu.Framework.Extensions.IEnumerableExtensions;
@@ -78,8 +81,30 @@ public class SearchController
         return sets.OfType<MapSet>().Select(x => translator.ToAPI(x, userid: auth?.ID)).ToArray();
     }
 
+    [HttpRoute("/maps/by-hash")]
+    public APIReturn<APIMapLookup> MapByHash([Source(ParameterSource.Query)] string hash)
+    {
+        var map = database.Maps.Include(x => x.MapSet).FirstOrDefault(x => x.SHA256Hash == hash);
+        if (map is null) return Returns.NotFound("map");
+
+        var mapLookup = new APIMapLookup
+        {
+            ID = map.ID,
+            SetID = map.MapSetID,
+            CreatorID = map.MapSet!.UserID,
+            Rating = map.DifficultyRating,
+            Status = (int)map.MapSet.Status,
+            DateSubmitted = map.MapSet.Submitted.ToUnixSeconds(),
+            DateRanked = map.MapSet.DateRanked?.ToUnixSeconds(),
+            LastUpdated = map.MapSet.LastUpdated.ToUnixSeconds(),
+            Hash = map.SHA256Hash
+        };
+
+        return mapLookup;
+    }
+
     // TODO: move to admin and create a valkey event
-    /*[Authenticated(Scopes.DEV)]*/
+    [Authenticated(Scopes.DEV)]
     [HttpRoute("/mapsets/reindex", APIMethod.Post)]
     public APIReturn<object> ReindexMapSets()
     {
