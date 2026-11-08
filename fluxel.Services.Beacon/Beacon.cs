@@ -5,7 +5,7 @@ using Midori.Networking;
 
 namespace fluxel.Services.Beacon;
 
-internal abstract class Program
+internal abstract class Beacon
 {
     internal static HttpConnectionManager<NotificationSocket> SocketManager { get; private set; } = null!;
 

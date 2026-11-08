@@ -21,13 +21,8 @@
     <ProjectReference Include="..\fluxel.Models\fluxel.Models.csproj" />
   </ItemGroup>
 
-  <ItemGroup Label="Code Analysis">
-    <AdditionalFiles Include="..\CodeAnalysis\BannedSymbols.txt" />
-  </ItemGroup>
-
   <ItemGroup>
     <Folder Include="API\Routes\" />
-    <Folder Include="Models\Payment\" />
   </ItemGroup>
 
 </Project>

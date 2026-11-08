@@ -62,7 +62,7 @@ public class NotificationSocket : AuthenticatedSocket<INotificationServer, INoti
         else valkey.Database.StringSet(key, activity.Serialize());
 
         return Task.WhenAll(
-            Program.SocketManager.Where(x => x.subscribed.Contains(UserID))
+            Beacon.SocketManager.Where(x => x.subscribed.Contains(UserID))
                    .Select(x => x.Client.NotifyUserActivity(UserID, activity))
         );
     }
@@ -74,7 +74,7 @@ public class NotificationSocket : AuthenticatedSocket<INotificationServer, INoti
 
         subscribed.Add(id);
 
-        var current = Program.SocketManager.FirstOrDefault(x => x.UserID == id);
+        var current = Beacon.SocketManager.FirstOrDefault(x => x.UserID == id);
         await Client.NotifyUserActivity(id, current?.activity ?? APIActivity.Offline);
     }
 

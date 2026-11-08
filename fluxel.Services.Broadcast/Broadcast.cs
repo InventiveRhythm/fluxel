@@ -4,7 +4,7 @@ using Midori.Networking;
 
 namespace fluxel.Services.Spectator;
 
-internal abstract class Program
+internal abstract class Broadcast
 {
     internal static HttpConnectionManager<SpectatorSocket> SocketManager { get; private set; } = null!;
 

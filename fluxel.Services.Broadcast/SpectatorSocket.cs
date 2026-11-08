@@ -11,7 +11,7 @@ namespace fluxel.Services.Spectator;
 
 public class SpectatorSocket : AuthenticatedSocket<ISpectatorServer, ISpectatorClient>, ISpectatorServer
 {
-    private SpectatorSocket[] viewers => Program.SocketManager.Where(x => x.CurrentlyWatching.Contains(UserID)).ToArray();
+    private SpectatorSocket[] viewers => Broadcast.SocketManager.Where(x => x.CurrentlyWatching.Contains(UserID)).ToArray();
 
     public SpectatorSocket(IServiceProvider services)
         : base(services)

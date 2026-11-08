@@ -1,20 +1,21 @@
 ﻿using System.Threading.Tasks;
+using fluxel.Services.Chronicle.Components;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
-namespace fluxel.Services.Atlas;
+namespace fluxel.Services.Chronicle;
 
-internal abstract class Program
+internal abstract class Chronicle
 {
     internal static async Task Main(string[] args)
     {
         var (builder, config) = SharedStartup.CreateDefault();
-        builder.Services.AddSingleton<Meili>();
+        builder.Services.AddSingleton<ScoreTickets>();
         builder.SetupAPI(config);
         builder.SetupPostgres();
 
         var host = builder.Build();
-        host.RegisterControllers(typeof(Program).Assembly);
+        host.RegisterControllers(typeof(Chronicle).Assembly);
         await host.RunAsync();
     }
 }

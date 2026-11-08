@@ -5,9 +5,9 @@ using Midori.Networking;
 
 namespace fluxel.Services.Multiplayer;
 
-internal abstract class Program
+internal abstract class Multiplayer
 {
-    public static HttpConnectionManager<MultiplayerSocket> SocketManager { get; private set; } = null!;
+    public static HttpConnectionManager<MultiplayerSocket> Sockets { get; private set; } = null!;
 
     internal static async Task Main(string[] args)
     {
@@ -16,8 +16,8 @@ internal abstract class Program
         builder.SetupPostgres();
 
         var host = builder.Build();
-        host.RegisterControllers(typeof(Program).Assembly);
-        SocketManager = host.RegisterModule<MultiplayerSocket>("/sockets/multiplayer", manager: true)!;
+        host.RegisterControllers(typeof(Multiplayer).Assembly);
+        Sockets = host.RegisterModule<MultiplayerSocket>("/sockets/multiplayer", manager: true)!;
 
         MultiplayerRoomManager.StartThread();
         await host.RunAsync();

@@ -14,7 +14,7 @@ using Microsoft.Extensions.Options;
 
 namespace fluxel.Services.Content;
 
-internal abstract class Program
+internal abstract class Content
 {
     internal static async Task Main(string[] args)
     {
@@ -33,7 +33,7 @@ internal abstract class Program
         });
 
         var host = builder.Build();
-        host.RegisterControllers(typeof(Program).Assembly);
+        host.RegisterControllers(typeof(Content).Assembly);
 
         using (var scope = host.Services.CreateScope())
         {

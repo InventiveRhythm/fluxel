@@ -2,7 +2,7 @@
 
 namespace fluxel.Services.Admin;
 
-internal abstract class Program
+internal abstract class Admin
 {
     internal static void Main(string[] args)
     {

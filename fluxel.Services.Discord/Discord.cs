@@ -6,16 +6,16 @@ using Microsoft.Extensions.Hosting;
 
 namespace fluxel.Services.Discord;
 
-internal abstract class Program
+internal abstract class Discord
 {
     internal static async Task Main(string[] args)
     {
         var (builder, config) = SharedStartup.CreateDefault();
         builder.Services.ParseConfiguration<DiscordConfig>("DISCORD");
-        builder.Services.AddSingleton<DiscordBot>();
+        builder.Services.AddSingleton<Bot>();
 
         var host = builder.Build();
-        var bot = host.Services.GetRequiredService<DiscordBot>();
+        var bot = host.Services.GetRequiredService<Bot>();
 
         await bot.StartAsync(CancellationToken.None);
         await host.RunAsync();

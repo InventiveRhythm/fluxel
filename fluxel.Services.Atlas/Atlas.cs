@@ -1,21 +1,20 @@
 ﻿using System.Threading.Tasks;
-using fluxel.Services.Chronicle.Components;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
-namespace fluxel.Services.Chronicle;
+namespace fluxel.Services.Atlas;
 
-internal abstract class Program
+internal abstract class Atlas
 {
     internal static async Task Main(string[] args)
     {
         var (builder, config) = SharedStartup.CreateDefault();
-        builder.Services.AddSingleton<ScoreTickets>();
+        builder.Services.AddSingleton<Meili>();
         builder.SetupAPI(config);
         builder.SetupPostgres();
 
         var host = builder.Build();
-        host.RegisterControllers(typeof(Program).Assembly);
+        host.RegisterControllers(typeof(Atlas).Assembly);
         await host.RunAsync();
     }
 }

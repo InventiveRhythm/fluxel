@@ -8,14 +8,6 @@ namespace fluxel.Services.Multiplayer;
 
 public class MultiplayerModule : IModule, IMultiRoomManager
 {
-    private readonly IServiceProvider services;
-
-    public MultiplayerModule(HttpRouter router, IServiceProvider services)
-    {
-        this.services = services;
-        Sockets = router.MapModule<MultiplayerSocket>("/multiplayer", manager: true)!;
-    }
-
     public void OnMessage(IServiceProvider _, object data)
     {
         switch (data)

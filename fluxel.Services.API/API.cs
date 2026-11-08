@@ -6,7 +6,7 @@ using Microsoft.Extensions.Hosting;
 
 namespace fluxel.Services.API;
 
-internal abstract class Program
+internal abstract class API
 {
     internal static async Task Main(string[] args)
     {
@@ -18,7 +18,7 @@ internal abstract class Program
         builder.SetupPostgres();
 
         var host = builder.Build();
-        host.RegisterControllers(typeof(Program).Assembly);
+        host.RegisterControllers(typeof(API).Assembly);
         await host.RunAsync();
     }
 }

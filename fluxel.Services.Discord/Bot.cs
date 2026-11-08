@@ -20,16 +20,16 @@ using Midori.Logging;
 
 namespace fluxel.Services.Discord;
 
-public class DiscordBot : BackgroundService
+public class Bot : BackgroundService
 {
     private readonly DiscordConfig config;
     private readonly Valkey valkey;
     private readonly IServiceProvider services;
 
-    public DiscordClient? Bot { get; private set; }
+    public DiscordClient? Client { get; private set; }
     private static List<ISlashCommand>? commands { get; set; }
 
-    public DiscordBot(IOptions<DiscordConfig> options, IServiceProvider services, Valkey valkey)
+    public Bot(IOptions<DiscordConfig> options, IServiceProvider services, Valkey valkey)
     {
         config = options.Value;
         this.services = services;
@@ -41,7 +41,7 @@ public class DiscordBot : BackgroundService
         if (string.IsNullOrWhiteSpace(config.BotToken))
             return;
 
-        Bot = new DiscordClient(new DiscordConfiguration
+        Client = new DiscordClient(new DiscordConfiguration
         {
             Token = config.BotToken,
             TokenType = TokenType.Bot,
@@ -64,11 +64,11 @@ public class DiscordBot : BackgroundService
             new UsersCommandGroup(),*/
         };
 
-        Bot.Ready += ready;
-        Bot.InteractionCreated += onInteraction;
-        Bot.MessageCreated += messageCreated;
-        Bot.MessageDeleted += messageDeleted;
-        await Bot.ConnectAsync();
+        Client.Ready += ready;
+        Client.InteractionCreated += onInteraction;
+        Client.MessageCreated += messageCreated;
+        Client.MessageDeleted += messageDeleted;
+        await Client.ConnectAsync();
     }
 
     private async Task onInteraction(DiscordClient sender, InteractionCreateEventArgs args)
@@ -94,12 +94,12 @@ public class DiscordBot : BackgroundService
 
     private async Task ready(DiscordClient sender, ReadyEventArgs args)
     {
-        Logger.Log($"Logged in as {Bot!.CurrentUser.Username}#{Bot.CurrentUser.Discriminator}!");
+        Logger.Log($"Logged in as {Client!.CurrentUser.Username}#{Client.CurrentUser.Discriminator}!");
 
         if (commands == null) throw new Exception("Commands are null!");
 
-        await Bot.BulkOverwriteGlobalApplicationCommandsAsync(commands.Select(x => x.Build()));
-        await Bot.UpdateStatusAsync(new DiscordActivity("fluXis", ActivityType.Playing));
+        await Client.BulkOverwriteGlobalApplicationCommandsAsync(commands.Select(x => x.Build()));
+        await Client.UpdateStatusAsync(new DiscordActivity("fluXis", ActivityType.Playing));
     }
 
     private async Task messageCreated(DiscordClient _, MessageCreateEventArgs args)
@@ -160,7 +160,7 @@ public class DiscordBot : BackgroundService
         await valkey.Publish(Valkey.ChatMessageDelete, new ValkeyStringIDEvent(message.ID));
     }
 
-    private DiscordChannel? getChannel(ulong id) => Bot?.GetChannelAsync(id).Result;
+    private DiscordChannel? getChannel(ulong id) => Client?.GetChannelAsync(id).Result;
 
     public DiscordChannel? GetChannel(ChannelType type) => type switch
     {
