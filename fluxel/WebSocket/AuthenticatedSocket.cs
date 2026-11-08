@@ -6,7 +6,6 @@ using fluxel.Constants;
 using fluxel.Database.Extensions;
 using fluxel.Models;
 using fluxel.Models.Users;
-using fluxel.Utils;
 using JetBrains.Annotations;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -136,10 +135,8 @@ public abstract class AuthenticatedSocket<S, C> : TypedWebSocketSession<S, C>
         if (!string.IsNullOrEmpty(user.CountryCode))
             return true;
 
-        var code = IpUtils.GetCountryCode(ip).Result;
-
-        using (db.EditAndSave())
-            user.CountryCode = code;
+        var loc = Utilities.GetIPInfo(ip).Result;
+        using (db.EditAndSave()) user.CountryCode = loc.country;
 
         return true;
     }
