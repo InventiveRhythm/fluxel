@@ -33,9 +33,5 @@ public class IndexController
             })
         };
     }
-
-    [HttpRoute("/test/:baller")]
-    public APIReturn<object> Testing(HttpServerContext ctx, string baller, [Source(ParameterSource.Query)] string opt = "wah")
-        => $"{ctx.EndPoint?.ToString() ?? ""} {baller} {opt}";
 }
 */
