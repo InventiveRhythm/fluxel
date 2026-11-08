@@ -19,9 +19,10 @@ public class Valkey
     public static RedisChannel MapSetCreate { get; } = RedisChannel.Literal("mapset:create");
     public static RedisChannel MapSetUpdate { get; } = RedisChannel.Literal("mapset:update");
 
-    public static RedisChannel UserCreate { get; } = RedisChannel.Literal("user:online");
+    public static RedisChannel UserCreate { get; } = RedisChannel.Literal("user:create");
     public static RedisChannel UserOnline { get; } = RedisChannel.Literal("user:online");
     public static RedisChannel UserOffline { get; } = RedisChannel.Literal("user:offline");
+    public static RedisChannel UserActivity { get; } = RedisChannel.Literal("user:activity");
 
     public static RedisKey UsersOnline { get; } = new("users:online");
     public const string USER_ACTIVITY = "users:activity";

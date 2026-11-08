@@ -19,6 +19,9 @@ public class NotificationSocket : AuthenticatedSocket<INotificationServer, INoti
     private APIActivity? activity;
 
     private readonly Valkey valkey;
+    private IDisposable? onUserOnline;
+    private IDisposable? onUserOffline;
+    private IDisposable? onUserActivity;
 
     public NotificationSocket(Valkey valkey, IServiceProvider services)
         : base(services)
@@ -39,19 +42,59 @@ public class NotificationSocket : AuthenticatedSocket<INotificationServer, INoti
             if (user.ForceNameChange) Client.ForceNameChange();
         }
 
+        onUserOnline = valkey.Subscribe<ValkeyIDEvent>(Valkey.UserOnline, e => updateFriendStatus(e.ID, true)).Result;
+        onUserOffline = valkey.Subscribe<ValkeyIDEvent>(Valkey.UserOffline, e => updateFriendStatus(e.ID, false)).Result;
+        onUserActivity = valkey.Subscribe<ValkeyIDEvent>(Valkey.UserActivity, e =>
+        {
+            if (!subscribed.Contains(e.ID))
+                return;
+
+            sendCurrentActivity(e.ID);
+        }).Result;
+
         _ = valkey.Publish(Valkey.UserOnline, new ValkeyIDEvent(UserID));
         valkey.Database.SetAdd(Valkey.UsersOnline, UserID);
     }
 
     protected override void OnClose()
     {
+        onUserOnline?.Dispose();
+        onUserOffline?.Dispose();
+        onUserActivity?.Dispose();
         subscribed.Clear();
+
         _ = valkey.Publish(Valkey.UserOffline, new ValkeyIDEvent(UserID));
         valkey.Database.SetRemove(Valkey.UsersOnline, UserID);
-        UpdateActivity("offline", new JObject());
+        ((INotificationServer)this).UpdateActivity("offline", new JObject());
     }
 
-    public Task UpdateActivity(string name, JObject data)
+    private void updateFriendStatus(long id, bool state)
+    {
+        using var svc = Services.CreateScope();
+        using var db = UseDatabase(svc.ServiceProvider);
+
+        if (!db.UserFollows.Any(x => x.FollowerID == UserID && x.FolloweeID == id))
+            return;
+
+        var user = db.Users.Find(id);
+        if (user is null) return;
+
+        var translator = svc.ServiceProvider.GetRequiredService<ModelTranslator>();
+        Client.NotifyFriendStatus(translator.ToAPI(user), state);
+    }
+
+    private void sendCurrentActivity(long id)
+    {
+        var val = valkey?.Database.StringGet($"{Valkey.USER_ACTIVITY}:{id}");
+        if (val?.IsNull ?? true) return;
+
+        var current = ((string)val!).Deserialize<APIActivity>();
+        Client.NotifyUserActivity(id, current ?? APIActivity.Offline);
+    }
+
+    #region INotificationServer
+
+    Task INotificationServer.UpdateActivity(string name, JObject data)
     {
         // TODO: validate
         activity = new APIActivity { Name = name, Data = data };
@@ -61,27 +104,25 @@ public class NotificationSocket : AuthenticatedSocket<INotificationServer, INoti
         if (name == "offline") valkey.Database.KeyDelete(key);
         else valkey.Database.StringSet(key, activity.Serialize());
 
-        return Task.WhenAll(
-            Beacon.SocketManager.Where(x => x.subscribed.Contains(UserID))
-                   .Select(x => x.Client.NotifyUserActivity(UserID, activity))
-        );
+        return valkey.Publish(Valkey.UserActivity, new ValkeyIDEvent(UserID));
     }
 
-    public async Task SubscribeToUser(long id)
+    Task INotificationServer.SubscribeToUser(long id)
     {
         if (subscribed.Contains(id))
-            return;
+            return Task.CompletedTask;
 
         subscribed.Add(id);
-
-        var current = Beacon.SocketManager.FirstOrDefault(x => x.UserID == id);
-        await Client.NotifyUserActivity(id, current?.activity ?? APIActivity.Offline);
+        sendCurrentActivity(id);
+        return Task.CompletedTask;
     }
 
-    public Task UpdateNotificationUnread(long time)
+    Task INotificationServer.UpdateNotificationUnread(long time)
     {
         // TODO: move this out of socket
         // why is this even here???
         return Task.CompletedTask;
     }
+
+    #endregion
 }
