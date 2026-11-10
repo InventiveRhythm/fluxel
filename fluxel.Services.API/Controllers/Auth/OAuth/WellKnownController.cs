@@ -1,9 +1,8 @@
-/*
 using Midori.API.Attributes;
 using Midori.API.Components;
 using Midori.Utils;
 
-namespace fluxel.Auth.API;
+namespace fluxel.Services.API.Controllers.Auth.OAuth;
 
 [Controller("/.well-known")]
 public class WellKnownController
@@ -24,4 +23,3 @@ public class WellKnownController
         scopes_supported = new[] { "openid", "profile", "email" },
     }.Serialize(true);
 }
-*/

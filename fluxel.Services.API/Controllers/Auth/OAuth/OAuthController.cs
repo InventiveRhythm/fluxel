@@ -1,9 +1,12 @@
-/*
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Web;
-using fluxel.Auth.Components;
+using fluxel.Models;
 using fluxel.Models.Users;
+using fluxel.Services.API.Components;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
@@ -13,18 +16,16 @@ using Midori.API.Handlers;
 using Midori.Networking;
 using Midori.Utils;
 
-namespace fluxel.Auth.API;
+namespace fluxel.Services.API.Controllers.Auth.OAuth;
 
 [Controller("/oauth")]
 public class OAuthController
 {
-    private readonly OAuthManager oauth;
-    private readonly UserManager users;
+    private readonly DatabaseContext database;
 
-    public OAuthController(UserManager users, OAuthManager oauth)
+    public OAuthController(DatabaseContext database)
     {
-        this.users = users;
-        this.oauth = oauth;
+        this.database = database;
     }
 
     [Authenticated]
@@ -37,7 +38,7 @@ public class OAuthController
         fullname = auth.Username,
         email = $"notauser+{auth.ID}@flux.moe",
         email_verified = true,
-        roles = auth.GroupIDs,
+        roles = database.GroupMembers.Where(x => x.UserID == auth.ID).Select(x => x.GroupID),
         backend = "oidc"
     }.Serialize(true);
 
@@ -55,7 +56,7 @@ public class OAuthController
         // ReSharper enable InconsistentNaming
     )
     {
-        var app = oauth.FindApplication(client_id);
+        var app = database.OAuthApps.Find(client_id);
         if (app is null) return Returns.Message(HttpStatusCode.BadRequest, "Invalid client ID.");
 
         if (response_type != "code")
@@ -86,7 +87,7 @@ public class OAuthController
         if (string.IsNullOrWhiteSpace(client_id))
             client_id = resolved.client;
 
-        var app = oauth.FindApplication(client_id);
+        var app = database.OAuthApps.Find(client_id);
         if (app is null) return Returns.Message(HttpStatusCode.BadRequest, "Invalid ClientID.");
 
         if (grant_type != "authorization_code")
@@ -98,7 +99,7 @@ public class OAuthController
             return Returns.Message(HttpStatusCode.BadRequest, "Invalid redirect URI.");
 
         OpenID.Codes.Remove(code);
-        var user = users.Get(resolved.id)!;
+        var user = database.Users.Find(resolved.id)!;
 
         var descriptor = new SecurityTokenDescriptor
         {
@@ -117,8 +118,13 @@ public class OAuthController
         var token = handler.CreateToken(descriptor);
 
         string ua = $"oauth-{client_id}";
-        users.RemoveSessions(x => x.UserID == user.ID && x.UserAgent == ua);
-        var session = users.CreateSession(user.ID, ctx.RemoteIP.ToString(), ua).Result;
+
+        var existing = database.AuthSessions
+                               .Where(x => x.UserID == user.ID && x.UserAgent == ua)
+                               .ToArray();
+
+        database.AuthSessions.RemoveRange(existing);
+        var session = database.AuthSessions.Create(user.ID, ctx.RemoteIP.ToString(), ua).Result;
 
         return new
         {
@@ -189,4 +195,3 @@ public class OAuthController
         }
     }
 }
-*/
