@@ -30,7 +30,7 @@ public class RecalculateMapRatingTask : IBasicTask
 
         using (database.EditAndSave())
         {
-            map.CalculateRating(states, out var refresh);
+            map.DifficultyRating = map.CalculateRating(states, out var refresh);
             map.HasPendingScoreRefresh |= refresh;
         }
 
