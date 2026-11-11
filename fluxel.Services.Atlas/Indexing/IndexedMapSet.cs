@@ -1,8 +1,10 @@
 using System;
 using System.Text.Json.Serialization;
+using JetBrains.Annotations;
 
 namespace fluxel.Services.Atlas.Indexing;
 
+[UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
 public class IndexedMapSet
 {
     [JsonPropertyName("id")]

@@ -2,7 +2,7 @@
 using System.Threading.Tasks;
 using fluxel.Components.Tasks;
 
-namespace fluxel.Tasks.Other;
+namespace fluxel.Services.API.Tasks.Other;
 
 public class MethodTask : IBasicTask
 {
