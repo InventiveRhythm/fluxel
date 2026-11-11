@@ -81,7 +81,7 @@ services:
       test: [ "CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8333/healthz" ]
     ports:
       - "127.0.0.1:2401:8333"
-      - "127.0.0.1:2402:8888"
+      - "2402:8888"
     volumes:
       - ./seaweed.sh:/seaweed.sh
       - ${FLUXEL_DATA_SEAWEEDFS:-./data/seaweed}:/data

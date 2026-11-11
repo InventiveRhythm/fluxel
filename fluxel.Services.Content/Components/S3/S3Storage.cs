@@ -28,6 +28,12 @@ public class S3Storage : Storage
         basePath = path;
     }
 
+    public override Storage GetStorageForDirectory(string path)
+    {
+        var storage = new S3Storage(s3, bucket, Path.Combine(basePath, path));
+        return storage;
+    }
+
     public override string GetFullPath(string path, bool createIfNotExisting = false)
     {
         if (createIfNotExisting)

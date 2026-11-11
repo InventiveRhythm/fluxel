@@ -2,6 +2,7 @@
 	encode zstd gzip
 
 	reverse_proxy /downloads* content
+	reverse_proxy /uploads* content
 	reverse_proxy /leaderboards* chronicle
 	reverse_proxy /multiplayer* multiplayer
 	reverse_proxy /scores* chronicle

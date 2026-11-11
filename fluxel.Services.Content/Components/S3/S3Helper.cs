@@ -5,10 +5,11 @@ using Amazon.S3;
 using Amazon.S3.Model;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using osu.Framework.Platform;
 
 namespace fluxel.Services.Content.Components.S3;
 
-public class S3Helper
+public class S3Helper : IStorageProvider
 {
     private readonly ILogger logger;
     public readonly AmazonS3Client Client;
@@ -105,4 +106,7 @@ public class S3Helper
 
         return res.CommonPrefixes?.ToArray() ?? [];
     }
+
+    Storage IStorageProvider.CreateStorage(string space, string path)
+        => new S3Storage(this, space, path);
 }

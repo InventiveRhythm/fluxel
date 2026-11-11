@@ -16,12 +16,14 @@ COPY fluxel/fluxel fluxel/fluxel
 COPY fluxel/fluxel.Services.${SERVICE} fluxel/fluxel.Services.${SERVICE}
 
 RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages,sharing=locked \
-    dotnet publish fluxel/fluxel.Services.${SERVICE}/fluxel.Services.${SERVICE}.csproj -r linux-x64 -c Release -o /app/publish --no-restore
-	
+    dotnet publish fluxel/fluxel.Services.${SERVICE}/fluxel.Services.${SERVICE}.csproj -r linux-x64 -c Release -o /app/publish --no-restore 
+
 FROM mcr.microsoft.com/dotnet/runtime:10.0-alpine AS final
 ARG SERVICE
-# RUN apk add --no-cache ffmpeg
+ENV SERVICE=${SERVICE}
+
+RUN if [ "$SERVICE" = "Content" ]; then apk add --no-cache ffmpeg; fi 
+
 WORKDIR /app
 COPY --from=build /app/publish .
-ENV SERVICE=${SERVICE}
 ENTRYPOINT ["sh", "-c", "dotnet fluxel.Services.${SERVICE}.dll"]

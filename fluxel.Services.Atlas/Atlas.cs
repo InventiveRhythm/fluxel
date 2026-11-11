@@ -15,6 +15,10 @@ internal abstract class Atlas
 
         var host = builder.Build();
         host.RegisterControllers(typeof(Atlas).Assembly);
+
+        // init valkey listeners
+        _ = host.Services.GetRequiredService<Meili>();
+
         await host.RunAsync();
     }
 }

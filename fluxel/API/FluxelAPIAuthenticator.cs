@@ -38,20 +38,14 @@ public class FluxelAPIAuthenticator : IAPIAuthenticator
         if (user == null)
             return false;
 
-        // TODO:
-        /*if (user.IsDeveloper())
+        var groups = database.GroupMembers.Where(x => x.UserID == user.ID).ToArray();
+        scopes.AddRange(groups.Select(x => x.GroupID));
+
+        if (scopes.Contains(Scopes.DEV))
         {
-            scopes.Add(Scopes.DEV);
             scopes.Add(Scopes.MOD);
             scopes.Add(Scopes.PURIFY);
         }
-        else
-        {
-            if (user.IsModerator())
-                scopes.Add(Scopes.MOD);
-            if (user.IsPurifier())
-                scopes.Add(Scopes.PURIFY);
-        }*/
 
         data["auth"] = user;
         return true;

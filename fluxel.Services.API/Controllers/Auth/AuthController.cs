@@ -102,8 +102,10 @@ public class AuthController
         }).Entity;
 
         database.SaveChanges();
+
         var session = database.AuthSessions.Create(user.ID, ip, ua).Result;
-        using (database.EditAndSave()) user.CountryCode = session.Country;
+        user.CountryCode = session.Country;
+        database.SaveChanges();
 
         // todo: add to channels and log register (in discord)
         _ = valkey.Publish(Valkey.UserCreate, new ValkeyIDEvent(user.ID));

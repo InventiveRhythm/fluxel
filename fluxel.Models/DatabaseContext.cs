@@ -190,7 +190,11 @@ public class DatabaseContext : DbContext
     public IDisposable EditAndSave()
     {
         Database.BeginTransaction();
-        return new InvokeOnDisposal(() => Database.CommitTransaction());
+        return new InvokeOnDisposal(() =>
+        {
+            Database.CommitTransaction();
+            SaveChanges();
+        });
     }
 
     public static string BuildConnectionString(Func<string, string?> getEnv)

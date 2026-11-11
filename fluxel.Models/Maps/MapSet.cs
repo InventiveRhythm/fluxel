@@ -11,6 +11,10 @@ namespace fluxel.Models.Maps;
 [Table("mapset")]
 public class MapSet
 {
+    public const long MAX_MAPSETS_IN_QUEUE = 2;
+    public const int MAX_PACKAGE_SIZE = 75 * 1024 * 1024;
+    public const int REQUIRED_VOTES = 2;
+
     [Key, Column("id")]
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public long ID { get; init; }
@@ -19,13 +23,13 @@ public class MapSet
     public long UserID { get; init; }
 
     [Column("title"), MaxLength(256)]
-    public string Title { get; set; } = "";
+    public string Title { get; set; } = string.Empty;
 
     [Column("title_romanized"), MaxLength(256)]
     public string? TitleRomanized { get; set; }
 
     [Column("artist"), MaxLength(256)]
-    public string Artist { get; set; } = "";
+    public string Artist { get; set; } = string.Empty;
 
     [Column("artist_romanized"), MaxLength(256)]
     public string? ArtistRomanized { get; set; }

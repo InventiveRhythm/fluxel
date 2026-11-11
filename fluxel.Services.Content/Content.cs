@@ -27,6 +27,7 @@ internal abstract class Content
         builder.Services.AddSingleton<PreviewGenerator>();
 
         builder.Services.AddScoped<S3Helper>();
+        builder.Services.AddScoped<IStorageProvider>(s => ActivatorUtilities.CreateInstance<S3Helper>(s));
         builder.Services.AddSingleton(c =>
         {
             var cfg = c.GetRequiredService<IOptions<S3Config>>();
