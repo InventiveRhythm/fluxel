@@ -6,6 +6,7 @@ using fluxel.Database.Migrations;
 using fluxel.Modules;
 using fluxel.Tasks;
 using fluxel.Tasks.Maps;
+using fluxel.Tasks.Users.Connections;
 using fluXis.Map;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -66,7 +67,7 @@ internal static class Program
 
         tasks.Schedule(new CheckMissingMapColorTask(), DateTime.Today, TimeSpan.FromDays(1));
         tasks.Schedule(new RefreshMapScoresTask(), DateTime.Today, TimeSpan.FromDays(1));
-        // tasks.Schedule(new CheckForDiscordRefreshesTask(), DateTime.Today, TimeSpan.FromHours(8));
+        tasks.Schedule(new CheckForDiscordRefreshesTask(), DateTime.Today, TimeSpan.FromHours(8));
 
         await host.Services.GetRequiredService<DatabaseMigrationRunner>().ExecuteUpgrades();
 
