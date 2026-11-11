@@ -15,6 +15,7 @@ using fluxel.Services.Discord.Components;
 using fluxel.Services.Discord.Utils;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Midori.Logging;
 
@@ -41,14 +42,8 @@ public class Bot : BackgroundService
         if (string.IsNullOrWhiteSpace(config.BotToken))
             return;
 
-        Client = new DiscordClient(new DiscordConfiguration
-        {
-            Token = config.BotToken,
-            TokenType = TokenType.Bot,
-            Intents = DiscordIntents.AllUnprivileged | DiscordIntents.MessageContents,
-            AutoReconnect = true,
-            MinimumLogLevel = Microsoft.Extensions.Logging.LogLevel.None
-        });
+        var build = DiscordClientBuilder.CreateDefault(config.BotToken, DiscordIntents.AllUnprivileged | DiscordIntents.MessageContents);
+        build.SetLogLevel(LogLevel.None);
 
         commands = new List<ISlashCommand>
         {
@@ -64,20 +59,66 @@ public class Bot : BackgroundService
             new UsersCommandGroup(),*/
         };
 
-        Client.Ready += ready;
-        Client.InteractionCreated += onInteraction;
-        Client.MessageCreated += messageCreated;
-        Client.MessageDeleted += messageDeleted;
+        build.ConfigureEventHandlers(c =>
+        {
+            c.HandleSessionCreated(ready);
+            c.HandleInteractionCreated(onInteraction);
+            c.HandleMessageCreated(messageCreated);
+            c.HandleMessageDeleted(messageDeleted);
+            c.HandleGuildMemberAdded(async (client, args) =>
+            {
+                using var svc = services.CreateScope();
+                var db = svc.ServiceProvider.GetRequiredService<DatabaseContext>();
+                var user = db.Users.ByDiscordID(args.Member.Id);
+                if (user is null) return;
+
+                await args.Member.GrantRoleAsync(args.Guild.GetRoleAsync(1541436614805299210).Result);
+            });
+        });
+
+        Client = build.Build();
         await Client.ConnectAsync();
     }
 
-    private async Task onInteraction(DiscordClient sender, InteractionCreateEventArgs args)
+    private async Task onInteraction(DiscordClient sender, InteractionCreatedEventArgs args)
     {
+        if (args.Interaction.Type == DiscordInteractionType.Component)
+        {
+            switch (args.Interaction.Data.CustomId)
+            {
+                case "user-verify":
+                {
+                    var svc = services.CreateScope();
+                    var db = svc.ServiceProvider.GetRequiredService<DatabaseContext>();
+                    var user = db.Users.ByDiscordID(args.Interaction.User.Id);
+
+                    if (user is null)
+                    {
+                        args.Interaction.Reply("You have no fluXis account linked to your discord account!", true);
+                        return;
+                    }
+
+                    var member = args.Interaction.Guild!.GetMemberAsync(args.Interaction.User.Id).Result;
+                    member.GrantRoleAsync(args.Interaction.Guild.GetRoleAsync(1541436614805299210).Result).Wait();
+
+                    args.Interaction.Reply("Done!", true);
+                    break;
+                }
+
+                default:
+                    Logger.Log($"Unknown component: {args.Interaction.Data.CustomId}.");
+                    break;
+            }
+
+            return;
+        }
+
         var command = commands!.FirstOrDefault(x => x.Name == args.Interaction.Data.Name);
 
         if (command == null)
         {
-            await args.Interaction.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource, new DiscordInteractionResponseBuilder().WithContent("Command not found!").AsEphemeral());
+            await args.Interaction.CreateResponseAsync(DiscordInteractionResponseType.ChannelMessageWithSource,
+                new DiscordInteractionResponseBuilder().WithContent("Command not found!").AsEphemeral());
             return;
         }
 
@@ -92,17 +133,17 @@ public class Bot : BackgroundService
         }
     }
 
-    private async Task ready(DiscordClient sender, ReadyEventArgs args)
+    private async Task ready(DiscordClient sender, SessionCreatedEventArgs sessionCreatedEventArgs)
     {
         Logger.Log($"Logged in as {Client!.CurrentUser.Username}#{Client.CurrentUser.Discriminator}!");
 
         if (commands == null) throw new Exception("Commands are null!");
 
         await Client.BulkOverwriteGlobalApplicationCommandsAsync(commands.Select(x => x.Build()));
-        await Client.UpdateStatusAsync(new DiscordActivity("fluXis", ActivityType.Playing));
+        await Client.UpdateStatusAsync(new DiscordActivity("fluXis", DiscordActivityType.Playing));
     }
 
-    private async Task messageCreated(DiscordClient _, MessageCreateEventArgs args)
+    private async Task messageCreated(DiscordClient _, MessageCreatedEventArgs args)
     {
         if (args.Channel.Id != config.ChannelChat) return;
         if (args.Author.IsBot) return;
@@ -143,7 +184,7 @@ public class Bot : BackgroundService
         await valkey.Publish(Valkey.ChatMessageCreate, new ValkeyStringIDEvent(message.ID));
     }
 
-    private async Task messageDeleted(DiscordClient _, MessageDeleteEventArgs args)
+    private async Task messageDeleted(DiscordClient _, MessageDeletedEventArgs args)
     {
         if (args.Channel.Id != config.ChannelChat)
             return;
@@ -183,11 +224,11 @@ public class Bot : BackgroundService
         var message = new DiscordMessageBuilder()
                       .WithContent("<@386436194709274627>")
                       .WithAllowedMention(new UserMention(386436194709274627))
-                      .WithEmbed(new DiscordEmbedBuilder()
-                                 .WithTitle("Unhandled exception")
-                                 .WithDescription(e.Message)
-                                 .AddField("Stack trace", $"```{stackTrace ?? "No stack trace"}```")
-                                 .WithColor(DiscordColor.Red));
+                      .AddEmbed(new DiscordEmbedBuilder()
+                                .WithTitle("Unhandled exception")
+                                .WithDescription(e.Message)
+                                .AddField("Stack trace", $"```{stackTrace ?? "No stack trace"}```")
+                                .WithColor(DiscordColor.Red));
 
         channel?.SendMessageAsync(message);
     }

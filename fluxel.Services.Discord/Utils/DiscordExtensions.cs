@@ -9,7 +9,7 @@ public static class DiscordExtensions
     public static DiscordEmbedBuilder.EmbedAuthor ToEmbedAuthor(this User user, UrlFormatter urls) => new()
     {
         Name = user.Username,
-        IconUrl = urls.Avatar(user.Profile),
+        IconUrl = urls.Avatar(user.Profile ?? new UserProfile()),
         Url = urls.Web(user)
     };
 }
