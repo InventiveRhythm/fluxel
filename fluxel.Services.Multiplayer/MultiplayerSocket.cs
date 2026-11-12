@@ -11,7 +11,6 @@ using fluXis.Online.API.Models.Multi;
 using fluXis.Online.Exceptions;
 using fluXis.Online.Multiplayer;
 using fluXis.Scoring;
-using fluXis.Scoring.Structs;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace fluxel.Services.Multiplayer;
@@ -192,7 +191,7 @@ public class MultiplayerSocket : AuthenticatedSocket<IMultiplayerServer, IMultip
         score.PlayerID = UserID;
         setPlayerStatus(player.ID, MultiplayerUserState.Finished);
 
-        score.HitResults = new List<HitResult>();
+        score.HitResults = [];
         player.Score = score;
 
         await endIfAllFinished();
