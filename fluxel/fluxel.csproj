@@ -6,7 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="InventiveRhythm.fluXis.Modes.Keys" Version="2026.1029.0" />
+    <PackageReference Include="InventiveRhythm.fluXis.Modes.Keys" Version="2026.1112.0" />
     <PackageReference Include="MessagePack" Version="3.1.12" />
     <PackageReference Include="DotNetEnv" Version="3.2.0" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />
